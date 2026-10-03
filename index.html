@@ -652,6 +652,7 @@ const PATCH_KEY = 'fupo-patches-v1';
 const LS_KEY = 'fupo-world-data-v9';
 const LS_DRAFT = 'fupo-local-draft';
 const LS_DRAFT_BAK = 'fupo-local-draft-backup';
+const LS_CACHE = 'fupo-cloud-cache';   /* 上一次成功同步到的云端内容（云端读不到时用它兜底显示） */
 const MAX_HISTORY = 30;
 const SNAPSHOT_KEEP_DAYS = 7;
 
@@ -999,6 +1000,7 @@ async function cloudLoad(opts){
       const d = data[SB_COL_DATA];
       const st = d ? ((typeof d === 'string') ? JSON.parse(d) : d) : null;
       const pt = Array.isArray(data[SB_COL_PATCHES]) ? data[SB_COL_PATCHES] : null;
+      if(st && st.meta && st.worlds) saveCloudCache(st, pt, data.updated_at);  /* 缓存最新云端内容 */
       return { ok:true, state: st, patches: pt, updatedAt: data.updated_at || null };
     }catch(e){
       lastErr = e;
@@ -1108,6 +1110,7 @@ async function cloudSave(opts){
     if(!stamp) throw (lastErr || new Error('保存失败'));
     lastCloudStamp = stamp; /* 记住自己写的版本，避免轮询把自己刚存的内容再套一遍 */
     cloudOk = true;
+    saveCloudCache(state, patches, stamp);   /* 保存成功也刷新本地缓存 */
     /* 如果覆盖掉的是比本页更新的一版，明确告知（已自动备份，可找回） */
     if(curRow && curRow.updated_at && opts.baseStamp && curRow.updated_at !== opts.baseStamp){
       toast('已保存到云端（覆盖了较新的一版，可在「云同步设置 → 恢复云端上一版」找回）');
@@ -1398,6 +1401,18 @@ function loadDraft(){
   }catch(e){ return null; }
 }
 function clearDraft(){ try{ localStorage.removeItem(LS_DRAFT); }catch(e){} }
+/* 云端内容本地缓存：网络被拦截时页面也能立刻显示上次同步到的内容 */
+function saveCloudCache(st, pt, stamp){
+  try{ localStorage.setItem(LS_CACHE, JSON.stringify({ savedAt: Date.now(), stamp: stamp || null, state: st, patches: pt || [] })); }catch(e){}
+}
+function loadCloudCache(){
+  try{
+    const raw = localStorage.getItem(LS_CACHE);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    return (d && d.state && d.state.meta && d.state.worlds) ? d : null;
+  }catch(e){ return null; }
+}
 function backupDraft(d){
   try{ if(d) localStorage.setItem(LS_DRAFT_BAK, JSON.stringify(d)); }catch(e){}
 }
@@ -4013,10 +4028,20 @@ function setRealm(r, origin){
    启动
    ============================================================ */
 (async function boot(){
-  /* 先立刻用本地内容渲染，云端在后台拉取：连不上也不影响使用 */
+  /* 立刻用「本机缓存的云端内容」渲染：网络被拦截时也不会退回默认内容 */
+  const cache = loadCloudCache();
   const draft = loadDraft();
-  state = (draft && draft.state) ? normalize(draft.state) : (loadState() || normalize(deep(DEFAULT_DATA)));
-  patches = (draft && Array.isArray(draft.patches)) ? draft.patches : loadPatches();
+  if(cache && cache.state){
+    state = normalize(cache.state);
+    patches = Array.isArray(cache.patches) ? cache.patches : loadPatches();
+    if(cache.stamp) lastCloudStamp = cache.stamp;
+  }else if(draft && draft.state){
+    state = normalize(draft.state);
+    patches = Array.isArray(draft.patches) ? draft.patches : loadPatches();
+  }else{
+    state = loadState() || normalize(deep(DEFAULT_DATA));
+    patches = loadPatches();
+  }
   applyPatches();
   renderAll();
   loadMusic();
@@ -4024,10 +4049,8 @@ function setRealm(r, origin){
   saveSnapshot();
   initSupabase();
   if(sbConfigured()) subscribeCloud();
-  const cloud = await Promise.race([
-    cloudLoad(),
-    new Promise(res => setTimeout(() => res({ ok:false, timeout:true }), 5000))
-  ]);
+  if(cache){ setCloudStatus('working', '已显示本机缓存，正在读取云端最新版…'); }
+  const cloud = await cloudLoad();
   if(cloud.ok){
     const cloudHas = !!(cloud.state && cloud.state.meta && cloud.state.worlds);
     const cloudStamp = cloud.updatedAt || null;
@@ -4045,12 +4068,16 @@ function setRealm(r, origin){
       _doSave();
       toast('云 端 为 空，已 上 传 当 前 内 容');
     }
+  }else if(sbConfigured()){
+    /* 云端读不到：继续显示缓存内容，并给出可点击重试的提示 */
+    setCloudStatus('fail', cache ? '云端暂时读不到（显示本机缓存）· 点此重试' : '云端读取失败 · 点此重试');
   }
   /* 轮询兜底：即使实时通道被网络拦截，其他设备的更新也会在几秒内自动出现 */
   if(sbConfigured()) startCloudPoll();
   /* 登录状态：优先读本机会话（不依赖网络），必要时自动登录 */
   if(sbConfigured()) restoreAuthSession();
   updateDraftBanner();
+  console.log('浮魄 版本：' + (typeof FUPO_BUILD !== 'undefined' ? FUPO_BUILD : '未知') + ' ｜ 数据来源：' + (cache ? '本机缓存' : '默认模板'));
 })();
 
 /* 恢复/自动建立登录状态：会话存在即视为已登录（写权限由服务端 RLS 决定） */
