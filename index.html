@@ -2637,6 +2637,31 @@ function closeModal(skipConfirm){
 }
 function onKeydown(e){ if(e.key === 'Escape') closeModal(); }
 /* ★ 每个文字框都带「插入图片」按钮 + 拖拽插图 */
+/* 插图统一入口：登录状态下先把图片传到云端存储，正文里只留链接（数据行就不会变大） */
+async function imageMarkdownFor(file){
+  const dataUrl = await compressImage(file);
+  const name = String(file.name || 'image').replace(/\.[^.]+$/, '');
+  if(!(sbConfigured() && sbLoggedIn)) return `![${name}](${dataUrl})`;
+  showProgress(null, '正在上传图片到云端…');
+  let url = null;
+  try{ url = await uploadDataUrl(dataUrl, name); }catch(e){ url = null; }
+  hideProgress();
+  if(url){ toast('图片已存入云端：所有设备都能看到'); return `![${name}](${url})`; }
+  toast('图片上传云端失败，已改为内嵌保存（能正常显示，但会让同步变慢）');
+  return `![${name}](${dataUrl})`;
+}
+async function insertImageAtCursor(ta, file){
+  if(!file || !String(file.type || '').startsWith('image/')) return;
+  const md = await imageMarkdownFor(file);
+  const pos = ta.selectionStart;
+  const before = ta.value.slice(0, pos);
+  const after = ta.value.slice(pos);
+  const insert = (before && !before.endsWith('\n') ? '\n\n' : '') + md + (after && !after.startsWith('\n') ? '\n\n' : '');
+  ta.value = before + insert + after;
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = pos + insert.length;
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+}
 function bindModalTextareas(){
   modalRoot.querySelectorAll('textarea').forEach(ta => {
     if(ta.dataset.toolBound) return;
@@ -2648,19 +2673,7 @@ function bindModalTextareas(){
       ta.style.borderColor = '';
       const file = e.dataTransfer.files[0];
       if(!file || !file.type.startsWith('image/')) return;
-      compressImage(file).then(dataUrl => {
-        const name = file.name.replace(/\.[^.]+$/, '');
-        const pos = ta.selectionStart;
-        const before = ta.value.slice(0, pos);
-        const after = ta.value.slice(pos);
-        const insert = (before && !before.endsWith('\n') ? '\n\n' : '') +
-                       `![${name}](${dataUrl})` +
-                       (after && !after.startsWith('\n') ? '\n\n' : '');
-        ta.value = before + insert + after;
-        ta.focus();
-        ta.selectionStart = ta.selectionEnd = pos + insert.length;
-        ta.dispatchEvent(new Event('input', { bubbles:true }));
-      });
+      insertImageAtCursor(ta, file);
     });
     if(ta.dataset.noImg === '1') return;
     const lbl = document.createElement('label');
@@ -2673,18 +2686,7 @@ function bindModalTextareas(){
     inp.addEventListener('change', () => {
       const f = inp.files[0];
       if(!f || !f.type.startsWith('image/')) return;
-      compressImage(f).then(dataUrl => {
-        const name = f.name.replace(/\.[^.]+$/, '');
-        const pos = ta.selectionStart;
-        const before = ta.value.slice(0, pos);
-        const after = ta.value.slice(pos);
-        const insert = (before && !before.endsWith('\n') ? '\n\n' : '') + `![${name}](${dataUrl})` + (after && !after.startsWith('\n') ? '\n\n' : '');
-        ta.value = before + insert + after;
-        ta.focus();
-        const np = pos + insert.length;
-        ta.selectionStart = ta.selectionEnd = np;
-        ta.dispatchEvent(new Event('input', { bubbles:true }));
-      });
+      insertImageAtCursor(ta, f);
       inp.value = '';
     });
   });
