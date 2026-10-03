@@ -1459,14 +1459,18 @@ trackListEl.addEventListener('click', e => {
 async function uploadLocalTrack(i){
   const t = tracks()[i];
   if(!t || !t.localId) return;
-  if(!sbConfigured()){ toast('未配置云同步'); return; }
-  if(!sbLoggedIn){ toast('请先在「云同步设置」登录，再上传音频'); return; }
+  if(!sbConfigured()){ alert('云同步还没配置好：请到 ☰ → 云同步设置 里填写。'); return; }
+  if(!sbLoggedIn){ alert('这台设备还没登录云同步。\n\n请到 ☰ → 云同步设置 → 填邮箱密码 → 点「登 录」，然后回来再点 ☁。'); return; }
   toast('正在上传音频…');
   const blob = await dbGet(DB_STORE, t.localId);
-  if(!blob){ toast('本机音频已丢失'); return; }
+  if(!blob){ alert('本机音频已丢失：这台设备上找不到这个音频文件了。'); return; }
+  const mb = (blob.size || 0) / 1048576;
   const file = new File([blob], (t.title || 'audio') + '.mp3', { type: blob.type || 'audio/mpeg' });
   const up = await uploadAudioToCloud(file, t.title);
-  if(!up.url){ toast('上传失败：' + up.error); return; }
+  if(!up.url){
+    alert('上传云端失败（' + mb.toFixed(1) + 'MB）：\n\n' + up.error + '\n\n常见原因：\n· 没登录（要先在「云同步设置」登录）\n· 存储桶没建好（Storage 里要有 fupo-audio 公开桶）\n· 文件超过 Supabase 单文件上限（默认 50MB）\n· 网络太慢/被拦截');
+    return;
+  }
   t.type = 'url'; t.url = up.url;
   const oldLocal = t.localId; t.localId = '';
   if(oldLocal && !localIdInUse(oldLocal)) dbDel(DB_STORE, oldLocal).catch(()=>{});
@@ -1533,7 +1537,7 @@ function openMusicEditor(idx){
         if(!sbLoggedIn){
           toast('未登录云同步：这首只有本机能听，登录后点 ☁ 即可上传');
         }else if((blobToUpload.size || 0) > 50 * 1048576){
-          toast('音频超过 50MB（云端单文件上限），已只存本机');
+          alert('这个音频 ' + ((blobToUpload.size || 0) / 1048576).toFixed(1) + 'MB，超过 Supabase 免费版单文件上限 50MB，所以只存了本机。\n\n三个办法：\n1) 转成 mp3（128kbps 的 50MB ≈ 53 分钟，普通歌曲只有 3–8MB）\n2) 把大文件放到你的 GitHub 仓库，用它的网址当「音频链接」\n3) 升级 Supabase Pro（500GB）');
         }else{
           const tk = tracks()[cfg.cur];
           toast('已保存到本机，正在后台上传云端…');
@@ -1545,7 +1549,7 @@ function openMusicEditor(idx){
               _doSave(); updateMusicUI();
               toast('音频已上传到云端：手机、电脑、访客都能听 ✅');
             }else{
-              toast('云端上传失败（' + up.error + '）：已保留本机版本，可稍后点列表里的 ☁ 重试');
+              alert('云端上传失败（' + up.error + '）：\n\n这首歌已保留本机版本，其他设备暂时听不到。\n可以稍后在音乐列表里点 ☁ 重试。');
             }
           });
         }
@@ -3341,7 +3345,9 @@ function openCloudSettings(){
       <button class="btn small" id="sb-login">登 录</button>
       <button class="btn small ghost" id="sb-logout">登 出</button>
       <button class="btn small ghost" id="sb-sync-now">立即从云端拉取</button>
+      <button class="btn small ghost" id="sb-audio-test">音频上传自检</button>
     </div>
+    <div class="hint" id="sb-audio-test-result" style="margin-top:8px"></div>
     <div class="hint" id="sb-login-state" style="margin-top:10px">当前状态：检测中…</div>
     <div class="hint" id="sb-rt-state" style="margin-top:6px">实时通道：检测中…</div>
     <div class="tip-box">
@@ -3415,6 +3421,23 @@ function openCloudSettings(){
     const stateEl = document.getElementById('sb-login-state');
     if(stateEl) stateEl.textContent = '当前状态：已登出（只能浏览，不能保存）';
     toast('已 登 出');
+  });
+  /* 音频上传自检：直接试传一个 4 字节的测试文件，把真实原因摆出来 */
+  document.getElementById('sb-audio-test').addEventListener('click', async () => {
+    const el = document.getElementById('sb-audio-test-result');
+    const say = t => { if(el) el.textContent = t.split('\n')[0]; alert(t); };
+    if(!sbConfigured()) return say('云同步还没配置：请先填写项目地址并点「保存配置」。');
+    const u = await cloudUser();
+    if(u){ sbLoggedIn = true; updateEditBar(); }
+    if(!u) return say('这台设备还没登录。\n\n音频上传只允许登录用户，请先在上面填邮箱和密码，点「登 录」。');
+    const f = new File([new Blob([new Uint8Array([1,2,3,4])], { type:'audio/mpeg' })], 'selftest.mp3', { type:'audio/mpeg' });
+    say('正在上传测试文件…（请稍候）');
+    const up = await uploadAudioToCloud(f, 'selftest');
+    if(up.url){
+      say('✅ 音频上传功能正常！\n\n测试文件已上传成功：\n' + up.url + '\n\n你可以到 Supabase → Storage → fupo-audio 把这个 selftest 文件删掉。');
+    }else{
+      say('❌ 上传失败：' + up.error + '\n\n已登录账号：' + (u.email || '未知') + '\n请依次检查：\n1) Supabase → Storage 里是否有公开桶 fupo-audio\n2) 桶的权限策略是否允许登录用户上传\n3) 网络能否访问 supabase.co');
+    }
   });
   cloudUser().then(u => {
     sbLoggedIn = !!u;
