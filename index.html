@@ -832,6 +832,11 @@ const SB_COL_PATCHES = 'patches';
 function sbUrl(){ return (localStorage.getItem(SB_URL_KEY) || '').trim() || SB_DEFAULT_URL; }
 function sbTable(){ return (localStorage.getItem(SB_TABLE_KEY) || 'fupo_state').trim(); }
 function sbBucket(){ return (localStorage.getItem('fupo-sb-bucket') || '').trim() || 'fupo-audio'; }
+/* Supabase 存储路径只允许 ASCII 字符（字母/数字/_-），中文标题要转成安全名 */
+function sbSafeName(title){
+  const s = String(title || 'audio').replace(/[^A-Za-z0-9-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 24);
+  return s || 'audio';
+}
 /* 把音频上传到 Supabase Storage，成功后返回公开链接（所有设备都能听） */
 async function uploadAudioToCloud(file, title){
   if(!sbConfigured()) return { error: '未配置云端' };
@@ -839,7 +844,7 @@ async function uploadAudioToCloud(file, title){
   try{
     const m = String(file.name || '').match(/\.([a-z0-9]{2,5})$/i);
     const ext = m ? m[1].toLowerCase() : 'mp3';
-    const safe = String(title || 'audio').replace(/[^\w\u4e00-\u9fa5-]+/g, '_').slice(0, 24) || 'audio';
+    const safe = sbSafeName(title);
     const path = 'audio/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '-' + safe + '.' + ext;
     const task = sb.storage.from(sbBucket()).upload(path, file, {
       contentType: file.type || 'audio/mpeg', upsert: false, cacheControl: '31536000'
