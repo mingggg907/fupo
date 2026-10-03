@@ -507,6 +507,7 @@ a[href]::after{content:""}
 <div class="edit-bar" id="edit-bar">
   <span class="edit-bar-dot"></span>
   <span class="edit-bar-text" id="edit-bar-text">正在编辑「表层」</span>
+  <button class="btn small" id="edit-bar-login" data-action="cloud" style="display:none">去登录云同步</button>
   <button class="btn small" data-action="help">说明</button>
   <button class="btn small" data-action="edit">退出编辑</button>
 </div>
@@ -830,6 +831,10 @@ function sbTable(){ return (localStorage.getItem(SB_TABLE_KEY) || 'fupo_state').
 let sb = null;
 let sbChannel = null;
 let cloudOk = false; /* 本会话云端是否可用：连不上时自动退回本地存储 */
+let sbStatus = '';   /* 实时通道状态 */
+let sbLoggedIn = false; /* 是否已登录（每台设备各自登录一次） */
+let pendingCloudState = null;
+let pendingCloudPatches = null;
 function sbConfigured(){ return !!sb && /^https:\/\/.+\.supabase\.co\/?$/.test(sbUrl()); }
 function sbReady(){ return sbConfigured() && cloudOk; }
 function initSupabase(){
@@ -891,21 +896,46 @@ function subscribeCloud(){
         if(!d) return;
         try{
           const st = (typeof d === 'string') ? JSON.parse(d) : d;
-          if(st && st.meta && st.worlds && !editMode){
-            applyState(st);
-            if(Array.isArray(row[SB_COL_PATCHES])) patches = row[SB_COL_PATCHES];
-            renderAll();
-            toast('已 从 云 端 同 步 最 新 内 容');
+          if(!st || !st.meta || !st.worlds) return;
+          if(editMode){
+            /* 正在编辑时先不覆盖，等退出编辑再载入，避免打断输入 */
+            pendingCloudState = st;
+            pendingCloudPatches = Array.isArray(row[SB_COL_PATCHES]) ? row[SB_COL_PATCHES] : null;
+            toast('云端有新内容，退出编辑后会自动载入');
+            return;
           }
+          applyState(st);
+          if(Array.isArray(row[SB_COL_PATCHES])) patches = row[SB_COL_PATCHES];
+          renderAll();
+          toast('已 从 云 端 同 步 最 新 内 容');
         }catch(err){ console.warn('云端数据解析失败', err); }
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        sbStatus = status;
+        console.log('realtime:', status, err || '');
+        updateRtState();
+      });
   }catch(e){ console.warn('实时订阅失败', e); }
+}
+function updateRtState(){
+  const el = document.getElementById('sb-rt-state');
+  if(!el) return;
+  const map = { SUBSCRIBED:'已连接（会自动接收更新）', CHANNEL_ERROR:'连接出错', TIMED_OUT:'连接超时', CLOSED:'已断开', JOINING:'连接中…' };
+  el.textContent = '实时通道：' + (map[sbStatus] || sbStatus || '未连接');
+}
+function applyPendingCloud(){
+  if(!pendingCloudState) return false;
+  applyState(pendingCloudState);
+  if(Array.isArray(pendingCloudPatches)) patches = pendingCloudPatches;
+  pendingCloudState = null; pendingCloudPatches = null;
+  applyPatches(); renderAll();
+  toast('已 载 入 云 端 最 新 内 容');
+  return true;
 }
 async function loginCloud(email, password){
   if(!sbConfigured()) return { error: { message: '尚未配置 Supabase 地址' } };
   const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(!error) cloudOk = true;
+  if(!error){ cloudOk = true; sbLoggedIn = true; updateEditBar(); }
   return { error };
 }
 async function cloudUser(){
@@ -917,6 +947,8 @@ async function cloudUser(){
 }
 async function logoutCloud(){
   if(sbConfigured()) await sb.auth.signOut();
+  sbLoggedIn = false;
+  updateEditBar();
 }
 function reinitCloud(){
   initSupabase();
@@ -2031,11 +2063,18 @@ function storiesHTML(){
 function updateEditBar(){
   const bar = document.getElementById('edit-bar');
   const txt = document.getElementById('edit-bar-text');
-  if(editMode){
-    bar.style.display = 'flex';
-    txt.textContent = '正在编辑「' + rl() + '」· 修改只影响当前界面 · Ctrl+Z 撤销';
+  const loginBtn = document.getElementById('edit-bar-login');
+  if(!editMode){ bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  if(sbConfigured() && !sbLoggedIn){
+    txt.textContent = '⚠ 未登录云同步：现在的修改只保存在本机，别人看不到 · 「' + rl() + '」';
+    if(loginBtn) loginBtn.style.display = '';
+  }else if(sbConfigured()){
+    txt.textContent = '正在编辑「' + rl() + '」· 保存后会自动同步给所有访问者 · Ctrl+Z 撤销';
+    if(loginBtn) loginBtn.style.display = 'none';
   }else{
-    bar.style.display = 'none';
+    txt.textContent = '正在编辑「' + rl() + '」· 修改只影响当前界面 · Ctrl+Z 撤销';
+    if(loginBtn) loginBtn.style.display = 'none';
   }
 }
 function renderAll(){
@@ -3183,6 +3222,7 @@ function openCloudSettings(){
       <button class="btn small ghost" id="sb-sync-now">立即从云端拉取</button>
     </div>
     <div class="hint" id="sb-login-state" style="margin-top:10px">当前状态：检测中…</div>
+    <div class="hint" id="sb-rt-state" style="margin-top:6px">实时通道：检测中…</div>
     <div class="tip-box">
       表结构约定：<code>id text 主键</code>、<code>data jsonb</code>（整个世界观）、<code>patches jsonb</code>、<code>updated_at timestamptz</code>。<br>
       • 保存配置后自动连接云端；云端有数据则以云端为准，没有则把当前内容推上去作为第一版。<br>
@@ -3253,9 +3293,12 @@ function openCloudSettings(){
     toast('已 登 出');
   });
   cloudUser().then(u => {
+    sbLoggedIn = !!u;
     const stateEl = document.getElementById('sb-login-state');
     if(stateEl) stateEl.textContent = '当前状态：' + (u ? ('已登录 ' + u.email) : '未登录（可以浏览，编辑保存需要登录）');
-  }).catch(()=>{});
+    updateRtState();
+    updateEditBar();
+  }).catch(()=>{ updateRtState(); });
   document.getElementById('sb-sync-now').addEventListener('click', async () => {
     if(!sbConfigured()){ toast('请先保存配置'); return; }
     const cloud = await cloudLoad();
@@ -3314,7 +3357,12 @@ document.addEventListener('click', e => {
   }
   if(a === 'edit'){
     closeDrawer();
-    if(editMode){ editMode = false; renderAll(); toast('已 退 出 编 辑'); }
+    if(editMode){
+      editMode = false;
+      applyPendingCloud();
+      renderAll();
+      toast('已 退 出 编 辑');
+    }
     else askPassword();
     return;
   }
@@ -3462,6 +3510,10 @@ function setRealm(r, origin){
       _doSave(); /* 云端表为空：把当前内容推上去作为第一版 */
       toast('云 端 为 空，已 上 传 当 前 内 容');
     }
+  }
+  /* 检查本机是否已有登录状态（每台设备各自登录一次，之后自动记住） */
+  if(sbConfigured()){
+    cloudUser().then(u => { sbLoggedIn = !!u; updateEditBar(); }).catch(()=>{});
   }
 })();
 
