@@ -537,7 +537,7 @@ a[href]::after{content:""}
 <div class="edit-bar" id="draft-banner" style="display:none">
   <span class="edit-bar-dot"></span>
   <span class="edit-bar-text" id="draft-banner-text">本机有未上传的修改</span>
-  <button class="btn small" data-action="cloud">去登录 / 上传</button>
+  <button class="btn small" id="draft-banner-btn">立即上传</button>
 </div>
 
 <div class="drawer" id="drawer">
@@ -976,18 +976,20 @@ function initSupabase(){
     return true;
   }catch(e){ sb = null; return false; }
 }
-async function cloudLoad(){
+async function cloudLoad(opts){
   if(!sbConfigured()) return { ok:false };
+  opts = opts || {};
+  const quiet = !!opts.quiet;   /* 后台轮询用静默模式：不反复弹状态标签 */
   /* 国内网络对大响应时常"挂住"或重置（移动网络更明显）：每次限时 + 多试几次 */
   const waits = [1200, 2500, 4500, 7000];
   let lastErr = null;
-  setCloudStatus('working', '正在读取云端内容…');
+  if(!quiet) setCloudStatus('working', '正在读取云端内容…');
   for(let attempt = 0; attempt <= waits.length; attempt++){
     try{
       const { data, error } = await withTimeout(sb.from(sbTable()).select('*').eq('id', SB_ID).maybeSingle(), 12000);
       if(error) throw error;
       cloudOk = true;
-      setCloudStatus('ok', '云端已同步');
+      if(!quiet) setCloudStatus('ok', '云端已同步');
       if(!data) return { ok:true, state:null, patches:null, updatedAt:null };
       const d = data[SB_COL_DATA];
       const st = d ? ((typeof d === 'string') ? JSON.parse(d) : d) : null;
@@ -996,7 +998,7 @@ async function cloudLoad(){
     }catch(e){
       lastErr = e;
       if(attempt < waits.length){
-        setCloudStatus('working', '网络不稳，正在重试（' + (attempt + 2) + '/' + (waits.length + 1) + '）…');
+        if(!quiet) setCloudStatus('working', '网络不稳，正在重试（' + (attempt + 2) + '/' + (waits.length + 1) + '）…');
         await new Promise(r => setTimeout(r, waits[attempt]));
       }
     }
@@ -1050,7 +1052,7 @@ async function pollCloudOnce(){
   if(!sbConfigured() || editMode || pollInFlight) return;
   pollInFlight = true;
   try{
-    const r = await cloudLoad();
+    const r = await cloudLoad({ quiet: true });
     if(!r.ok || !r.updatedAt || r.updatedAt === lastCloudStamp) return;
     lastCloudStamp = r.updatedAt;
     if(r.state && r.state.meta && r.state.worlds){
@@ -2637,18 +2639,23 @@ function closeModal(skipConfirm){
 }
 function onKeydown(e){ if(e.key === 'Escape') closeModal(); }
 /* ★ 每个文字框都带「插入图片」按钮 + 拖拽插图 */
-/* 插图统一入口：登录状态下先把图片传到云端存储，正文里只留链接（数据行就不会变大） */
-async function imageMarkdownFor(file){
+/* 图片统一入口：登录状态下先上传云端，返回公开链接；失败才退回 base64（保证不丢图） */
+async function imageUrlFor(file){
   const dataUrl = await compressImage(file);
+  if(!(sbConfigured() && sbLoggedIn)) return dataUrl;
   const name = String(file.name || 'image').replace(/\.[^.]+$/, '');
-  if(!(sbConfigured() && sbLoggedIn)) return `![${name}](${dataUrl})`;
   showProgress(null, '正在上传图片到云端…');
   let url = null;
   try{ url = await uploadDataUrl(dataUrl, name); }catch(e){ url = null; }
   hideProgress();
-  if(url){ toast('图片已存入云端：所有设备都能看到'); return `![${name}](${url})`; }
+  if(url){ toast('图片已存入云端 ✅'); return url; }
   toast('图片上传云端失败，已改为内嵌保存（能正常显示，但会让同步变慢）');
-  return `![${name}](${dataUrl})`;
+  return dataUrl;
+}
+async function imageMarkdownFor(file){
+  const name = String(file.name || 'image').replace(/\.[^.]+$/, '');
+  const src = await imageUrlFor(file);
+  return `![${name}](${src})`;
 }
 async function insertImageAtCursor(ta, file){
   if(!file || !String(file.type || '').startsWith('image/')) return;
@@ -3254,8 +3261,8 @@ function openStoryEditor(id, isNew){
   });
 }
 
-/* 图片上传（通用：头像/印章/背景） */
-modalRoot.addEventListener('change', e => {
+/* 图片上传（通用：头像/印章/背景/封面）——同样优先存云端链接，避免数据行变大 */
+modalRoot.addEventListener('change', async e => {
   const inp = e.target;
   if(inp.type !== 'file' || !inp.files || !inp.files[0]) return;
   if(inp.id === 'music-file-input') return;
@@ -3265,15 +3272,14 @@ modalRoot.addEventListener('change', e => {
   if(file.size > 5 * 1024 * 1024){
     if(!confirm('图片较大（超过 5MB），继续吗？')) { inp.value = ''; return; }
   }
-  compressImage(file).then(dataUrl => {
-    const wrap = inp.closest('.field');
-    if(!wrap) return;
-    const text = wrap.querySelector('input[type=text]');
-    const pv = wrap.querySelector('.img-preview');
-    if(text) text.value = dataUrl;
-    if(pv) pv.style.backgroundImage = cssUrl(dataUrl);
-    inp.value = '';
-  });
+  const wrap = inp.closest('.field');
+  if(!wrap) return;
+  const text = wrap.querySelector('input[type=text]');
+  const pv = wrap.querySelector('.img-preview');
+  const src = await imageUrlFor(file);
+  if(text){ text.value = src; text.dispatchEvent(new Event('input', { bubbles: true })); }
+  if(pv) pv.style.backgroundImage = cssUrl(src);
+  inp.value = '';
 });
 modalRoot.addEventListener('input', e => {
   if(e.target.matches('.img-row input[type=text]')){
@@ -3678,12 +3684,16 @@ function openCloudSettings(){
     if(!d){ alert('本机没有未上传的修改。'); return; }
     if(!sbLoggedIn){ alert('请先登录，再上传本机修改。'); return; }
     if(!confirm('用本机这份修改（' + new Date(d.savedAt || Date.now()).toLocaleString('zh-CN') + '）覆盖云端当前内容？')) return;
+    showProgress(null, '正在上传本机修改…');
     applyState(d.state);
     if(Array.isArray(d.patches)) patches = d.patches;
     applyPatches(); renderAll();
-    _doSave();
-    setTimeout(refreshDraftState, 2000);
-    toast('已 把 本 机 修 改 上 传 到 云 端');
+    const ok = await cloudSave({ baseStamp: lastCloudStamp });
+    hideProgress();
+    if(ok){ clearDraft(); toast('本 机 修 改 已 上 传 到 云 端 ✅'); }
+    else toast('上传失败（网络问题），内容仍在本机，稍后再试');
+    refreshDraftState();
+    updateDraftBanner();
   });
   document.getElementById('sb-draft-drop').addEventListener('click', () => {
     if(!loadDraft()){ alert('本机没有未上传的修改。'); return; }
@@ -3812,6 +3822,24 @@ const menuBtn = document.getElementById('menu-btn');
 /* 状态标签点击 = 重试读取云端 */
 document.getElementById('cloud-chip').addEventListener('click', e => {
   if(e.currentTarget.dataset.kind === 'fail') retryCloudNow();
+});
+/* 底部「本机有未上传的修改」提示条：点一下直接上传，上传后立刻收起 */
+document.getElementById('draft-banner-btn').addEventListener('click', async () => {
+  const d = loadDraft();
+  if(!d){ updateDraftBanner(); return; }
+  if(!sbConfigured()){ alert('云同步还没配置好：请到「云同步设置」里填写。'); return; }
+  if(!sbLoggedIn){ toast('请先登录云同步（登录后会自动上传）'); openCloudSettings(); return; }
+  if(!confirm('用本机这份修改（保存于 ' + new Date(d.savedAt || Date.now()).toLocaleString('zh-CN') + '）覆盖云端当前内容？')) return;
+  showProgress(null, '正在上传本机修改…');
+  applyState(d.state);
+  if(Array.isArray(d.patches)) patches = d.patches;
+  applyPatches(); renderAll();
+  let ok = false;
+  try{ ok = await cloudSave({ baseStamp: lastCloudStamp }); }catch(e){ ok = false; }
+  hideProgress();
+  if(ok){ clearDraft(); toast('本机修改已上传到云端 ✅'); }
+  else toast('上传失败（网络问题），内容仍保留在本机，稍后再点一次');
+  updateDraftBanner();
 });
 function openDrawer(){ drawer.classList.add('open'); menuBtn.textContent = '✕'; }
 function closeDrawer(){ drawer.classList.remove('open'); menuBtn.textContent = '☰'; }
