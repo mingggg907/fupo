@@ -54,7 +54,7 @@ body.abyss .abyss-exit{display:inline-block}
 @keyframes exitPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,74,58,.5)}50%{box-shadow:0 0 0 10px rgba(201,74,58,0)}}
 .icon-btn{width:36px;height:36px;flex:none;display:grid;place-items:center;background:transparent;border:1px solid var(--line);border-radius:2px;color:var(--ink);font-size:1.05rem;line-height:1;cursor:pointer;transition:.25s;-webkit-tap-highlight-color:transparent}
 .icon-btn:hover{border-color:var(--cinnabar);color:var(--cinnabar);background:rgba(158,51,40,.04)}
-.menu-btn{display:none;width:36px;height:36px;background:transparent;border:1px solid var(--line);border-radius:2px;color:var(--ink);font-size:1rem;cursor:pointer;place-items:center}
+.menu-btn{display:grid;width:36px;height:36px;background:transparent;border:1px solid var(--line);border-radius:2px;color:var(--ink);font-size:1rem;cursor:pointer;place-items:center}
 .gate{position:fixed;inset:0;z-index:500;background:var(--paper);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;transition:opacity .8s var(--ease-out),visibility .8s,background .7s}
 .gate::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(50% 40% at 50% 40%,rgba(160,134,80,.1),transparent 65%),radial-gradient(60% 50% at 50% 100%,rgba(158,51,40,.06),transparent 65%)}
 .gate.hide{opacity:0;visibility:hidden;pointer-events:none}
