@@ -617,6 +617,7 @@ const DEL_WARN_KEY = 'fupo-no-confirm-delete';
 const UNDO_SECONDS = 30;
 const PATCH_KEY = 'fupo-patches-v1';
 const LS_KEY = 'fupo-world-data-v9';
+const LS_DRAFT = 'fupo-local-draft';
 const MAX_HISTORY = 30;
 const SNAPSHOT_KEEP_DAYS = 7;
 
@@ -1147,10 +1148,23 @@ function loadState(){
     return normalize(JSON.parse(raw));
   }catch(e){ return null; }
 }
-/* 保存：配置了云 → 只写云端；未配置 → 退回本地 localStorage */
+/* 本机草稿：云端模式下用来兜住「未登录时保存失败」的修改，避免刷新丢内容 */
+function loadDraft(){
+  try{
+    const raw = localStorage.getItem(LS_DRAFT);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    return (d && d.state) ? d : null;
+  }catch(e){ return null; }
+}
+function clearDraft(){ try{ localStorage.removeItem(LS_DRAFT); }catch(e){} }
+/* 保存：配置了云 → 上传云端（同时留一份本机草稿，成功即清除）；未配置 → 退回本地 localStorage */
 function _doSave(){
-  if(sbReady()){
-    cloudSave();
+  if(sbConfigured()){
+    try{
+      localStorage.setItem(LS_DRAFT, JSON.stringify({ savedAt: Date.now(), state, patches }));
+    }catch(e){}
+    cloudSave().then(ok => { if(ok) clearDraft(); }).catch(()=>{});
     return true;
   }
   try{
@@ -2066,8 +2080,9 @@ function updateEditBar(){
   const loginBtn = document.getElementById('edit-bar-login');
   if(!editMode){ bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
-  if(sbConfigured() && !sbLoggedIn){
-    txt.textContent = '⚠ 未登录云同步：现在的修改只保存在本机，别人看不到 · 「' + rl() + '」';
+  const hasDraft = !!loadDraft();
+  if(sbConfigured() && (!sbLoggedIn || hasDraft)){
+    txt.textContent = '⚠ ' + (hasDraft ? '本机有未上传的修改' : '未登录云同步') + '：现在的修改只保存在本机，别人看不到 · 「' + rl() + '」';
     if(loginBtn) loginBtn.style.display = '';
   }else if(sbConfigured()){
     txt.textContent = '正在编辑「' + rl() + '」· 保存后会自动同步给所有访问者 · Ctrl+Z 撤销';
@@ -3306,6 +3321,7 @@ function openCloudSettings(){
       pushHistory();
       applyState(cloud.state);
       if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
+      clearDraft();
       renderAll();
       toast('已 拉 取 云 端 最 新 内 容');
     }else if(cloud.ok){
@@ -3485,8 +3501,9 @@ function setRealm(r, origin){
    ============================================================ */
 (async function boot(){
   /* 先立刻用本地内容渲染，云端在后台拉取：连不上也不影响使用 */
-  state = loadState() || normalize(deep(DEFAULT_DATA));
-  patches = loadPatches();
+  const draft = loadDraft();
+  state = (draft && draft.state) ? normalize(draft.state) : (loadState() || normalize(deep(DEFAULT_DATA)));
+  patches = (draft && Array.isArray(draft.patches)) ? draft.patches : loadPatches();
   applyPatches();
   renderAll();
   loadMusic();
@@ -3499,7 +3516,10 @@ function setRealm(r, origin){
     new Promise(res => setTimeout(() => res({ ok:false, timeout:true }), 5000))
   ]);
   if(cloud.ok){
-    if(cloud.state && cloud.state.meta && cloud.state.worlds){
+    if(draft){
+      /* 本机有未上传的修改：优先保留本机版本，登录后会自动上传 */
+      toast('⚠ 本机有未上传的修改，登录云同步后会自动上传');
+    }else if(cloud.state && cloud.state.meta && cloud.state.worlds){
       applyState(cloud.state);
       if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
       applyPatches();
@@ -3513,7 +3533,11 @@ function setRealm(r, origin){
   }
   /* 检查本机是否已有登录状态（每台设备各自登录一次，之后自动记住） */
   if(sbConfigured()){
-    cloudUser().then(u => { sbLoggedIn = !!u; updateEditBar(); }).catch(()=>{});
+    cloudUser().then(u => {
+      sbLoggedIn = !!u;
+      updateEditBar();
+      if(u && loadDraft()){ _doSave(); } /* 已登录且有草稿 → 立刻补传 */
+    }).catch(()=>{});
   }
 })();
 
