@@ -834,6 +834,7 @@ const SB_DEFAULT_URL = 'https://rntjwfkwozngerceluul.supabase.co';
 const SB_URL_KEY = 'fupo-sb-url';
 const SB_TABLE_KEY = 'fupo-sb-table';
 const SB_ID = 'main';
+const SB_BACKUP_ID = 'backup';   /* 每次覆盖前自动留一份云端旧版本 */
 const SB_COL_DATA = 'data';
 const SB_COL_PATCHES = 'patches';
 function sbUrl(){ return (localStorage.getItem(SB_URL_KEY) || '').trim() || SB_DEFAULT_URL; }
@@ -914,6 +915,8 @@ function startCloudPoll(){
   console.log('cloud sync: 轮询兜底已启用（每 6 秒检查一次）');
 }
 function stopCloudPoll(){ if(sbPollTimer){ clearInterval(sbPollTimer); sbPollTimer = null; } }
+/* 切回这个标签页时立刻检查一次云端，避免「很久没刷新的页面」用旧内容覆盖新内容 */
+document.addEventListener('visibilitychange', () => { if(!document.hidden && typeof pollCloudOnce === 'function') pollCloudOnce(); });
 async function pollCloudOnce(){
   if(!sbConfigured() || document.hidden || editMode) return;
   const r = await cloudLoad();
@@ -926,9 +929,40 @@ async function pollCloudOnce(){
     toast('已 同 步 到 最 新 内 容');
   }
 }
-async function cloudSave(){
+async function cloudSave(opts){
   if(!sbReady()) return false;
+  opts = opts || {};
   try{
+    /* ① 写入前检查：云端版本是否还是本页载入的那一版（防止过期页面覆盖别人的新内容） */
+    let curRow = null;
+    if(!opts.force){
+      const cur = await sb.from(sbTable()).select('*').eq('id', SB_ID).maybeSingle();
+      if(cur.error) throw cur.error;
+      curRow = cur.data || null;
+      const curStamp = curRow ? curRow.updated_at : null;
+      const curHasData = !!(curRow && curRow[SB_COL_DATA]);
+      if(curHasData && (!lastCloudStamp || curStamp !== lastCloudStamp)){
+        const keepMine = confirm('⚠ 云端有比本页更新的内容（可能是另一台设备或另一个标签页保存的）。\n\n点「确定」= 用本页内容覆盖云端\n点「取消」= 放弃这次覆盖，改为载入云端最新内容（本页的修改会保留为本机草稿，可稍后手动上传）');
+        if(!keepMine){
+          const r = await cloudLoad();
+          if(r.ok && r.state && r.state.meta && r.state.worlds){
+            try{ localStorage.setItem(LS_DRAFT, JSON.stringify({ savedAt: Date.now(), baseStamp: lastCloudStamp, state, patches })); }catch(e){}
+            applyState(r.state);
+            if(Array.isArray(r.patches)) patches = r.patches;
+            lastCloudStamp = r.updatedAt;
+            applyPatches(); renderAll(); loadMusic(); updateDraftBanner();
+            toast('已 载 入 云 端 最 新 内 容 · 本页修改已留作本机草稿');
+          }
+          return false;
+        }
+      }
+      /* ② 覆盖前把云端旧版本存进备份行（id=backup），随时可一键找回 */
+      if(curHasData){
+        try{
+          await sb.from(sbTable()).upsert({ id: SB_BACKUP_ID, [SB_COL_DATA]: curRow[SB_COL_DATA], [SB_COL_PATCHES]: curRow[SB_COL_PATCHES] || [], updated_at: curRow.updated_at }, { onConflict:'id' });
+        }catch(e){ /* 备份失败不阻塞保存 */ }
+      }
+    }
     const row = { id: SB_ID };
     row[SB_COL_DATA] = JSON.parse(JSON.stringify(state));
     row[SB_COL_PATCHES] = JSON.parse(JSON.stringify(patches));
@@ -3380,6 +3414,7 @@ function openCloudSettings(){
       <button class="btn small ghost" id="sb-logout">登 出</button>
       <button class="btn small ghost" id="sb-sync-now">立即从云端拉取</button>
       <button class="btn small ghost" id="sb-audio-test">音频上传自检</button>
+      <button class="btn small ghost" id="sb-restore-prev">恢复云端上一版</button>
     </div>
     <div class="hint" id="sb-audio-test-result" style="margin-top:8px"></div>
     <div class="hint" id="sb-login-state" style="margin-top:10px">当前状态：检测中…</div>
@@ -3495,8 +3530,7 @@ function openCloudSettings(){
     clearDraft(); refreshDraftState();
     toast('本 机 草 稿 已 丢 弃');
   });
-  document.getElementById('sb-draft-restore').addEventListener('click', () => {
-    const b = loadBackupDraft();
+  document.getElementById('sb-draft-restore').addEventListener('click', () => {    const b = loadBackupDraft();
     if(!b){ alert('没有备份版本。'); return; }
     if(!confirm('把备份版本恢复为「本机未上传的修改」？')) return;
     try{ localStorage.setItem(LS_DRAFT, JSON.stringify(b)); }catch(e){}
@@ -3547,6 +3581,25 @@ function openCloudSettings(){
       toast('云端暂无数据');
     }else{
       toast('连不上云端，请检查网络或表名');
+    }
+  });
+  /* 恢复云端上一版：每次覆盖前系统会自动留一份备份 */
+  document.getElementById('sb-restore-prev').addEventListener('click', async () => {
+    if(!sbConfigured()){ toast('请先配置云同步'); return; }
+    try{
+      const { data, error } = await sb.from(sbTable()).select('*').eq('id', SB_BACKUP_ID).maybeSingle();
+      if(error) throw error;
+      if(!data || !data[SB_COL_DATA]){ alert('云端还没有备份版本。\n\n系统会在你「覆盖保存」之前自动备份上一版，所以先正常保存一次之后就会有。'); return; }
+      const when = data.updated_at ? new Date(data.updated_at).toLocaleString('zh-CN') : '未知时间';
+      if(!confirm('用云端备份版本替换当前内容？\n\n备份时间：' + when + '\n\n（当前内容会先被备份，可再次找回）')) return;
+      lastCloudStamp = null; /* 强制走覆盖分支（内部仍会先备份当前版本） */
+      applyState(data[SB_COL_DATA]);
+      if(Array.isArray(data[SB_COL_PATCHES])) patches = data[SB_COL_PATCHES];
+      applyPatches(); renderAll(); loadMusic();
+      _doSave();
+      toast('已 恢 复 云 端 备 份 版 本');
+    }catch(e){
+      alert('读取备份失败：' + ((e && e.message) || '未知错误'));
     }
   });
 }
