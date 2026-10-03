@@ -934,35 +934,16 @@ async function cloudSave(opts){
   if(!sbReady()) return false;
   opts = opts || {};
   try{
-    /* ① 写入前检查：云端版本是否还是本页载入的那一版（防止过期页面覆盖别人的新内容） */
+    /* 覆盖前先把云端旧版本存进备份行（id=backup），随时可一键找回 */
     let curRow = null;
-    if(!opts.force){
+    try{
       const cur = await sb.from(sbTable()).select('*').eq('id', SB_ID).maybeSingle();
-      if(cur.error) throw cur.error;
-      curRow = cur.data || null;
-      const curStamp = curRow ? curRow.updated_at : null;
-      const curHasData = !!(curRow && curRow[SB_COL_DATA]);
-      if(curHasData && (!lastCloudStamp || curStamp !== lastCloudStamp)){
-        const keepMine = confirm('⚠ 云端有比本页更新的内容（可能是另一台设备或另一个标签页保存的）。\n\n点「确定」= 用本页内容覆盖云端\n点「取消」= 放弃这次覆盖，改为载入云端最新内容（本页的修改会保留为本机草稿，可稍后手动上传）');
-        if(!keepMine){
-          const r = await cloudLoad();
-          if(r.ok && r.state && r.state.meta && r.state.worlds){
-            try{ localStorage.setItem(LS_DRAFT, JSON.stringify({ savedAt: Date.now(), baseStamp: lastCloudStamp, state, patches })); }catch(e){}
-            applyState(r.state);
-            if(Array.isArray(r.patches)) patches = r.patches;
-            lastCloudStamp = r.updatedAt;
-            applyPatches(); renderAll(); loadMusic(); updateDraftBanner();
-            toast('已 载 入 云 端 最 新 内 容 · 本页修改已留作本机草稿');
-          }
-          return false;
-        }
-      }
-      /* ② 覆盖前把云端旧版本存进备份行（id=backup），随时可一键找回 */
-      if(curHasData){
-        try{
-          await sb.from(sbTable()).upsert({ id: SB_BACKUP_ID, [SB_COL_DATA]: curRow[SB_COL_DATA], [SB_COL_PATCHES]: curRow[SB_COL_PATCHES] || [], updated_at: curRow.updated_at }, { onConflict:'id' });
-        }catch(e){ /* 备份失败不阻塞保存 */ }
-      }
+      if(!cur.error) curRow = cur.data || null;
+    }catch(e){ /* 读取失败不阻塞保存 */ }
+    if(curRow && curRow[SB_COL_DATA]){
+      try{
+        await sb.from(sbTable()).upsert({ id: SB_BACKUP_ID, [SB_COL_DATA]: curRow[SB_COL_DATA], [SB_COL_PATCHES]: curRow[SB_COL_PATCHES] || [], updated_at: curRow.updated_at }, { onConflict:'id' });
+      }catch(e){}
     }
     const row = { id: SB_ID };
     row[SB_COL_DATA] = JSON.parse(JSON.stringify(state));
@@ -972,6 +953,10 @@ async function cloudSave(opts){
     if(error) throw error;
     const stamp = Array.isArray(data) && data[0] ? data[0].updated_at : row.updated_at;
     lastCloudStamp = stamp; /* 记住自己写的版本，避免轮询把自己刚存的内容再套一遍 */
+    /* 如果覆盖掉的是比本页更新的一版，明确告知（已自动备份，可找回） */
+    if(curRow && curRow.updated_at && opts.baseStamp && curRow.updated_at !== opts.baseStamp){
+      toast('已保存到云端（覆盖了较新的一版，可在「云同步设置 → 恢复云端上一版」找回）');
+    }
     return true;
   }catch(e){
     cloudOk = false;
@@ -1270,7 +1255,7 @@ function _doSave(){
     try{
       localStorage.setItem(LS_DRAFT, JSON.stringify({ savedAt: Date.now(), baseStamp: lastCloudStamp, state, patches }));
     }catch(e){}
-    cloudSave().then(ok => { if(ok) clearDraft(); }).catch(()=>{});
+    cloudSave({ baseStamp: lastCloudStamp }).then(ok => { if(ok) clearDraft(); updateDraftBanner(); }).catch(()=>{});
     return true;
   }
   try{
@@ -2261,8 +2246,8 @@ function updateDraftBanner(){
   const t = document.getElementById('draft-banner-text');
   const when = d.savedAt ? new Date(d.savedAt).toLocaleString('zh-CN') : '';
   if(t) t.textContent = sbLoggedIn
-    ? '本机有未上传的修改（' + when + '）· 点右侧按钮立即上传'
-    : '本机有未上传的修改（' + when + '）· 别人还看不到：登录后会自动上传';
+    ? '本机有一份未上传的修改（' + when + '）· 点右侧按钮上传到云端'
+    : '本机有一份未上传的修改（' + when + '）· 别人还看不到：登录后会自动上传';
 }
 function updateEditBar(){
   const bar = document.getElementById('edit-bar');
@@ -3441,12 +3426,16 @@ function openCloudSettings(){
       <button class="btn small ghost" id="sb-draft-restore">恢复本机备份版本</button>
     </div>
     <div class="tip-box">
-      表结构约定：<code>id text 主键</code>、<code>data jsonb</code>（整个世界观）、<code>patches jsonb</code>、<code>updated_at timestamptz</code>。<br>
-      • 保存配置后自动连接云端；云端有数据则以云端为准，没有则把当前内容推上去作为第一版。<br>
-      • 多人访问：任一台设备保存后，其他打开的页面会在几秒内自动更新。<br>
-      • 写入权限：若 RLS 只允许登录用户写入，请先在上方「登 录」。<br>
-      • 音乐：登录后上传的音频会存进「音频存储桶」，所有设备都能听；未登录时只存在本机。<br>
-      • 实时推送：如果这里显示「受网络限制连不上」，页面会自动改用每 6 秒轮询同步，功能不受影响。
+      <b>怎么用（记住三件事就行）</b><br>
+      ① 打开网页看到的内容 = <b>云端内容</b> = 所有访客看到的内容（刷新总是显示云端最新版）。<br>
+      ② 编辑后点「保存」→ 立刻上传云端 → 其他人几秒内自动更新。<br>
+      ③ 如果保存时没登录成功，内容会留成「本机未上传的修改」，页面底部会出现提示条，点它上传即可，不会丢。<br>
+      <br>
+      • 「保存配置」只保存下面这些设置，<b>不会改动页面内容</b>。<br>
+      • 「立即从云端拉取」= 用云端内容替换当前页面。<br>
+      • 「恢复云端上一版」= 你每次覆盖保存前，系统会自动备份上一版，可一键找回。<br>
+      • 音乐：登录后上传的音频会存进「音频存储桶」，所有设备都能听；标着「仅本机」的要点列表里的 ☁ 上传。<br>
+      • 实时推送若显示「受网络限制连不上」，页面会自动改用每 6 秒轮询同步，功能不受影响。
     </div>`
   });
   document.getElementById('sb-save-config').addEventListener('click', async () => {
@@ -3460,25 +3449,15 @@ function openCloudSettings(){
     if(em) localStorage.setItem('fupo-sb-email', em);
     reinitCloud();
     closeModal(true);
-    if(sbConfigured()){
-      const cloud = await cloudLoad();
-      if(cloud.ok){
-        if(cloud.state && cloud.state.meta && cloud.state.worlds){
-          pushHistory();
-          applyState(cloud.state);
-          if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
-          renderAll();
-          toast('已 连 接 云 端 并 加 载 数 据');
-        }else{
-          _doSave();
-          renderAll();
-          toast('已 连 接 云 端，当前内容已作为第一版上传');
-        }
-      }else{
-        toast('连不上云端（网络或表名不对），已退回本地保存');
-      }
+    /* 「保存配置」只保存这些设置并测试连接，绝不改动页面内容、也不上传 */
+    if(!sbConfigured()){ toast('地址格式不对：请填写 https://xxxx.supabase.co 形式'); return; }
+    const cloud = await cloudLoad();
+    if(cloud.ok){
+      if(cloud.updatedAt) lastCloudStamp = cloud.updatedAt;
+      const has = !!(cloud.state && cloud.state.meta && cloud.state.worlds);
+      toast(has ? '配置已保存 · 云端连接正常（页面内容未改动）' : '配置已保存 · 云端还没有内容，下次保存就会上传');
     }else{
-      toast('地址格式不对，仍使用本地存储');
+      toast('配置已保存，但连不上云端（检查网络或表名）');
     }
   });
   document.getElementById('sb-login').addEventListener('click', async () => {
@@ -3511,10 +3490,19 @@ function openCloudSettings(){
           localStorage.removeItem('fupo-sb-pass');
         }
       }catch(e){}
-      _doSave();
       const u = await cloudUser();
+      const d = loadDraft();
+      if(d && d.state){
+        /* 本机有未上传的修改：登录成功后自动把它传上去（这是你最想要的结果） */
+        applyState(d.state);
+        if(Array.isArray(d.patches)) patches = d.patches;
+        applyPatches(); renderAll(); loadMusic();
+        _doSave();
+        toast('登 录 成 功：本机未上传的修改已上传到云端');
+      }else{
+        toast('登 录 成 功，现在保存的内容会同步给所有人');
+      }
       if(stateEl) stateEl.textContent = '当前状态：已登录 ' + ((u && u.email) || em) + '（现在保存会上传到云端）';
-      toast('登 录 成 功，当前内容已同步到云端');
     }
   });
   /* 本机草稿管理：状态显示 + 上传 / 丢弃 / 恢复备份 */
@@ -3808,42 +3796,18 @@ function setRealm(r, origin){
   if(cloud.ok){
     const cloudHas = !!(cloud.state && cloud.state.meta && cloud.state.worlds);
     const cloudStamp = cloud.updatedAt || null;
-    if(draft){
-      const base = draft.baseStamp || null;
-      const conflict = cloudHas && base && cloudStamp && base !== cloudStamp;
-      if(conflict){
-        /* 云端比本机草稿新：交给用户决定，绝不默默覆盖 */
-        const when = draft.savedAt ? new Date(draft.savedAt).toLocaleString('zh-CN') : '未知时间';
-        const useLocal = confirm('检测到版本冲突：\n\n· 本机有一份未上传的修改（保存于 ' + when + '）\n· 云端有更新的版本\n\n点「确定」= 用【本机版本】覆盖云端\n点「取消」= 载入【云端版本】（本机草稿会备份保留，可在「云同步设置」里找回）');
-        if(useLocal){
-          lastCloudStamp = cloudStamp;
-          toast('将用本机版本覆盖云端（下次保存生效）');
-        }else{
-          backupDraft(draft);
-          clearDraft();
-          applyState(cloud.state);
-          if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
-          lastCloudStamp = cloudStamp;
-          applyPatches();
-          renderAll();
-          loadMusic();
-          toast('已 载 入 云 端 版 本（本机草稿已备份）');
-        }
-      }else{
-        /* 草稿基于当前云端版本（或云端还没有数据）：安全，登录后补传 */
-        if(cloudStamp) lastCloudStamp = cloudStamp;
-        toast('⚠ 本机有未上传的修改，登录后会自动上传');
-      }
-    }else if(cloudHas){
+    if(cloudHas){
+      /* 云端是共享的权威版本：刷新后一定显示云端内容（= 所有访客看到的内容） */
       applyState(cloud.state);
       if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
       lastCloudStamp = cloudStamp;
       applyPatches();
       renderAll();
       loadMusic();
-      toast('已 加 载 云 端 数 据');
+      toast(draft ? '已 载 入 云 端 内 容（本机另有一份未上传的修改，可在云同步设置里上传）' : '已 加 载 云 端 内 容');
     }else{
-      _doSave(); /* 云端表为空：把当前内容推上去作为第一版 */
+      /* 云端还没有内容：把当前内容（优先本机草稿）作为第一版上传 */
+      _doSave();
       toast('云 端 为 空，已 上 传 当 前 内 容');
     }
   }
@@ -3870,11 +3834,8 @@ async function restoreAuthSession(){
     }
   }
   updateEditBar();
-  /* 已登录 + 本机有草稿 → 基于云端最新版本补传 */
-  if(sbLoggedIn && loadDraft() && lastCloudStamp){
-    _doSave();
-    toast('本机未上传的修改已补传到云端');
-  }
+  /* 已登录 + 本机有未上传的草稿 → 不自动覆盖云端，改由用户明确选择（页面底部提示条 / 云同步设置里有按钮） */
+  updateDraftBanner();
 }
 
 /* ★ 控制台小工具 */
