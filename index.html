@@ -846,16 +846,15 @@ function sbSafeName(title){
   return s || 'audio';
 }
 /* 把音频上传到 Supabase Storage，成功后返回公开链接（所有设备都能听） */
-async function uploadAudioToCloud(file, title){
+async function uploadBlobToCloud(blob, ext, title, kind){
   if(!sbConfigured()) return { error: '未配置云端' };
   if(!sbLoggedIn) return { error: '这台设备还没登录云同步' };
   try{
-    const m = String(file.name || '').match(/\.([a-z0-9]{2,5})$/i);
-    const ext = m ? m[1].toLowerCase() : 'mp3';
+    const folder = kind === 'image' ? 'image/' : 'audio/';
     const safe = sbSafeName(title);
-    const path = 'audio/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '-' + safe + '.' + ext;
-    const task = sb.storage.from(sbBucket()).upload(path, file, {
-      contentType: file.type || 'audio/mpeg', upsert: false, cacheControl: '31536000'
+    const path = folder + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '-' + safe + '.' + String(ext || 'bin').toLowerCase();
+    const task = sb.storage.from(sbBucket()).upload(path, blob, {
+      contentType: blob.type || (kind === 'image' ? 'image/jpeg' : 'audio/mpeg'), upsert: false, cacheControl: '31536000'
     });
     /* 网络太慢时最多等 150 秒，避免一直卡住 */
     const timeout = new Promise(r => setTimeout(() => r({ error: { message: '上传超时（网络太慢）' } }), 150000));
@@ -867,6 +866,47 @@ async function uploadAudioToCloud(file, title){
   }catch(e){
     return { error: (e && e.message) ? e.message : '上传失败' };
   }
+}
+async function uploadAudioToCloud(file, title){
+  return uploadBlobToCloud(file, (String(file.name || '').match(/\.([a-z0-9]{2,5})$/i) || [,'mp3'])[1], title, 'audio');
+}
+/* 把正文/封面里内嵌的 base64 图片搬到云端存储，让数据行变小（避免大响应被网络掐断） */
+async function migrateInlineImages(limit){
+  if(!sbConfigured() || !sbLoggedIn) return { moved:0, total:0, skipped:'需要先登录' };
+  const cap = limit || 12;
+  const text = JSON.stringify(state);
+  const total = text.split('data:image').length - 1;
+  if(!total) return { moved:0, total:0 };
+  let moved = 0;
+  const walk = async (obj) => {
+    if(moved >= cap || obj == null) return;
+    if(typeof obj === 'string'){
+      return; /* 字符串在父级处理 */
+    }
+    if(Array.isArray(obj)){ for(const v of obj){ await walk(v); if(moved >= cap) return; } return; }
+    if(typeof obj === 'object'){
+      for(const k of Object.keys(obj)){
+        const v = obj[k];
+        if(typeof v === 'string' && v.startsWith('data:image') && moved < cap){
+          const m = v.match(/^data:image\/([a-z0-9+.-]+);base64,(.*)$/i);
+          if(m){
+            const ext = (m[1] === 'jpeg' ? 'jpg' : m[1]).replace('+xml','');
+            const bin = atob(m[2]);
+            const bytes = new Uint8Array(bin.length);
+            for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const blob = new Blob([bytes], { type: 'image/' + m[1] });
+            const up = await uploadBlobToCloud(blob, ext, 'img', 'image');
+            if(up.url){ obj[k] = up.url; moved++; continue; }
+          }
+        } else if(v && typeof v === 'object'){
+          await walk(v);
+        }
+      }
+    }
+  };
+  await walk(state);
+  if(moved) renderAll();
+  return { moved, total };
 }
 let sb = null;
 let sbChannel = null;
@@ -894,20 +934,26 @@ function initSupabase(){
 }
 async function cloudLoad(){
   if(!sbConfigured()) return { ok:false };
-  try{
-    const { data, error } = await sb.from(sbTable()).select('*').eq('id', SB_ID).maybeSingle();
-    if(error) throw error;
-    cloudOk = true;
-    if(!data) return { ok:true, state:null, patches:null, updatedAt:null };
-    const d = data[SB_COL_DATA];
-    const st = d ? ((typeof d === 'string') ? JSON.parse(d) : d) : null;
-    const pt = Array.isArray(data[SB_COL_PATCHES]) ? data[SB_COL_PATCHES] : null;
-    return { ok:true, state: st, patches: pt, updatedAt: data.updated_at || null };
-  }catch(e){
-    cloudOk = false;
-    console.warn('云读取失败', e);
-    return { ok:false };
+  /* 国内网络对大响应时常重置连接：自动重试几次 */
+  let lastErr = null;
+  for(let attempt = 0; attempt < 3; attempt++){
+    try{
+      const { data, error } = await sb.from(sbTable()).select('*').eq('id', SB_ID).maybeSingle();
+      if(error) throw error;
+      cloudOk = true;
+      if(!data) return { ok:true, state:null, patches:null, updatedAt:null };
+      const d = data[SB_COL_DATA];
+      const st = d ? ((typeof d === 'string') ? JSON.parse(d) : d) : null;
+      const pt = Array.isArray(data[SB_COL_PATCHES]) ? data[SB_COL_PATCHES] : null;
+      return { ok:true, state: st, patches: pt, updatedAt: data.updated_at || null };
+    }catch(e){
+      lastErr = e;
+      if(attempt < 2) await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+    }
   }
+  cloudOk = false;
+  console.warn('云读取失败（已重试 3 次）', lastErr);
+  return { ok:false, error: lastErr };
 }
 /* WebSocket 连不上时（部分网络会拦截 wss）用 HTTPS 轮询兜底 */
 function startCloudPoll(){
@@ -3415,6 +3461,7 @@ function openCloudSettings(){
       <button class="btn small ghost" id="sb-sync-now">立即从云端拉取</button>
       <button class="btn small ghost" id="sb-audio-test">音频上传自检</button>
       <button class="btn small ghost" id="sb-restore-prev">恢复云端上一版</button>
+      <button class="btn small ghost" id="sb-offload-images">把图片搬到云端（加速同步）</button>
     </div>
     <div class="hint" id="sb-audio-test-result" style="margin-top:8px"></div>
     <div class="hint" id="sb-login-state" style="margin-top:10px">当前状态：检测中…</div>
@@ -3585,6 +3632,32 @@ function openCloudSettings(){
     }else{
       toast('连不上云端，请检查网络或表名');
     }
+  });
+  /* 把内嵌 base64 图片搬到云端存储：数据行变小后，国内网络读取就不容易被掐断 */
+  document.getElementById('sb-offload-images').addEventListener('click', async () => {
+    const el = document.getElementById('sb-audio-test-result');
+    const say = t => { if(el) el.textContent = t.split('\n')[0]; };
+    if(!sbConfigured()) return alert('还没配置云同步。');
+    if(!sbLoggedIn) return alert('请先登录，再搬图片。');
+    const before = Math.round(JSON.stringify(state).length / 1024);
+    const imgs = JSON.stringify(state).split('data:image').length - 1;
+    if(!imgs) return alert('当前内容里没有内嵌图片，不需要搬（数据行已经很小）。');
+    if(!confirm('当前数据行约 ' + before + ' KB，其中内嵌图片 ' + imgs + ' 张。\n\n把图片搬到云端存储？\n· 同步会明显变快、更稳\n· 图片改为独立链接，所有人照样能看到\n\n（图片多时需要一两分钟，请勿关闭页面）')) return;
+    say('正在搬运图片… 已完成 0/' + imgs);
+    let moved = 0, guard = 0;
+    while(guard++ < 40){
+      const r = await migrateInlineImages(6);
+      moved += r.moved;
+      say('正在搬运图片… 已完成 ' + moved + '/' + imgs);
+      if(!r.moved) break;
+      _doSave();
+      await new Promise(res => setTimeout(res, 1200));
+    }
+    _doSave();
+    const after = Math.round(JSON.stringify(state).length / 1024);
+    const left = JSON.stringify(state).split('data:image').length - 1;
+    say('图片搬运完成：' + moved + ' 张');
+    alert('完成！\n\n· 已搬到云端：' + moved + ' 张\n· 数据行：' + before + ' KB → ' + after + ' KB\n· 还剩内嵌图片：' + left + ' 张' + (left ? '\n\n（还剩一些，可以再点一次这个按钮继续搬）' : '') + '\n\n现在同步会稳定得多。');
   });
   /* 恢复云端上一版：每次覆盖前系统会自动留一份备份 */
   document.getElementById('sb-restore-prev').addEventListener('click', async () => {
