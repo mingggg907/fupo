@@ -1180,6 +1180,12 @@ function _doSave(){
 function save(){
   pushHistory();
   _doSave();
+  if(sbConfigured()){
+    if(sbLoggedIn) toast('已 保 存 到 云 端 · 所有访问者都会自动看到');
+    else toast('⚠ 只 保 存 在 本 机：请先在「云同步设置」登录，别人才看得到');
+  }else{
+    toast('已 保 存 到 本 机 浏 览 器');
+  }
 }
 
 /* ============================================================
