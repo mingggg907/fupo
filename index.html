@@ -908,6 +908,13 @@ async function loginCloud(email, password){
   if(!error) cloudOk = true;
   return { error };
 }
+async function cloudUser(){
+  if(!sbConfigured()) return null;
+  try{
+    const { data } = await sb.auth.getUser();
+    return data && data.user ? data.user : null;
+  }catch(e){ return null; }
+}
 async function logoutCloud(){
   if(sbConfigured()) await sb.auth.signOut();
 }
@@ -3175,6 +3182,7 @@ function openCloudSettings(){
       <button class="btn small ghost" id="sb-logout">登 出</button>
       <button class="btn small ghost" id="sb-sync-now">立即从云端拉取</button>
     </div>
+    <div class="hint" id="sb-login-state" style="margin-top:10px">当前状态：检测中…</div>
     <div class="tip-box">
       表结构约定：<code>id text 主键</code>、<code>data jsonb</code>（整个世界观）、<code>patches jsonb</code>、<code>updated_at timestamptz</code>。<br>
       • 保存配置后自动连接云端；云端有数据则以云端为准，没有则把当前内容推上去作为第一版。<br>
@@ -3216,16 +3224,38 @@ function openCloudSettings(){
   document.getElementById('sb-login').addEventListener('click', async () => {
     const em = document.getElementById('sb-email-input').value.trim();
     const pw = document.getElementById('sb-pass-input').value;
+    const stateEl = document.getElementById('sb-login-state');
     if(!em || !pw){ toast('请填写邮箱和密码'); return; }
     localStorage.setItem('fupo-sb-email', em);
+    const btn = document.getElementById('sb-login');
+    btn.textContent = '登录中…';
     const r = await loginCloud(em, pw);
-    if(r && r.error){ toast('登录失败：' + r.error.message); }
-    else{ _doSave(); toast('登 录 成 功，当前内容已同步到云端'); }
+    btn.textContent = '登 录';
+    if(r && r.error){
+      const m = String(r.error.message || '');
+      let tip = m;
+      if(/Invalid login credentials/i.test(m)) tip = '邮箱或密码不对。请确认已在 Supabase → Authentication → Users 建过这个邮箱的账号，且密码完全一致；最省事的办法是在那里把这个用户删掉，重新建一个（Auto Confirm User 打开），密码设简单点';
+      else if(/Email not confirmed/i.test(m)) tip = '这个账号还没确认邮箱：到 Users 里点开它 → Confirm email，或删掉重建时打开 Auto Confirm User';
+      else if(/Failed to fetch|NetworkError|network/i.test(m)) tip = '连不上 Supabase（网络问题），换手机流量或换个网络再试';
+      toast('登录失败：' + tip);
+      if(stateEl) stateEl.textContent = '当前状态：未登录';
+    }else{
+      _doSave();
+      const u = await cloudUser();
+      if(stateEl) stateEl.textContent = '当前状态：已登录 ' + ((u && u.email) || em) + '（现在保存会上传到云端）';
+      toast('登 录 成 功，当前内容已同步到云端');
+    }
   });
   document.getElementById('sb-logout').addEventListener('click', async () => {
     await logoutCloud();
+    const stateEl = document.getElementById('sb-login-state');
+    if(stateEl) stateEl.textContent = '当前状态：已登出（只能浏览，不能保存）';
     toast('已 登 出');
   });
+  cloudUser().then(u => {
+    const stateEl = document.getElementById('sb-login-state');
+    if(stateEl) stateEl.textContent = '当前状态：' + (u ? ('已登录 ' + u.email) : '未登录（可以浏览，编辑保存需要登录）');
+  }).catch(()=>{});
   document.getElementById('sb-sync-now').addEventListener('click', async () => {
     if(!sbConfigured()){ toast('请先保存配置'); return; }
     const cloud = await cloudLoad();
