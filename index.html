@@ -514,6 +514,12 @@ a[href]::after{content:""}
   <button class="btn small" data-action="edit">退出编辑</button>
 </div>
 
+<div class="edit-bar" id="draft-banner" style="display:none">
+  <span class="edit-bar-dot"></span>
+  <span class="edit-bar-text" id="draft-banner-text">本机有未上传的修改</span>
+  <button class="btn small" data-action="cloud">去登录 / 上传</button>
+</div>
+
 <div class="drawer" id="drawer">
   <div class="drawer-inner">
     <p class="drawer-title">目 录</p>
@@ -2196,6 +2202,19 @@ function storiesHTML(){
   </section>`;
 }
 
+function updateDraftBanner(){
+  const el = document.getElementById('draft-banner');
+  if(!el) return;
+  const d = loadDraft();
+  const show = !!(d && sbConfigured() && !editMode);
+  el.style.display = show ? 'flex' : 'none';
+  if(!show) return;
+  const t = document.getElementById('draft-banner-text');
+  const when = d.savedAt ? new Date(d.savedAt).toLocaleString('zh-CN') : '';
+  if(t) t.textContent = sbLoggedIn
+    ? '本机有未上传的修改（' + when + '）· 点右侧按钮立即上传'
+    : '本机有未上传的修改（' + when + '）· 别人还看不到：登录后会自动上传';
+}
 function updateEditBar(){
   const bar = document.getElementById('edit-bar');
   const txt = document.getElementById('edit-bar-text');
@@ -2213,6 +2232,7 @@ function updateEditBar(){
     txt.textContent = '正在编辑「' + rl() + '」· 修改只影响当前界面 · Ctrl+Z 撤销';
     if(loginBtn) loginBtn.style.display = 'none';
   }
+  updateDraftBanner();
 }
 function renderAll(){
   const m = state.meta;
@@ -3760,6 +3780,7 @@ function setRealm(r, origin){
   if(sbConfigured()) startCloudPoll();
   /* 登录状态：优先读本机会话（不依赖网络），必要时自动登录 */
   if(sbConfigured()) restoreAuthSession();
+  updateDraftBanner();
 })();
 
 /* 恢复/自动建立登录状态：会话存在即视为已登录（写权限由服务端 RLS 决定） */
