@@ -841,10 +841,13 @@ async function uploadAudioToCloud(file, title){
     const ext = m ? m[1].toLowerCase() : 'mp3';
     const safe = String(title || 'audio').replace(/[^\w\u4e00-\u9fa5-]+/g, '_').slice(0, 24) || 'audio';
     const path = 'audio/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '-' + safe + '.' + ext;
-    const { error } = await sb.storage.from(sbBucket()).upload(path, file, {
+    const task = sb.storage.from(sbBucket()).upload(path, file, {
       contentType: file.type || 'audio/mpeg', upsert: false, cacheControl: '31536000'
     });
-    if(error) throw error;
+    /* 网络太慢时最多等 150 秒，避免一直卡住 */
+    const timeout = new Promise(r => setTimeout(() => r({ error: { message: '上传超时（网络太慢）' } }), 150000));
+    const res = await Promise.race([task, timeout]);
+    if(!res || res.error) throw (res && res.error) || new Error('上传失败');
     const { data } = sb.storage.from(sbBucket()).getPublicUrl(path);
     if(!data || !data.publicUrl) throw new Error('无法生成公开链接');
     return { url: data.publicUrl };
@@ -1504,17 +1507,11 @@ function openMusicEditor(idx){
       const url = document.getElementById('music-url-input').value.trim();
       let finalType = '', finalUrl = '', finalLocalId = '';
       if(tempMusic.tempBlob){
-        const up = await uploadAudioToCloud(tempMusic.tempBlob, title);
-        if(up.url){
-          finalType = 'url'; finalUrl = up.url;
-          toast('音频已上传到云端：所有设备都能听');
-        }else{
-          finalType = 'local';
-          finalLocalId = tempMusic.localId || ('m_' + uid());
-          try{ await dbPut(DB_STORE, finalLocalId, tempMusic.tempBlob); }
-          catch(e){ toast('音频保存失败：' + e.message); return false; }
-          if(sbConfigured()) toast('云端上传失败（' + up.error + '）：这首只存在本机');
-        }
+        /* 先秒存本机（保存键立刻生效，不会卡），随后在后台悄悄上传云端 */
+        finalType = 'local';
+        finalLocalId = tempMusic.localId || ('m_' + uid());
+        try{ await dbPut(DB_STORE, finalLocalId, tempMusic.tempBlob); }
+        catch(e){ toast('音频保存失败：' + e.message); return false; }
       }else if(url){ finalType = 'url'; finalUrl = url; }
       else if(tempMusic.localId){ finalType = 'local'; finalLocalId = tempMusic.localId; }
       if(!finalType){ toast('请先添加链接或上传音频'); return false; }
@@ -1529,7 +1526,30 @@ function openMusicEditor(idx){
       _doSave();
       await loadMusic();
       updateMusicUI();
-      toast('音 乐 已 保 存');
+      toast('音 乐 已 保 存（本机）');
+      /* 后台静默上传云端：不阻塞保存按钮，成功后再把这首歌换成云端链接 */
+      const blobToUpload = tempMusic.tempBlob;
+      if(blobToUpload && sbConfigured()){
+        if(!sbLoggedIn){
+          toast('未登录云同步：这首只有本机能听，登录后点 ☁ 即可上传');
+        }else if((blobToUpload.size || 0) > 50 * 1048576){
+          toast('音频超过 50MB（云端单文件上限），已只存本机');
+        }else{
+          const tk = tracks()[cfg.cur];
+          toast('已保存到本机，正在后台上传云端…');
+          uploadAudioToCloud(blobToUpload, tk.title).then(up => {
+            if(up.url){
+              tk.type = 'url'; tk.url = up.url;
+              const old = tk.localId; tk.localId = '';
+              if(old && !localIdInUse(old)) dbDel(DB_STORE, old).catch(()=>{});
+              _doSave(); updateMusicUI();
+              toast('音频已上传到云端：手机、电脑、访客都能听 ✅');
+            }else{
+              toast('云端上传失败（' + up.error + '）：已保留本机版本，可稍后点列表里的 ☁ 重试');
+            }
+          });
+        }
+      }
     }
   });
   const previewAudio = new Audio();
