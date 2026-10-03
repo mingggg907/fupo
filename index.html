@@ -620,6 +620,7 @@ const UNDO_SECONDS = 30;
 const PATCH_KEY = 'fupo-patches-v1';
 const LS_KEY = 'fupo-world-data-v9';
 const LS_DRAFT = 'fupo-local-draft';
+const LS_DRAFT_BAK = 'fupo-local-draft-backup';
 const MAX_HISTORY = 30;
 const SNAPSHOT_KEEP_DAYS = 7;
 
@@ -1205,7 +1206,8 @@ function loadState(){
     return normalize(JSON.parse(raw));
   }catch(e){ return null; }
 }
-/* 本机草稿：云端模式下用来兜住「未登录时保存失败」的修改，避免刷新丢内容 */
+/* 本机草稿：云端模式下用来兜住「未登录时保存失败」的修改，避免刷新丢内容。
+   草稿里记下它基于哪个云端版本（baseStamp），避免用旧内容覆盖云端的新内容。 */
 function loadDraft(){
   try{
     const raw = localStorage.getItem(LS_DRAFT);
@@ -1215,11 +1217,17 @@ function loadDraft(){
   }catch(e){ return null; }
 }
 function clearDraft(){ try{ localStorage.removeItem(LS_DRAFT); }catch(e){} }
+function backupDraft(d){
+  try{ if(d) localStorage.setItem(LS_DRAFT_BAK, JSON.stringify(d)); }catch(e){}
+}
+function loadBackupDraft(){
+  try{ const raw = localStorage.getItem(LS_DRAFT_BAK); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
 /* 保存：配置了云 → 上传云端（同时留一份本机草稿，成功即清除）；未配置 → 退回本地 localStorage */
 function _doSave(){
   if(sbConfigured()){
     try{
-      localStorage.setItem(LS_DRAFT, JSON.stringify({ savedAt: Date.now(), state, patches }));
+      localStorage.setItem(LS_DRAFT, JSON.stringify({ savedAt: Date.now(), baseStamp: lastCloudStamp, state, patches }));
     }catch(e){}
     cloudSave().then(ok => { if(ok) clearDraft(); }).catch(()=>{});
     return true;
@@ -3344,6 +3352,7 @@ function openCloudSettings(){
       <div class="field full" data-field="bucket"><label>音频存储桶（上传的音乐放这里）</label><input type="text" id="sb-bucket-input" value="${esc(sbBucket())}" placeholder="fupo-audio"></div>
       <div class="field" data-field="email"><label>编辑账号邮箱（用于写权限）</label><input type="text" id="sb-email-input" value="${esc(email)}" placeholder="you@example.com"></div>
       <div class="field" data-field="pass"><label>账号密码（不保存，仅本次登录）</label><input type="password" id="sb-pass-input" autocomplete="off" placeholder="密码"></div>
+      <div class="field full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0"><input type="checkbox" id="sb-remember" style="width:auto" ${localStorage.getItem('fupo-sb-remember') === '1' ? 'checked' : ''}> 在这台设备上记住密码，以后自动登录（只建议在自己的设备上勾选）</label></div>
     </div>
     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn small primary" id="sb-save-config">保 存 配 置</button>
@@ -3355,6 +3364,12 @@ function openCloudSettings(){
     <div class="hint" id="sb-audio-test-result" style="margin-top:8px"></div>
     <div class="hint" id="sb-login-state" style="margin-top:10px">当前状态：检测中…</div>
     <div class="hint" id="sb-rt-state" style="margin-top:6px">实时通道：检测中…</div>
+    <div class="hint" id="sb-draft-state" style="margin-top:6px"></div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn small ghost" id="sb-draft-push">上传本机未上传的修改</button>
+      <button class="btn small ghost" id="sb-draft-drop">丢弃本机草稿</button>
+      <button class="btn small ghost" id="sb-draft-restore">恢复本机备份版本</button>
+    </div>
     <div class="tip-box">
       表结构约定：<code>id text 主键</code>、<code>data jsonb</code>（整个世界观）、<code>patches jsonb</code>、<code>updated_at timestamptz</code>。<br>
       • 保存配置后自动连接云端；云端有数据则以云端为准，没有则把当前内容推上去作为第一版。<br>
@@ -3415,11 +3430,58 @@ function openCloudSettings(){
       toast('登录失败：' + tip);
       if(stateEl) stateEl.textContent = '当前状态：未登录';
     }else{
+      /* 记住密码（可选）：勾选后这台设备以后自动登录 */
+      try{
+        const remember = document.getElementById('sb-remember');
+        if(remember && remember.checked){
+          localStorage.setItem('fupo-sb-remember', '1');
+          localStorage.setItem('fupo-sb-pass', btoa(unescape(encodeURIComponent(pw))));
+        }else{
+          localStorage.removeItem('fupo-sb-remember');
+          localStorage.removeItem('fupo-sb-pass');
+        }
+      }catch(e){}
       _doSave();
       const u = await cloudUser();
       if(stateEl) stateEl.textContent = '当前状态：已登录 ' + ((u && u.email) || em) + '（现在保存会上传到云端）';
       toast('登 录 成 功，当前内容已同步到云端');
     }
+  });
+  /* 本机草稿管理：状态显示 + 上传 / 丢弃 / 恢复备份 */
+  const refreshDraftState = () => {
+    const el = document.getElementById('sb-draft-state');
+    if(!el) return;
+    const d = loadDraft(); const b = loadBackupDraft();
+    const fmt = ts => ts ? new Date(ts).toLocaleString('zh-CN') : '未知时间';
+    el.textContent = '本机未上传的修改：' + (d ? ('有（' + fmt(d.savedAt) + '）') : '无')
+      + '　｜　本机备份：' + (b ? ('有（' + fmt(b.savedAt) + '）') : '无');
+  };
+  refreshDraftState();
+  document.getElementById('sb-draft-push').addEventListener('click', async () => {
+    const d = loadDraft();
+    if(!d){ alert('本机没有未上传的修改。'); return; }
+    if(!sbLoggedIn){ alert('请先登录，再上传本机修改。'); return; }
+    if(!confirm('用本机这份修改（' + new Date(d.savedAt || Date.now()).toLocaleString('zh-CN') + '）覆盖云端当前内容？')) return;
+    applyState(d.state);
+    if(Array.isArray(d.patches)) patches = d.patches;
+    applyPatches(); renderAll();
+    _doSave();
+    setTimeout(refreshDraftState, 2000);
+    toast('已 把 本 机 修 改 上 传 到 云 端');
+  });
+  document.getElementById('sb-draft-drop').addEventListener('click', () => {
+    if(!loadDraft()){ alert('本机没有未上传的修改。'); return; }
+    if(!confirm('丢弃本机未上传的修改？\n\n丢弃后这份本机版本不再保留（云端内容不受影响）。')) return;
+    clearDraft(); refreshDraftState();
+    toast('本 机 草 稿 已 丢 弃');
+  });
+  document.getElementById('sb-draft-restore').addEventListener('click', () => {
+    const b = loadBackupDraft();
+    if(!b){ alert('没有备份版本。'); return; }
+    if(!confirm('把备份版本恢复为「本机未上传的修改」？')) return;
+    try{ localStorage.setItem(LS_DRAFT, JSON.stringify(b)); }catch(e){}
+    refreshDraftState();
+    toast('已 恢 复 备 份 版 本');
   });
   document.getElementById('sb-logout').addEventListener('click', async () => {
     await logoutCloud();
@@ -3653,13 +3715,38 @@ function setRealm(r, origin){
     new Promise(res => setTimeout(() => res({ ok:false, timeout:true }), 5000))
   ]);
   if(cloud.ok){
+    const cloudHas = !!(cloud.state && cloud.state.meta && cloud.state.worlds);
+    const cloudStamp = cloud.updatedAt || null;
     if(draft){
-      /* 本机有未上传的修改：优先保留本机版本，登录后会自动上传 */
-      toast('⚠ 本机有未上传的修改，登录云同步后会自动上传');
-    }else if(cloud.state && cloud.state.meta && cloud.state.worlds){
+      const base = draft.baseStamp || null;
+      const conflict = cloudHas && base && cloudStamp && base !== cloudStamp;
+      if(conflict){
+        /* 云端比本机草稿新：交给用户决定，绝不默默覆盖 */
+        const when = draft.savedAt ? new Date(draft.savedAt).toLocaleString('zh-CN') : '未知时间';
+        const useLocal = confirm('检测到版本冲突：\n\n· 本机有一份未上传的修改（保存于 ' + when + '）\n· 云端有更新的版本\n\n点「确定」= 用【本机版本】覆盖云端\n点「取消」= 载入【云端版本】（本机草稿会备份保留，可在「云同步设置」里找回）');
+        if(useLocal){
+          lastCloudStamp = cloudStamp;
+          toast('将用本机版本覆盖云端（下次保存生效）');
+        }else{
+          backupDraft(draft);
+          clearDraft();
+          applyState(cloud.state);
+          if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
+          lastCloudStamp = cloudStamp;
+          applyPatches();
+          renderAll();
+          loadMusic();
+          toast('已 载 入 云 端 版 本（本机草稿已备份）');
+        }
+      }else{
+        /* 草稿基于当前云端版本（或云端还没有数据）：安全，登录后补传 */
+        if(cloudStamp) lastCloudStamp = cloudStamp;
+        toast('⚠ 本机有未上传的修改，登录后会自动上传');
+      }
+    }else if(cloudHas){
       applyState(cloud.state);
       if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
-      if(cloud.updatedAt) lastCloudStamp = cloud.updatedAt;
+      lastCloudStamp = cloudStamp;
       applyPatches();
       renderAll();
       loadMusic();
@@ -3671,15 +3758,32 @@ function setRealm(r, origin){
   }
   /* 轮询兜底：即使实时通道被网络拦截，其他设备的更新也会在几秒内自动出现 */
   if(sbConfigured()) startCloudPoll();
-  /* 检查本机是否已有登录状态（每台设备各自登录一次，之后自动记住） */
-  if(sbConfigured()){
-    cloudUser().then(u => {
-      sbLoggedIn = !!u;
-      updateEditBar();
-      if(u && loadDraft()){ _doSave(); } /* 已登录且有草稿 → 立刻补传 */
-    }).catch(()=>{});
-  }
+  /* 登录状态：优先读本机会话（不依赖网络），必要时自动登录 */
+  if(sbConfigured()) restoreAuthSession();
 })();
+
+/* 恢复/自动建立登录状态：会话存在即视为已登录（写权限由服务端 RLS 决定） */
+async function restoreAuthSession(){
+  try{
+    const { data } = await sb.auth.getSession();
+    sbLoggedIn = !!(data && data.session);
+  }catch(e){ sbLoggedIn = false; }
+  updateEditBar();
+  if(!sbLoggedIn && localStorage.getItem('fupo-sb-remember') === '1'){
+    const em = localStorage.getItem('fupo-sb-email') || '';
+    const pw = localStorage.getItem('fupo-sb-pass') || '';
+    if(em && pw){
+      const r = await loginCloud(em, pw);
+      if(r && !r.error) toast('已 自 动 登 录 云 同 步');
+    }
+  }
+  updateEditBar();
+  /* 已登录 + 本机有草稿 → 基于云端最新版本补传 */
+  if(sbLoggedIn && loadDraft() && lastCloudStamp){
+    _doSave();
+    toast('本机未上传的修改已补传到云端');
+  }
+}
 
 /* ★ 控制台小工具 */
 window.FUPO = {
