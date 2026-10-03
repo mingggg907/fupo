@@ -373,6 +373,11 @@ body.abyss .music-preview{background:rgba(255,255,255,.04)}
 .realm-veil{position:fixed;inset:0;z-index:400;pointer-events:none;background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),#0a0b0d 0%,#0a0b0d 0%,transparent 70%);opacity:0}
 .realm-veil.play{animation:veilGrow .9s var(--ease-out) forwards}
 @keyframes veilGrow{0%{opacity:0;transform:scale(.2)}40%{opacity:1}100%{opacity:0;transform:scale(2.6)}}
+.cloud-chip{position:fixed;left:14px;bottom:14px;z-index:520;font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--paper);background:rgba(31,36,32,.86);padding:7px 13px;border-radius:99px;border:1px solid rgba(160,134,80,.45);cursor:default;max-width:min(70vw,300px);transition:background .3s,opacity .3s}
+.cloud-chip[data-kind="ok"]{background:rgba(61,90,82,.9)}
+.cloud-chip[data-kind="fail"]{background:rgba(158,51,40,.92);cursor:pointer;text-decoration:underline}
+.cloud-chip[data-kind="working"]{background:rgba(31,36,32,.8);opacity:.9}
+@media print{.cloud-chip{display:none!important}}
 .toast{position:fixed;left:50%;bottom:34px;z-index:300;transform:translate(-50%,16px);background:var(--ink);color:var(--paper);font-family:var(--serif);font-size:.84rem;letter-spacing:.22em;padding:10px 22px;border-radius:2px;opacity:0;transition:.34s var(--ease);pointer-events:none;box-shadow:0 18px 40px -22px rgba(0,0,0,.8)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast.undo-toast{display:flex;align-items:center;gap:18px;padding:11px 14px 11px 20px;letter-spacing:.16em;pointer-events:auto;max-width:calc(100vw - 32px)}
@@ -513,6 +518,8 @@ a[href]::after{content:""}
   <button class="btn small" data-action="help">说明</button>
   <button class="btn small" data-action="edit">退出编辑</button>
 </div>
+
+<div id="cloud-chip" class="cloud-chip" style="display:none" title="云端同步状态"></div>
 
 <div class="edit-bar" id="draft-banner" style="display:none">
   <span class="edit-bar-dot"></span>
@@ -934,13 +941,16 @@ function initSupabase(){
 }
 async function cloudLoad(){
   if(!sbConfigured()) return { ok:false };
-  /* 国内网络对大响应时常重置连接：自动重试几次 */
+  /* 国内网络对大响应时常重置连接（移动网络更明显）：多试几次、逐步退避 */
+  const waits = [1200, 2500, 4500, 7000];
   let lastErr = null;
-  for(let attempt = 0; attempt < 3; attempt++){
+  setCloudStatus('working', '正在读取云端内容…');
+  for(let attempt = 0; attempt <= waits.length; attempt++){
     try{
       const { data, error } = await sb.from(sbTable()).select('*').eq('id', SB_ID).maybeSingle();
       if(error) throw error;
       cloudOk = true;
+      setCloudStatus('ok', '云端已同步');
       if(!data) return { ok:true, state:null, patches:null, updatedAt:null };
       const d = data[SB_COL_DATA];
       const st = d ? ((typeof d === 'string') ? JSON.parse(d) : d) : null;
@@ -948,12 +958,46 @@ async function cloudLoad(){
       return { ok:true, state: st, patches: pt, updatedAt: data.updated_at || null };
     }catch(e){
       lastErr = e;
-      if(attempt < 2) await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+      if(attempt < waits.length){
+        setCloudStatus('working', '网络不稳，正在重试（' + (attempt + 2) + '/' + (waits.length + 1) + '）…');
+        await new Promise(r => setTimeout(r, waits[attempt]));
+      }
     }
   }
   cloudOk = false;
-  console.warn('云读取失败（已重试 3 次）', lastErr);
+  console.warn('云读取失败（已重试 ' + (waits.length + 1) + ' 次）', lastErr);
+  setCloudStatus('fail', '云端读取失败 · 点此重试');
   return { ok:false, error: lastErr };
+}
+/* 左下角状态标签：让"到底连上没有"一眼可见，读取失败可点击重试 */
+function setCloudStatus(kind, text){
+  try{
+    if(!sbConfigured()) return;
+    const el = document.getElementById('cloud-chip');
+    if(!el) return;
+    el.dataset.kind = kind;
+    el.textContent = text;
+    el.style.display = '';
+    if(kind === 'ok'){
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+  }catch(e){}
+}
+async function retryCloudNow(){
+  setCloudStatus('working', '正在重新读取云端…');
+  const r = await cloudLoad();
+  if(r.ok && r.state && r.state.meta && r.state.worlds){
+    applyState(r.state);
+    if(Array.isArray(r.patches)) patches = r.patches;
+    lastCloudStamp = r.updatedAt;
+    applyPatches(); renderAll(); loadMusic();
+    toast('已 载 入 云 端 内 容');
+  }else if(r.ok){
+    toast('云端暂时还没有内容');
+  }else{
+    toast('还是连不上云端：可能是网络拦截，换流量/WiFi 再试');
+  }
 }
 /* WebSocket 连不上时（部分网络会拦截 wss）用 HTTPS 轮询兜底 */
 function startCloudPoll(){
@@ -3685,6 +3729,10 @@ function openCloudSettings(){
    ============================================================ */
 const drawer = document.getElementById('drawer');
 const menuBtn = document.getElementById('menu-btn');
+/* 状态标签点击 = 重试读取云端 */
+document.getElementById('cloud-chip').addEventListener('click', e => {
+  if(e.currentTarget.dataset.kind === 'fail') retryCloudNow();
+});
 function openDrawer(){ drawer.classList.add('open'); menuBtn.textContent = '✕'; }
 function closeDrawer(){ drawer.classList.remove('open'); menuBtn.textContent = '☰'; }
 menuBtn.addEventListener('click', () => { drawer.classList.contains('open') ? closeDrawer() : openDrawer(); });
