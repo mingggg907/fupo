@@ -875,6 +875,7 @@ let sbStatus = '';   /* 实时通道状态 */
 let sbLoggedIn = false; /* 是否已登录（每台设备各自登录一次） */
 let pendingCloudState = null;
 let pendingCloudPatches = null;
+let musicIntent = false;    /* 用户是否希望背景音乐在播放（用于切界面/同步后自动续播） */
 let lastCloudStamp = null;  /* 当前内存中数据对应的云端时间戳，用来判断是否有新版本 */
 let sbPollTimer = null;     /* WebSocket 不可用时的轮询兜底 */
 function sbConfigured(){ return !!sb && /^https:\/\/.+\.supabase\.co\/?$/.test(sbUrl()); }
@@ -925,7 +926,7 @@ async function pollCloudOnce(){
   if(r.state && r.state.meta && r.state.worlds){
     applyState(r.state);
     if(Array.isArray(r.patches)) patches = r.patches;
-    applyPatches(); renderAll(); loadMusic();
+    applyPatches(); renderAll(); reloadMusicKeepState();
     toast('已 同 步 到 最 新 内 容');
   }
 }
@@ -1003,7 +1004,7 @@ function subscribeCloud(){
           applyState(st);
           if(Array.isArray(row[SB_COL_PATCHES])) patches = row[SB_COL_PATCHES];
           if(row.updated_at) lastCloudStamp = row.updated_at;
-          applyPatches(); renderAll(); loadMusic();
+          applyPatches(); renderAll(); reloadMusicKeepState();
           toast('已 从 云 端 同 步 最 新 内 容');
         }catch(err){ console.warn('云端数据解析失败', err); }
       })
@@ -1422,6 +1423,8 @@ async function loadMusic(){
   audioEl.volume = (cfg.volume ?? 60) / 100;
   volEl.value = cfg.volume ?? 60;
   updateMusicUI();
+  /* 用户本来在听音乐 → 换歌单/加载完成后自动续播（含表里往返、云端同步） */
+  if(musicIntent && musicReady && audioEl.paused) audioEl.play().catch(()=>{});
 }
 function renderTrackList(){
   const list = tracks();
@@ -1450,6 +1453,7 @@ function selectTrack(i, autoplay){
   const list = tracks();
   if(i < 0 || i >= list.length) return;
   cfg.cur = i; curTrack = i; _doSave();
+  if(autoplay) musicIntent = true;
   loadMusic().then(() => { if(autoplay) audioEl.play().catch(()=>{}); });
 }
 function playNext(){ const list = tracks(); if(list.length) selectTrack((curTrack + 1) % list.length, true); }
@@ -1469,9 +1473,20 @@ function togglePlay(){
     else toast('尚未设置音乐');
     return;
   }
-  if(!musicReady){ selectTrack(curTrack, true); return; }
-  if(audioEl.paused) audioEl.play().then(updateMusicUI).catch(err => toast('播放失败：' + (err.message || '未知')));
-  else{ audioEl.pause(); updateMusicUI(); }
+  if(!musicReady){ musicIntent = true; selectTrack(curTrack, true); return; }
+  if(audioEl.paused){ musicIntent = true; audioEl.play().then(updateMusicUI).catch(err => toast('播放失败：' + (err.message || '未知'))); }
+  else{ musicIntent = false; audioEl.pause(); updateMusicUI(); }
+}
+/* 云端内容更新时重载音乐：保持播放位置与播放状态，不让音乐断掉 */
+async function reloadMusicKeepState(){
+  const tid = currentTrack() ? currentTrack().id : null;
+  const wasPlaying = musicIntent || (musicReady && !audioEl.paused);
+  let pos = 0;
+  try{ pos = audioEl.currentTime || 0; }catch(e){}
+  await loadMusic();
+  const nt = currentTrack();
+  if(tid && nt && nt.id === tid && pos > 0){ try{ audioEl.currentTime = pos; }catch(e){} }
+  if(wasPlaying && musicReady && audioEl.paused) audioEl.play().catch(()=>{});
 }
 playBtn.addEventListener('click', togglePlay);
 prevBtn.addEventListener('click', playPrev);
@@ -3716,6 +3731,7 @@ function renderGate(){
     document.body.style.overflow = '';
     setTimeout(() => { if(gate.parentNode) gate.remove(); }, 400);
     const tryPlayOnce = () => {
+      musicIntent = true;
       if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
       document.removeEventListener('click', tryPlayOnce);
       document.removeEventListener('touchstart', tryPlayOnce);
@@ -3738,6 +3754,7 @@ function renderGate(){
   function enter(){
     gate.classList.add('hide');
     document.body.style.overflow = '';
+    musicIntent = true;   /* 点「入界」= 想听音乐：即使歌单还在加载，加载完会自动响起 */
     if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
     setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); }, 900);
   }
@@ -3760,11 +3777,12 @@ function setRealm(r, origin){
     veil.classList.add('play');
   }
   const wasPlaying = musicReady && !audioEl.paused;
+  if(wasPlaying) musicIntent = true;   /* 切换界面时保持「想听音乐」的意图，回来自动续播 */
   realm = r;
   document.body.classList.toggle('abyss', r === 'abyss');
   window.scrollTo({ top: 0, behavior: 'auto' });
   renderAll();
-  loadMusic().then(() => { if(wasPlaying) audioEl.play().catch(()=>{}); });
+  loadMusic();
   toast(r === 'abyss' ? '已 入 上 古 · 内容与音乐均为独立栏目' : '已 归 表 层');
 }
 
