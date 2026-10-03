@@ -836,6 +836,8 @@ let sbStatus = '';   /* 实时通道状态 */
 let sbLoggedIn = false; /* 是否已登录（每台设备各自登录一次） */
 let pendingCloudState = null;
 let pendingCloudPatches = null;
+let lastCloudStamp = null;  /* 当前内存中数据对应的云端时间戳，用来判断是否有新版本 */
+let sbPollTimer = null;     /* WebSocket 不可用时的轮询兜底 */
 function sbConfigured(){ return !!sb && /^https:\/\/.+\.supabase\.co\/?$/.test(sbUrl()); }
 function sbReady(){ return sbConfigured() && cloudOk; }
 function initSupabase(){
@@ -856,15 +858,34 @@ async function cloudLoad(){
     const { data, error } = await sb.from(sbTable()).select('*').eq('id', SB_ID).maybeSingle();
     if(error) throw error;
     cloudOk = true;
-    if(!data) return { ok:true, state:null, patches:null };
+    if(!data) return { ok:true, state:null, patches:null, updatedAt:null };
     const d = data[SB_COL_DATA];
     const st = d ? ((typeof d === 'string') ? JSON.parse(d) : d) : null;
     const pt = Array.isArray(data[SB_COL_PATCHES]) ? data[SB_COL_PATCHES] : null;
-    return { ok:true, state: st, patches: pt };
+    return { ok:true, state: st, patches: pt, updatedAt: data.updated_at || null };
   }catch(e){
     cloudOk = false;
     console.warn('云读取失败', e);
     return { ok:false };
+  }
+}
+/* WebSocket 连不上时（部分网络会拦截 wss）用 HTTPS 轮询兜底 */
+function startCloudPoll(){
+  if(sbPollTimer || !sbConfigured()) return;
+  sbPollTimer = setInterval(pollCloudOnce, 6000);
+  console.log('cloud sync: 轮询兜底已启用（每 6 秒检查一次）');
+}
+function stopCloudPoll(){ if(sbPollTimer){ clearInterval(sbPollTimer); sbPollTimer = null; } }
+async function pollCloudOnce(){
+  if(!sbConfigured() || document.hidden || editMode) return;
+  const r = await cloudLoad();
+  if(!r.ok || !r.updatedAt || r.updatedAt === lastCloudStamp) return;
+  lastCloudStamp = r.updatedAt;
+  if(r.state && r.state.meta && r.state.worlds){
+    applyState(r.state);
+    if(Array.isArray(r.patches)) patches = r.patches;
+    applyPatches(); renderAll(); loadMusic();
+    toast('已 同 步 到 最 新 内 容');
   }
 }
 async function cloudSave(){
@@ -874,8 +895,10 @@ async function cloudSave(){
     row[SB_COL_DATA] = JSON.parse(JSON.stringify(state));
     row[SB_COL_PATCHES] = JSON.parse(JSON.stringify(patches));
     row.updated_at = new Date().toISOString();
-    const { error } = await sb.from(sbTable()).upsert(row, { onConflict:'id' });
+    const { data, error } = await sb.from(sbTable()).upsert(row, { onConflict:'id' }).select('updated_at');
     if(error) throw error;
+    const stamp = Array.isArray(data) && data[0] ? data[0].updated_at : row.updated_at;
+    lastCloudStamp = stamp; /* 记住自己写的版本，避免轮询把自己刚存的内容再套一遍 */
     return true;
   }catch(e){
     cloudOk = false;
@@ -907,7 +930,8 @@ function subscribeCloud(){
           }
           applyState(st);
           if(Array.isArray(row[SB_COL_PATCHES])) patches = row[SB_COL_PATCHES];
-          renderAll();
+          if(row.updated_at) lastCloudStamp = row.updated_at;
+          applyPatches(); renderAll(); loadMusic();
           toast('已 从 云 端 同 步 最 新 内 容');
         }catch(err){ console.warn('云端数据解析失败', err); }
       })
@@ -915,13 +939,15 @@ function subscribeCloud(){
         sbStatus = status;
         console.log('realtime:', status, err || '');
         updateRtState();
+        if(status === 'SUBSCRIBED'){ stopCloudPoll(); }
+        else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){ startCloudPoll(); }
       });
-  }catch(e){ console.warn('实时订阅失败', e); }
+  }catch(e){ console.warn('实时订阅失败', e); startCloudPoll(); }
 }
 function updateRtState(){
   const el = document.getElementById('sb-rt-state');
   if(!el) return;
-  const map = { SUBSCRIBED:'已连接（会自动接收更新）', CHANNEL_ERROR:'连接出错', TIMED_OUT:'连接超时', CLOSED:'已断开', JOINING:'连接中…' };
+  const map = { SUBSCRIBED:'已连接（秒级自动更新）', CHANNEL_ERROR:'受网络限制连不上，已自动改用每 6 秒轮询同步（功能不受影响）', TIMED_OUT:'超时，已自动改用每 6 秒轮询同步', CLOSED:'已断开，已自动改用轮询同步', JOINING:'连接中…' };
   el.textContent = '实时通道：' + (map[sbStatus] || sbStatus || '未连接');
 }
 function applyPendingCloud(){
@@ -3528,6 +3554,7 @@ function setRealm(r, origin){
     }else if(cloud.state && cloud.state.meta && cloud.state.worlds){
       applyState(cloud.state);
       if(Array.isArray(cloud.patches)){ patches = cloud.patches; savePatches(); }
+      if(cloud.updatedAt) lastCloudStamp = cloud.updatedAt;
       applyPatches();
       renderAll();
       loadMusic();
@@ -3537,6 +3564,8 @@ function setRealm(r, origin){
       toast('云 端 为 空，已 上 传 当 前 内 容');
     }
   }
+  /* 轮询兜底：即使实时通道被网络拦截，其他设备的更新也会在几秒内自动出现 */
+  if(sbConfigured()) startCloudPoll();
   /* 检查本机是否已有登录状态（每台设备各自登录一次，之后自动记住） */
   if(sbConfigured()){
     cloudUser().then(u => {
