@@ -1177,9 +1177,13 @@ function applyPendingCloud(){
 }
 async function loginCloud(email, password){
   if(!sbConfigured()) return { error: { message: '尚未配置 Supabase 地址' } };
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(!error){ cloudOk = true; sbLoggedIn = true; updateEditBar(); }
-  return { error };
+  try{
+    const { error } = await withTimeout(sb.auth.signInWithPassword({ email, password }), 30000);
+    if(!error){ cloudOk = true; sbLoggedIn = true; updateEditBar(); }
+    return { error };
+  }catch(e){
+    return { error: { message: (e && e.message) || '登录超时，请检查网络' } };
+  }
 }
 async function cloudUser(){
   if(!sbConfigured()) return null;
@@ -2657,7 +2661,14 @@ function closeModal(skipConfirm){
   document.removeEventListener('keydown', onKeydown);
   document.body.style.overflow = '';
 }
-function onKeydown(e){ if(e.key === 'Escape') closeModal(); }
+function onKeydown(e){
+  if(e.key === 'Escape'){ closeModal(); return; }
+  /* Ctrl/Cmd + Enter：快捷保存 */
+  if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+    const ok = modalRoot.querySelector('[data-ok]');
+    if(ok && !ok.disabled){ ok.click(); e.preventDefault(); }
+  }
+}
 /* ★ 每个文字框都带「插入图片」按钮 + 拖拽插图 */
 /* 图片统一入口：登录状态下先上传云端，返回公开链接；失败才退回 base64（保证不丢图） */
 async function imageUrlFor(file){
@@ -2673,7 +2684,8 @@ async function imageUrlFor(file){
   return dataUrl;
 }
 async function imageMarkdownFor(file){
-  const name = String(file.name || 'image').replace(/\.[^.]+$/, '');
+  /* 文件名做安全处理：去掉会破坏 markdown 的字符 */
+  const name = String(file.name || 'image').replace(/\.[^.]+$/, '').replace(/[\[\]()"']/g, '_').slice(0, 60) || 'image';
   const src = await imageUrlFor(file);
   return `![${name}](${src})`;
 }
@@ -2737,9 +2749,18 @@ function showModal({ title, body, onOk, okText = '保 存', hideFooter = false, 
   modalRoot.querySelector('.overlay').addEventListener('click', e => {
     if(e.target.closest('[data-close]')){ closeModal(); return; }
     if(e.target.closest('[data-ok]')){
+      const okBtn = e.target.closest('[data-ok]');
+      if(okBtn.disabled) return;
       const r = onOk && onOk();
       if(r === false) return;
-      if(r instanceof Promise){ r.then(ok => { if(ok !== false) closeModal(true); }).catch(()=>{}); return; }
+      /* 异步保存期间禁用按钮，防止连点造成重复保存 */
+      okBtn.disabled = true;
+      const finish = () => { okBtn.disabled = false; };
+      if(r && typeof r.then === 'function'){
+        r.then(ok => { finish(); if(ok !== false) closeModal(true); }).catch(() => finish());
+        return;
+      }
+      finish();
       closeModal(true);
     }
   });
@@ -3989,13 +4010,20 @@ function renderGate(){
       ${g.note ? `<p class="gate-note">${esc(g.note)}</p>` : ''}
     </div>`;
   const gateBtn = gate.querySelector('#gate-btn');
+  let entered = false;
   function enter(){
+    if(entered) return;
+    entered = true;
     gate.classList.add('hide');
     document.body.style.overflow = '';
     musicIntent = true;   /* 点「入界」= 想听音乐：即使歌单还在加载，加载完会自动响起 */
     if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
     setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); }, 900);
+    document.removeEventListener('keydown', gateKey);
   }
+  /* 回车也可以入界 */
+  const gateKey = e => { if(e.key === 'Enter') enter(); };
+  document.addEventListener('keydown', gateKey);
   if(gateBtn) gateBtn.addEventListener('click', enter);
   gate.addEventListener('click', e => { if(e.target === gate) enter(); });
   document.body.style.overflow = 'hidden';
@@ -4089,10 +4117,13 @@ async function restoreAuthSession(){
   updateEditBar();
   if(!sbLoggedIn && localStorage.getItem('fupo-sb-remember') === '1'){
     const em = localStorage.getItem('fupo-sb-email') || '';
-    const pw = localStorage.getItem('fupo-sb-pass') || '';
+    /* ★ 修复：登录时密码经过编码保存，这里必须解码再登录（之前直接拿来用，自动登录永远失败） */
+    const rawPw = localStorage.getItem('fupo-sb-pass') || '';
+    let pw = '';
+    try{ pw = decodeURIComponent(escape(atob(rawPw))); }catch(e){ pw = ''; }
     if(em && pw){
       const r = await loginCloud(em, pw);
-      if(r && !r.error) toast('已 自 动 登 录 云 同 步');
+      if(r && r.error) console.warn('自动登录失败：', r.error.message);
     }
   }
   updateEditBar();
