@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ecece6">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
@@ -172,8 +172,11 @@ body.abyss .inline-img{filter:sepia(.3) contrast(1.08) brightness(.82)}
 .rich-img figcaption{font-family:var(--serif);font-size:.76rem;letter-spacing:.2em;color:var(--ink-3);text-align:center;padding:10px 12px 2px;text-indent:.2em}
 /* 图片点击放大查看详情 */
 .rich-img img,.inline-img{cursor:zoom-in}
-.fupo-lightbox{position:fixed;inset:0;z-index:600;background:rgba(5,7,6,.92);display:flex;align-items:center;justify-content:center;padding:26px;cursor:zoom-out;animation:fade .18s ease}
-.fupo-lightbox img{max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 20px 70px -20px rgba(0,0,0,.9);border-radius:2px;background:#000}
+.fupo-lightbox{position:fixed;inset:0;z-index:600;background:rgba(5,7,6,.92);display:flex;align-items:center;justify-content:center;padding:26px;cursor:zoom-out;animation:fade .18s ease;touch-action:none;overflow:hidden}
+.fupo-lightbox img{max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 20px 70px -20px rgba(0,0,0,.9);border-radius:2px;background:#000;touch-action:none;will-change:transform;transform-origin:center center;transition:transform .08s linear}
+.fupo-lightbox .lb-tip{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font-family:var(--serif);font-size:.72rem;letter-spacing:.12em;color:rgba(255,255,255,.62);background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);padding:5px 14px;border-radius:99px;white-space:nowrap;pointer-events:none}
+/* 页面整体禁止缩放（图片在灯箱里仍可缩放） */
+html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .fupo-lightbox .lb-cap{position:absolute;left:0;right:0;bottom:20px;text-align:center;color:rgba(255,255,255,.85);font-family:var(--serif);font-size:.82rem;letter-spacing:.18em;text-indent:.18em;pointer-events:none}
 .fupo-lightbox .lb-close{position:absolute;top:14px;right:20px;width:40px;height:40px;display:grid;place-items:center;color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;opacity:.85;background:rgba(255,255,255,.08);border-radius:50%;border:none}
 .fupo-lightbox .lb-close:hover{opacity:1;background:rgba(255,255,255,.16)}
@@ -645,7 +648,7 @@ a[href]::after{content:""}
 
 <script>
 /* 版本号：用于确认设备加载的是不是最新版本 */
-const FUPO_BUILD = '2026-10-04 23:00 (v29 · 草稿提示只给编辑者看)';
+const FUPO_BUILD = '2026-10-04 23:40 (v30 · 禁页面缩放/阅读位置记忆)';
 /* ============================================================
    常量
    ============================================================ */
@@ -1071,7 +1074,7 @@ async function pollCloudOnce(){
     if(r.state && r.state.meta && r.state.worlds){
       applyState(r.state);
       if(Array.isArray(r.patches)) patches = r.patches;
-      applyPatches(); renderAll(); reloadMusicKeepState();
+      applyPatches(); renderAllKeepScroll(); reloadMusicKeepState();
       toast('已 同 步 到 最 新 内 容');
     }
   }finally{
@@ -1153,7 +1156,7 @@ function subscribeCloud(){
           applyState(st);
           if(Array.isArray(row[SB_COL_PATCHES])) patches = row[SB_COL_PATCHES];
           if(row.updated_at) lastCloudStamp = row.updated_at;
-          applyPatches(); renderAll(); reloadMusicKeepState();
+          applyPatches(); renderAllKeepScroll(); reloadMusicKeepState();
           toast('已 从 云 端 同 步 最 新 内 容');
         }catch(err){ console.warn('云端数据解析失败', err); }
       })
@@ -4071,8 +4074,39 @@ function renderGate(){
 /* ============================================================
    表里切换（内容、音乐全部切换为当前界面的独立数据）
    ============================================================ */
+/* ============================================================
+   阅读位置记忆：表层 / 上古 各自独立；远程同步时也不打断阅读
+   ============================================================ */
+const realmScroll = { surface: 0, abyss: 0 };
+let scrollSaveTimer = null;
+window.addEventListener('scroll', () => {
+  if(scrollSaveTimer) return;
+  scrollSaveTimer = setTimeout(() => {
+    scrollSaveTimer = null;
+    try{ realmScroll[realm] = window.scrollY || 0; }catch(e){}
+  }, 180);
+}, { passive: true });
+
+function maxScrollY(){
+  return Math.max(0, (document.documentElement.scrollHeight || 0) - window.innerHeight);
+}
+/* 渲染但保持阅读位置：你在改内容时，正在阅读的人不会被弹回顶部 */
+function renderAllKeepScroll(){
+  const y = (typeof window.scrollY === 'number') ? window.scrollY : 0;
+  renderAll();
+  const put = () => window.scrollTo(0, Math.min(y, maxScrollY()));
+  requestAnimationFrame(() => requestAnimationFrame(put));
+}
+/* 切回某个界面时，回到上次读到的位置（第一次进入即顶部） */
+function restoreRealmScroll(r){
+  const y = Math.min(realmScroll[r] || 0, maxScrollY());
+  const put = () => window.scrollTo(0, Math.min(y, maxScrollY()));
+  requestAnimationFrame(() => requestAnimationFrame(put));
+}
+
 function setRealm(r, origin){
   if(realm === r) return;
+  try{ realmScroll[realm] = window.scrollY || 0; }catch(e){}   /* 记住离开时的位置 */
   const veil = document.getElementById('realm-veil');
   if(veil && origin){
     veil.style.setProperty('--rx', origin.x + 'px');
@@ -4085,8 +4119,8 @@ function setRealm(r, origin){
   if(wasPlaying) musicIntent = true;   /* 切换界面时保持「想听音乐」的意图，回来自动续播 */
   realm = r;
   document.body.classList.toggle('abyss', r === 'abyss');
-  window.scrollTo({ top: 0, behavior: 'auto' });
   renderAll();
+  restoreRealmScroll(r);   /* 回到该界面上次读到的位置（首次进入 = 顶部） */
   loadMusic();
   toast(r === 'abyss' ? '已 入 上 古 · 内容与音乐均为独立栏目' : '已 归 表 层');
 }
@@ -4456,6 +4490,24 @@ window.FUPO = {
 };
 
 /* 图片点击放大查看详情（正文里的 .rich-img / .inline-img） */
+/* 页面整体禁止缩放（iOS 会忽略 user-scalable=no，这里再兜底）；灯箱内允许缩放图片 */
+(function lockPageZoom(){
+  const inLightbox = el => !!(el && el.closest && el.closest('.fupo-lightbox'));
+  ['gesturestart','gesturechange','gestureend'].forEach(ev => {
+    document.addEventListener(ev, e => { if(!inLightbox(e.target)) e.preventDefault(); }, { passive: false });
+  });
+  document.addEventListener('touchmove', e => {
+    if(e.touches && e.touches.length > 1 && !inLightbox(e.target)) e.preventDefault();
+  }, { passive: false });
+  let lastTap = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    const interactive = e.target && e.target.closest && e.target.closest('button, a, input, select, textarea, label, [data-act], [data-action]');
+    if(now - lastTap < 300 && !interactive && !inLightbox(e.target)) e.preventDefault();
+    lastTap = now;
+  }, { passive: false });
+})();
+
 function openLightbox(img){
   if(!img) return;
   document.querySelectorAll('.fupo-lightbox').forEach(el => el.remove());
@@ -4470,13 +4522,80 @@ function openLightbox(img){
   close.className = 'lb-close';
   close.textContent = '✕';
   close.setAttribute('aria-label', '关闭');
+  const tip = document.createElement('div');
+  tip.className = 'lb-tip';
+  tip.textContent = '双指 / 滚轮缩放 · 双击放大 · 点空白关闭';
   lb.appendChild(im);
   if(cap.textContent) lb.appendChild(cap);
+  lb.appendChild(tip);
   lb.appendChild(close);
   document.body.appendChild(lb);
+
+  /* —— 灯箱内缩放：图片可放大，页面不会被放大 —— */
+  let scale = 1, tx = 0, ty = 0, startDist = 0, startScale = 1;
+  let startX = 0, startY = 0, startTx = 0, startTy = 0, panning = false, lastTapAt = 0, suppressClick = 0;
+  const apply = () => {
+    im.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+    im.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+  };
+  const reset = () => { scale = 1; tx = 0; ty = 0; apply(); };
+  const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const clampScale = s => Math.max(1, Math.min(5, s));
+  apply();
+
+  lb.addEventListener('touchstart', e => {
+    if(e.touches.length === 2){
+      startDist = dist(e.touches); startScale = scale; panning = false; e.preventDefault();
+    }else if(e.touches.length === 1){
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+      startTx = tx; startTy = ty; panning = scale > 1;
+    }
+  }, { passive: false });
+  lb.addEventListener('touchmove', e => {
+    if(e.touches.length === 2){
+      e.preventDefault();
+      const d = dist(e.touches);
+      scale = clampScale(startScale * (d / (startDist || d)));
+      if(scale <= 1.02){ tx = 0; ty = 0; }
+      suppressClick = Date.now() + 400;
+      apply();
+    }else if(e.touches.length === 1 && panning){
+      e.preventDefault();
+      tx = startTx + (e.touches[0].clientX - startX);
+      ty = startTy + (e.touches[0].clientY - startY);
+      suppressClick = Date.now() + 400;
+      apply();
+    }
+  }, { passive: false });
+  lb.addEventListener('touchend', e => {
+    if(e.touches.length === 0){
+      const now = Date.now();
+      if(now - lastTapAt < 300){          /* 双击：放大 / 还原 */
+        if(scale > 1.2){ reset(); } else { scale = 2.5; tx = 0; ty = 0; apply(); }
+        suppressClick = Date.now() + 400;
+      }
+      lastTapAt = now;
+      panning = false;
+      if(scale <= 1.02) reset();
+    }
+  });
+  lb.addEventListener('wheel', e => {   /* 电脑：滚轮缩放 */
+    e.preventDefault();
+    scale = clampScale(scale * (e.deltaY < 0 ? 1.12 : 0.89));
+    if(scale <= 1.02) { tx = 0; ty = 0; }
+    apply();
+  }, { passive: false });
+  lb.addEventListener('dblclick', e => {   /* 电脑：双击缩放 */
+    e.preventDefault();
+    if(scale > 1.2){ reset(); } else { scale = 2.5; tx = 0; ty = 0; apply(); }
+  });
+
   const esc = e => { if(e.key === 'Escape'){ remove(); } };
   const remove = () => { lb.remove(); document.removeEventListener('keydown', esc); };
-  lb.addEventListener('click', e => { if(e.target === lb || e.target === close) remove(); });
+  lb.addEventListener('click', e => {
+    if(Date.now() < suppressClick) return;          /* 刚拖动/缩放过，不误关 */
+    if(e.target === lb || e.target === close) remove();
+  });
   document.addEventListener('keydown', esc);
 }
 document.addEventListener('click', e => {
