@@ -3574,8 +3574,8 @@ function openGuestEditor(id){
       <p class="hint" style="font-family:var(--serif);font-size:.76rem;color:var(--ink-3);letter-spacing:.08em">保存后立即对所有人生效。</p>`,
     onOk: async () => {
       if(!sbLoggedIn){
-        toast('请先登录云同步，才能修改留言');
-        setTimeout(() => { try{ openCloudSettings(); }catch(e){} }, 400);
+        /* 不自动跳登录面板：否则正在编辑的内容会被顶掉 */
+        toast('请先登录云同步，再点保存（编辑内容不会丢）');
         return false;
       }
       const name = (document.getElementById('ge-name').value || '').trim().slice(0, 20);
