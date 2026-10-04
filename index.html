@@ -317,6 +317,20 @@ body.editing #ver-badge{display:none}
 .ver-text{flex:1;min-width:0;font-size:.82rem;line-height:1.85;color:var(--ink-2);word-break:break-word}
 .ver-foot{font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--ink-3);text-align:center;margin:6px 0 0}
 @media (max-width:640px){.ver-item{flex-wrap:wrap;gap:6px}.ver-date{min-width:0}.ver-text{flex-basis:100%}}
+/* ===== 手机手感升级：去掉灰蓝点击高亮、扩大点击区、去掉迟滞 ===== */
+*{-webkit-tap-highlight-color:transparent!important}
+button, a, [data-act], [data-action], .cf-btn, .lex-ini, .toc-item, input, textarea, select, label{touch-action:manipulation}
+.world-head{min-height:56px;padding-top:6px;padding-bottom:6px;cursor:pointer;touch-action:manipulation;transition:background .18s}
+.world-head:active{background:rgba(160,134,80,.10)}
+.world-head:active .world-title{color:var(--cinnabar)}
+.world-arrow{transition:transform .3s var(--ease-out),color .3s}
+.world-item.open .world-arrow{transform:rotate(90deg);color:var(--gold)}
+.char-card:active,.story-item:active,.tl-item:active,.lex-item:active,.abyss-entry:active{background:rgba(160,134,80,.10)}
+@media (max-width:820px){
+  .world-body{transition:none!important}          /* 手机上不做展开高度动画：点下去立刻出来 */
+  .world-arrow{transition:transform .18s var(--ease-out)}
+  .btn,.cf-btn,.lex-ini{min-height:34px}
+}
 .lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:9px 13px;font-family:var(--serif);font-size:.9rem;letter-spacing:.04em;text-align:center}
 body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-input:focus{outline:none;border-color:var(--gold)}
@@ -2786,7 +2800,7 @@ function sectionsHTML(){
     <div class="world-list">
       ${list.length ? list.map((s, i) => `
         <div class="world-item" data-sid="${s.id}">
-          <div class="world-head">
+          <div class="world-head" data-act="toggle-section">
             <span class="world-icon" data-act="toggle-section">${esc(s.icon || '✦')}</span>
             <span class="world-title" data-act="toggle-section">${esc(s.title)}</span>
             <span class="world-count">${(s.entries || []).length} 条</span>
