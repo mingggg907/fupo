@@ -416,6 +416,23 @@ body.abyss .guest-box{background:linear-gradient(180deg,rgba(255,255,255,.04),rg
 .guest-count{font-family:var(--serif);font-size:.72rem;letter-spacing:.16em;color:var(--ink-3);text-align:center;margin:0 0 10px}
 .guest-item.pending{background:rgba(201,74,58,.05)}
 .guest-badge{font-family:var(--serif);font-size:.66rem;letter-spacing:.12em;color:var(--cinnabar);border:1px solid var(--cinnabar);border-radius:99px;padding:1px 8px}
+.guest-badge.owner{color:var(--gold);border-color:var(--gold)}
+.guest-item.owner{background:linear-gradient(90deg,rgba(160,134,80,.09),transparent 70%)}
+.guest-owner-hint{font-family:var(--serif);font-size:.76rem;letter-spacing:.1em;color:var(--gold);text-align:center}
+.guest-foot{display:flex;gap:10px;align-items:center;margin-top:8px}
+.guest-like{display:inline-flex;align-items:center;gap:6px;font-family:var(--serif);font-size:.76rem;letter-spacing:.06em;color:var(--ink-3);background:transparent;border:1px solid var(--line-2);border-radius:99px;padding:3px 12px;cursor:pointer;transition:.2s;touch-action:manipulation}
+.guest-like:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
+.guest-like.on{color:var(--cinnabar);border-color:var(--cinnabar);opacity:.85}
+.guest-like .gl-heart{font-size:.9rem}
+.guest-more{text-align:center;padding:14px 0 4px}
+/* 手机端快速通道：顶部横向导航（不用点三条杠也能跳转） */
+@media (max-width:820px){
+  .topbar{flex-wrap:wrap;row-gap:2px}
+  .nav{display:flex!important;order:99;width:100%;overflow-x:auto;gap:16px;padding:2px 2px 6px;margin:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{flex:none;font-size:.8rem;letter-spacing:.1em;padding:4px 0;border-bottom:1px solid transparent}
+  .nav a:active{color:var(--cinnabar);border-bottom-color:var(--cinnabar)}
+}
 .guest-form{display:flex;flex-direction:column;gap:12px;align-items:center;max-width:620px;margin:0 auto 30px}
 .guest-textarea{width:100%;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:12px 14px;font-family:var(--serif);font-size:.9rem;line-height:1.95;resize:vertical}
 body.abyss .guest-textarea{background:rgba(255,255,255,.05)}
@@ -1744,8 +1761,9 @@ function normalize(d){
   if(!d.meta.copyright || typeof d.meta.copyright !== 'object') d.meta.copyright = { text: '' };
   if(typeof d.meta.copyright.text !== 'string') d.meta.copyright.text = '';
   /* 访客感想墙 */
-  if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true };
+  if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true, ownerLabel: '站主' };
   if(typeof d.meta.guest.on !== 'boolean') d.meta.guest.on = true;
+  if(typeof d.meta.guest.ownerLabel !== 'string' || !d.meta.guest.ownerLabel.trim()) d.meta.guest.ownerLabel = '站主';
   /* 角色扩展字段：主题色 / 生日 / 资料表 / 立绘画廊 / 语录 */
   const normChar = (c) => {
     if(!c || typeof c !== 'object') return c;
@@ -3208,7 +3226,9 @@ function seedLexicon(){
    访客感想墙（Supabase 表 fupo_guest；未建表则自动隐藏）
    ============================================================ */
 const GUEST_TABLE = 'fupo_guest';
-const guestState = { ok: null, rows: [], pending: [], err: '', loaded: false, sent: false };
+const GUEST_LIKE_TABLE = 'fupo_guest_like';
+const GUEST_PAGE = 20;
+const guestState = { ok: null, rows: [], pending: [], err: '', loaded: false, sent: false, likes: {}, likeOk: null, limit: GUEST_PAGE };
 
 async function loadGuest(force){
   if(!sbConfigured() || !sbReady()){ guestState.ok = null; return; }
@@ -3220,6 +3240,14 @@ async function loadGuest(force){
     guestState.rows = rows.filter(r => r.approved);
     guestState.pending = rows.filter(r => !r.approved);
     guestState.ok = true; guestState.err = ''; guestState.loaded = true;
+    /* 点赞数（表不存在就自动隐藏点赞按钮） */
+    try{
+      const lk = await withTimeout(sb.from(GUEST_LIKE_TABLE).select('guest_id').limit(5000), 12000);
+      if(lk.error) throw lk.error;
+      const map = {};
+      (lk.data || []).forEach(r => { const k = String(r.guest_id); map[k] = (map[k] || 0) + 1; });
+      guestState.likes = map; guestState.likeOk = true;
+    }catch(e){ guestState.likeOk = false; }
   }catch(e){
     guestState.ok = false;
     guestState.err = (e && e.message) || String(e);
@@ -3278,10 +3306,11 @@ function guestInnerHTML(){
           <button class="btn small ghost" id="guest-again" type="button">再 写 一 条</button>
         </div>`
       : `<div class="guest-form">
-          <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20">
+          ${sbLoggedIn ? `<div class="guest-owner-hint">你已登录 · 以「${esc(ownerLabel())}」身份发言（免审核，立刻显示）</div>` : ''}
+          <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20" value="${sbLoggedIn ? esc(ownerLabel()) : ''}">
           <textarea id="guest-text" class="guest-textarea" rows="3" placeholder="想对作者说的话…（最多 500 字）" maxlength="500"></textarea>
           <div class="guest-send-row">
-            <span class="guest-hint">送出后需作者审核通过才公开</span>
+            <span class="guest-hint">${sbLoggedIn ? '站主发言免审核' : '送出后需作者审核通过才公开'}</span>
             <button class="btn small primary" id="guest-send" type="button">送 出</button>
           </div>
         </div>`}
@@ -3289,13 +3318,26 @@ function guestInnerHTML(){
     <div class="guest-list" id="guest-list-wrap">${guestListHTML()}</div>
   </div>`;
 }
-/* 只渲染留言列表（供自动刷新用，不触碰表单） */
+/* 只渲染留言列表（供自动刷新用，不触碰表单）：分页 + 点赞 + 站主标识 */
+function ownerLabel(){ return ((state.meta && state.meta.guest) || {}).ownerLabel || '站主'; }
+function isOwnerRow(r){ return !!r && !!r.approved && String(r.name || '').trim() === ownerLabel(); }
+function likedSet(){
+  try{ return new Set(JSON.parse(localStorage.getItem('fupo-guest-liked') || '[]')); }catch(e){ return new Set(); }
+}
+function markLiked(id){
+  try{ const s = likedSet(); s.add(String(id)); localStorage.setItem('fupo-guest-liked', JSON.stringify([...s].slice(-500))); }catch(e){}
+}
 function guestListHTML(){
   const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
-  return rows.length ? rows.map(r => `
-    <div class="guest-item${r.approved ? '' : ' pending'}">
+  if(!rows.length) return `<div class="guest-empty">还没有留言 · 欢迎写下第一句</div>`;
+  const liked = likedSet();
+  const shown = rows.slice(0, guestState.limit);
+  const rest = rows.length - shown.length;
+  return shown.map(r => `
+    <div class="guest-item${r.approved ? '' : ' pending'}${isOwnerRow(r) ? ' owner' : ''}">
       <div class="guest-head">
         <span class="guest-name">${esc(String(r.name || '').trim() || '匿名')}</span>
+        ${isOwnerRow(r) ? `<span class="guest-badge owner">${esc(ownerLabel())}</span>` : ''}
         <span class="guest-time">${esc(String(r.created_at || '').slice(0, 10))}</span>
         ${r.approved ? '' : '<span class="guest-badge">待审核</span>'}
         ${editMode ? `<span class="guest-acts">
@@ -3304,8 +3346,13 @@ function guestListHTML(){
         </span>` : ''}
       </div>
       <div class="guest-text">${esc(String(r.text || ''))}</div>
+      <div class="guest-foot">
+        ${guestState.likeOk === false ? '' : `<button class="guest-like${liked.has(String(r.id)) ? ' on' : ''}" data-guest-like="${esc(String(r.id))}" type="button" ${liked.has(String(r.id)) ? 'disabled' : ''}>
+          <span class="gl-heart">${liked.has(String(r.id)) ? '♥' : '♡'}</span>${guestState.likes[String(r.id)] || 0}
+        </button>`}
+      </div>
     </div>`).join('')
-    : `<div class="guest-empty">还没有留言 · 欢迎写下第一句</div>`;
+    + (rest > 0 ? `<div class="guest-more"><button class="btn small ghost" id="guest-more-btn" type="button">看更早的留言（还有 ${rest} 条）</button></div>` : '');
 }
 function guestHTML(){
   if(!guestOn()) return '';
@@ -3319,7 +3366,8 @@ function guestHTML(){
 async function postGuest(){
   const nameEl = document.getElementById('guest-name');
   const textEl = document.getElementById('guest-text');
-  const name = ((nameEl && nameEl.value) || '').trim().slice(0, 20);
+  const asOwner = !!sbLoggedIn;                        /* 站主：登录状态下免审核 */
+  const name = ((nameEl && nameEl.value) || '').trim().slice(0, 20) || (asOwner ? ownerLabel() : '');
   const text = ((textEl && textEl.value) || '').trim().slice(0, 500);
   if(!text){ toast('请先写点内容'); return; }
   if(!sbReady()){ toast('留言区暂时不可用'); return; }
@@ -3327,16 +3375,36 @@ async function postGuest(){
   if(Date.now() - last < 30000){ toast('刚刚已经送出了一条，稍后再写吧'); return; }
   showProgress(null, '正在送出…');
   try{
-    const res = await withTimeout(sb.from(GUEST_TABLE).insert([{ name, text, approved: false }]), 16000);
+    const res = await withTimeout(sb.from(GUEST_TABLE).insert([{ name, text, approved: asOwner }]), 16000);
     hideProgress();
     if(res.error) throw res.error;
     try{ localStorage.setItem('fupo-guest-last', String(Date.now())); }catch(e){}
     guestState.sent = true;
     renderGuest();
-    toast('留言已送达 · 作者看过后会显示出来');
+    toast(asOwner ? '已发布（站主身份，立即可见）' : '留言已送达 · 作者看过后会显示出来');
+    loadGuest(true);
   }catch(e){
     hideProgress();
     toast('送出失败，请稍后再试');
+  }
+}
+/* 点赞（每次浏览器每条只能点一次；点赞表未建则按钮自动隐藏） */
+async function likeGuest(id){
+  if(!sbReady()){ toast('点赞暂时不可用'); return; }
+  const key = String(id);
+  if(likedSet().has(key)){ toast('已经点过赞啦'); return; }
+  guestState.likes[key] = (guestState.likes[key] || 0) + 1;
+  markLiked(key);
+  renderGuest();
+  try{
+    const res = await withTimeout(sb.from(GUEST_LIKE_TABLE).insert([{ guest_id: Number(id) }]), 12000);
+    if(res.error) throw res.error;
+  }catch(e){
+    /* 失败就回滚本地计数 */
+    guestState.likes[key] = Math.max(0, (guestState.likes[key] || 1) - 1);
+    try{ const s = likedSet(); s.delete(key); localStorage.setItem('fupo-guest-liked', JSON.stringify([...s])); }catch(e2){}
+    renderGuest();
+    toast('点赞失败，请稍后再试');
   }
 }
 async function modGuest(id, approve){
@@ -4305,6 +4373,9 @@ app.addEventListener('click', e => {
   /* 感想墙：提交 / 审核 / 删除 */
   if(e.target.closest && e.target.closest('#guest-send')){ postGuest(); return; }
   if(e.target.closest && e.target.closest('#guest-again')){ guestState.sent = false; renderGuest(); return; }
+  const gl = e.target.closest && e.target.closest('[data-guest-like]');
+  if(gl){ likeGuest(gl.dataset.guestLike); return; }
+  if(e.target.closest && e.target.closest('#guest-more-btn')){ guestState.limit += GUEST_PAGE; renderGuest(); return; }
   const ga = e.target.closest && e.target.closest('[data-guest-approve]');
   if(ga){ modGuest(ga.dataset.guestApprove, true); return; }
   const gd = e.target.closest && e.target.closest('[data-guest-del]');
