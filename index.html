@@ -313,9 +313,11 @@ body.abyss .lex-ini.on{color:var(--ink);background:var(--gold-2,#c9a35c);border-
 .lex-cats{display:flex;gap:8px;flex-wrap:wrap}
 .lex-cats .cf-btn{font-size:.72rem;padding:4px 12px}
 .lex-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:0 26px}
-.lex-item{position:relative;padding:9px 8px 9px 10px;border-bottom:1px dashed var(--line-2);min-width:0;cursor:pointer;transition:background .18s}
+.lex-item{position:relative;padding:8px 10px 10px 10px;border-bottom:1px dashed var(--line-2);min-width:0;cursor:pointer;transition:background .18s;touch-action:manipulation}
 .lex-item:hover{background:rgba(160,134,80,.05)}
-.lex-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.lex-item::after{content:"›";position:absolute;right:8px;top:8px;font-size:.9rem;color:var(--ink-3);opacity:.5}
+.lex-item:hover::after{color:var(--cinnabar);opacity:1}
+.lex-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding-right:16px}
 .lex-term{font-family:var(--serif);font-size:.92rem;letter-spacing:.06em;color:var(--ink)}
 .lex-item:hover .lex-term{color:var(--cinnabar)}
 .lex-reading{font-size:.68rem;letter-spacing:.04em;color:var(--ink-3);font-family:var(--sans)}
@@ -324,7 +326,8 @@ body.abyss .lex-ini.on{color:var(--ink);background:var(--gold-2,#c9a35c);border-
 .lex-acts button{width:22px;height:22px;display:grid;place-items:center;font-size:.68rem;background:rgba(236,236,236,.95);border:1px solid var(--line);border-radius:2px;color:var(--ink-2);cursor:pointer}
 body.abyss .lex-acts button{background:rgba(10,11,13,.9)}
 .lex-acts button:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
-.lex-def{font-family:var(--serif);font-size:.78rem;line-height:1.75;color:var(--ink-3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 释义完整显示（不截断），只需紧凑排版 */
+.lex-def{font-family:var(--serif);font-size:.76rem;line-height:1.7;color:var(--ink-2);margin-top:3px;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word}
 .lex-alias{font-family:var(--serif);font-size:.7rem;color:var(--ink-3);opacity:.85;margin-top:2px}
 .lex-detail-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line-2)}
 .lex-related{display:flex;gap:8px;flex-wrap:wrap}
@@ -496,7 +499,7 @@ body.abyss .modal{box-shadow:0 40px 90px -40px rgba(0,0,0,.95),0 0 0 1px rgba(21
 body.abyss .modal header{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent)}
 .modal header::after{content:"";position:absolute;left:22px;right:22px;bottom:-1px;height:1px;background:linear-gradient(90deg,var(--gold),transparent 60%);opacity:.5}
 .modal header h3{margin:0;font-family:var(--serif);font-weight:400;font-size:1.04rem;letter-spacing:.22em;color:var(--ink)}
-.modal-body{padding:24px;overflow-y:auto;overscroll-behavior:contain}
+.modal-body{padding:24px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 .modal footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--line);background:rgba(255,255,255,.25);transition:background .7s}
 body.abyss .modal footer{background:rgba(255,255,255,.02)}
 .close-x{width:30px;height:30px;display:grid;place-items:center;background:transparent;border:1px solid var(--line);border-radius:2px;color:var(--ink-2);cursor:pointer;font-size:.8rem;transition:.25s}
