@@ -450,9 +450,13 @@ body.abyss .gbar.on{color:var(--ink);background:var(--gold-2,#c9a35c);border-col
 .guest-reply:hover{color:var(--gold);border-color:var(--gold)}
 .guest-badge.mine{color:var(--ink-3);border-color:var(--line-2)}
 .guest-item.mine{background:rgba(160,134,80,.05)}
-.guest-item.pinned{background:linear-gradient(90deg,rgba(160,134,80,.13),transparent 72%);border-bottom-color:var(--line)}
-.guest-pin{font-size:.72rem}
-.guest-pin-head{font-family:var(--serif);font-size:.68rem;letter-spacing:.3em;color:var(--gold);text-align:center;padding:16px 0 8px;border-top:1px solid var(--line-2);margin-top:12px}
+.guest-item.pinned{background:linear-gradient(90deg,rgba(160,134,80,.16),rgba(160,134,80,.03) 78%);border-left:3px solid var(--gold);border-bottom-color:var(--line);padding-left:14px;border-radius:2px}
+body.abyss .guest-item.pinned{background:linear-gradient(90deg,rgba(201,163,92,.18),rgba(201,163,92,.03) 78%);border-left-color:var(--gold-2,#c9a35c)}
+.guest-pin{font-size:.78rem;margin-right:2px}
+.guest-badge.pin{color:var(--gold);border-color:var(--gold);background:rgba(160,134,80,.12);letter-spacing:.16em}
+body.abyss .guest-badge.pin{color:var(--gold-2,#c9a35c);border-color:var(--gold-2,#c9a35c)}
+.guest-pin-head{display:flex;align-items:center;gap:12px;margin:8px 0 6px;font-family:var(--serif);font-size:.7rem;letter-spacing:.34em;color:var(--gold)}
+.guest-pin-head::before,.guest-pin-head::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
 .guest-hint b{color:var(--gold);font-weight:400}
 /* 手机端快速通道：顶部横向导航（不用点三条杠也能跳转） */
 @media (max-width:820px){
@@ -3428,12 +3432,12 @@ function guestListHTML(){
     const n = guestState.likes[id] || 0;
     const isPin = pinOk && r.pinned === true;
     let header = '';
-    if(isPin && !pinnedHeaderDrawn && !editMode){ pinnedHeaderDrawn = true; header = `<div class="guest-pin-head">置 顶</div>`; }
+    if(isPin && !pinnedHeaderDrawn){ pinnedHeaderDrawn = true; header = `<div class="guest-pin-head"><span>置 顶</span></div>`; }
     return header + `
     <div class="guest-item${r.approved ? '' : ' pending'}${isOwnerRow(r) ? ' owner' : ''}${mine.has(id) ? ' mine' : ''}${isPin ? ' pinned' : ''}">
       <div class="guest-head">
-        ${isPin ? '<span class="guest-pin">📌</span>' : ''}
-        <span class="guest-name">${esc(String(r.name || '').trim() || '匿名')}</span>
+        <span class="guest-name">${isPin ? '<span class="guest-pin">📌</span>' : ''}${esc(String(r.name || '').trim() || '匿名')}</span>
+        ${isPin ? '<span class="guest-badge pin">置 顶</span>' : ''}
         ${isOwnerRow(r) ? `<span class="guest-badge owner">${esc(ownerLabel())}</span>` : ''}
         ${mine.has(id) ? '<span class="guest-badge mine">我</span>' : ''}
         <span class="guest-time">${esc(String(r.created_at || '').slice(0, 10))}</span>
