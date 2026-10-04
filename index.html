@@ -3486,7 +3486,11 @@ async function postGuest(){
   try{
     const payload = { name, text, approved: asOwner };
     if(asOwner && guestState.ownerColOk !== false) payload.is_owner = true;
-    let res = await withTimeout(sb.from(GUEST_TABLE).insert([payload]).select(), 16000);
+    /* 注意：访客发的是「待审核」留言，读取权限只放行已通过的留言，
+       所以访客这条路绝不能加 .select()（PostgREST 会在 RETURNING 处被 RLS 拒绝）。 */
+    let res = asOwner
+      ? await withTimeout(sb.from(GUEST_TABLE).insert([payload]).select(), 16000)
+      : await withTimeout(sb.from(GUEST_TABLE).insert([payload]), 16000);
     /* is_owner 字段还没建：自动降级重试，不打扰使用者 */
     if(res.error && asOwner && /is_owner|column/i.test(String(res.error.message || ''))){
       guestState.ownerColOk = false;
@@ -3499,6 +3503,10 @@ async function postGuest(){
     if(!asOwner) guestDailyBump();
     const newId = res.data && res.data[0] && res.data[0].id;
     if(newId) markMine(newId);
+    /* 访客读不回自己的待审留言，本地先记一条临时标记，让「我」的标识与计数即时可见 */
+    if(!asOwner && !newId){
+      try{ const s = myGuestIds(); s.add('local-' + Date.now()); localStorage.setItem('fupo-guest-mine', JSON.stringify([...s].slice(-200))); }catch(e){}
+    }
     guestState.sent = true;
     renderGuestForm();
     renderGuest();
@@ -3506,7 +3514,10 @@ async function postGuest(){
     loadGuest(true);
   }catch(e){
     hideProgress();
-    toast('送出失败，请稍后再试');
+    const msg = String((e && e.message) || '');
+    if(/row-level security|42501/i.test(msg)) toast('送出失败：留言区权限未放行，请检查数据库设置');
+    else if(/column|schema/i.test(msg)) toast('送出失败：留言表缺少字段，请在 Supabase 补齐');
+    else toast('送出失败：' + (msg.slice(0, 40) || '请稍后再试'));
   }
 }
 /* 点赞（每次浏览器每条只能点一次；点赞表未建则按钮自动隐藏） */
