@@ -3,6 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- 分享预览（微信 / QQ / 微博 等平台抓取这些标签） -->
+<meta name="description" content="浮魄 —— 人间有非常之地，名曰浮魄。原创妖界与上古的设定、插画与故事：月夜、水涯、银雾。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="浮魄">
+<meta property="og:title" content="浮魄 · 妖界与上古">
+<meta property="og:description" content="人间有非常之地，名曰浮魄。原创设定与插画集：月夜、水涯、银雾。">
+<meta property="og:url" content="https://minggg.top/">
+<meta property="og:image" content="https://minggg.top/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="浮魄 · 妖界与上古">
+<meta name="twitter:description" content="人间有非常之地，名曰浮魄。原创设定与插画集。">
+<meta name="twitter:image" content="https://minggg.top/og-cover.png">
+<meta name="theme-color" content="#ecece6">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#ecece6">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
@@ -2326,12 +2343,28 @@ function openShare(){
         : `<img class="qr-img" src="${esc(qrUrl)}" alt="二维码" onerror="this.style.display='none'">`}
       <div class="url-box" id="share-url">${esc(url)}</div>
       <button class="btn" id="copy-url">复 制 链 接</button>
+      <button class="btn ghost" id="copy-text">复 制 分 享 文 案</button>
       <button class="btn ghost" id="gen-sync">生 成 同 步 码</button>
     </div>
     <div class="tip-box">
-      <strong>手机访问：</strong>把当前页面地址复制到手机浏览器，或者扫码。如果是本地文件，先把 HTML 传到网上（如 GitHub Pages）。<br>
+      <strong>分享到微信 / QQ：</strong>把链接发出去即可，对方会看到标题、简介与封面图（页面已内置分享卡）。<br>
+      <strong>手机访问：</strong>把当前页面地址复制到手机浏览器，或者扫码。<br>
       <strong>同步码：</strong>把当前内容（含表层与上古、含本地图片）压成一段长文本，在手机上打开同一个页面，粘贴这段文字就能恢复内容。
     </div>`
+  });
+  const shareText = (() => {
+    const t = (realm === 'abyss' ? state.meta.abyssTitle : state.meta.title) || '浮魄';
+    const intro = String((realm === 'abyss' ? state.meta.abyssIntro : state.meta.intro) || '').replace(/\*\*/g, '').split('\n')[0].slice(0, 60);
+    return '《' + t + '》' + (intro ? '　' + intro : '') + '\n' + url;
+  })();
+  document.getElementById('copy-text').addEventListener('click', async () => {
+    try{ await navigator.clipboard.writeText(shareText); toast('分享文案已复制'); }
+    catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = shareText; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+      toast('分享文案已复制');
+    }
   });
   document.getElementById('copy-url').addEventListener('click', async () => {
     try{ await navigator.clipboard.writeText(url); toast('已 复 制'); }
