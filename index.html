@@ -674,6 +674,7 @@ a[href]::after{content:""}
     <button class="btn edit-only" data-action="appearance">外观设置</button>
     <button class="btn edit-only" data-action="daily">每日寄语</button>
     <button class="btn edit-only" data-action="changelog">更新日志</button>
+    <button class="btn edit-only" data-action="copyright">版权声明</button>
     <button class="btn" data-action="help">使用说明</button>
     <button class="btn" data-action="share">分享 / 手机访问</button>
     <button class="btn" data-action="sync-code">生成同步码</button>
@@ -1474,6 +1475,9 @@ function normalize(d){
   if(!d.meta.watermark || typeof d.meta.watermark !== 'object') d.meta.watermark = { on: false, text: '' };
   if(typeof d.meta.watermark.on !== 'boolean') d.meta.watermark.on = false;
   if(typeof d.meta.watermark.text !== 'string') d.meta.watermark.text = '';
+  /* 版权声明（可自行编辑；留空用默认措辞） */
+  if(!d.meta.copyright || typeof d.meta.copyright !== 'object') d.meta.copyright = { text: '' };
+  if(typeof d.meta.copyright.text !== 'string') d.meta.copyright.text = '';
   /* 角色扩展字段：主题色 / 生日 / 资料表 / 立绘画廊 / 语录 */
   const normChar = (c) => {
     if(!c || typeof c !== 'object') return c;
@@ -2636,19 +2640,59 @@ function openChangelog(){
   });
 }
 
+/* 版权声明的默认措辞（含约稿作品说明） */
+function defaultNoticeLines(){
+  return [
+    '本站文字由作者本人撰写；站内插画大部分为作者本人绘制，另有部分为作者委托他人创作（约稿）的作品；音乐亦为作者自选与约稿并用。',
+    '上述原创作品与约稿作品的相关权利，分别归作者本人及各原作者所有，均受著作权法保护。',
+    '站内全部插画（含约稿作品）仅用于本站展示。未经作者及相关权利人许可，请勿保存、下载、转载、二次修改或用于任何其他平台及商业用途。',
+    '站内音乐部分来源于网易云音乐等公开平台，部分为作者约稿或经授权使用，仅供个人欣赏与交流，不作任何商业用途；相关权利归原作者及权利方所有。如涉版权问题，请联系作者，将第一时间处理。',
+    '本站为个人非商业性质的原创作品展示站点，内容纯属虚构，如有雷同，纯属巧合。',
+    '本站由作者构思、撰写与绘制，DeepSeek 提供技术支持与实现。'
+  ];
+}
+function noticeLines(){
+  const t = (state.meta && state.meta.copyright && state.meta.copyright.text) || '';
+  const arr = String(t).split('\n').map(s => s.trim()).filter(Boolean);
+  return arr.length ? arr : defaultNoticeLines();
+}
+
 /* 站内声明（访客可见）：版权 / 插图 / 音乐 / 性质 / 制作 */
 function noticeHTML(){
   const y = new Date().getFullYear();
   const author = state.meta && state.meta.author ? esc(state.meta.author) : '';
   return `<section class="site-notice" id="site-notice">
     <div class="nt-mark">浮 魄</div>
-    <p class="nt-line">本站全部文字与插画均为作者原创作品，依法享有著作权。未经作者书面许可，任何单位或个人不得以任何形式转载、摘编、复制、镜像或用于商业用途。</p>
-    <p class="nt-line">站内插画请勿保存、下载、二次修改或用于其他平台发布。</p>
-    <p class="nt-line">站内音乐来源于网易云音乐等公开平台，仅供个人欣赏与交流学习，不作任何商业用途，相关权利归原作者及权利方所有；如涉版权问题，请联系作者删除。</p>
-    <p class="nt-line">本站为个人非商业性质的原创作品展示站点，内容纯属虚构，如有雷同，纯属巧合。</p>
-    <p class="nt-line">本站由作者构思、撰写与绘制，DeepSeek 提供技术支持与实现。</p>
+    ${noticeLines().map(l => `<p class="nt-line">${esc(l)}</p>`).join('')}
     <div class="nt-copy">© ${y} 浮魄${author ? ' · ' + author : ''}　保留所有权利</div>
   </section>`;
+}
+
+/* 版权声明编辑（编辑模式） */
+function openCopyright(){
+  const cur = (state.meta.copyright && state.meta.copyright.text) || '';
+  showModal({
+    title: '版 权 声 明', wide: true, hideFooter: true,
+    body: `<div class="form">
+      <div class="field full"><label>声明内容（每行一段）</label>
+        <textarea id="cr-text" rows="10" placeholder="${esc(defaultNoticeLines().join('\n'))}">${esc(cur || defaultNoticeLines().join('\n'))}</textarea>
+        <span class="hint">显示在页面最末尾；清空并保存则恢复默认措辞</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn small primary" id="cr-save">保 存</button>
+      <button class="btn small ghost" id="cr-reset">恢 复 默 认</button>
+    </div>`,
+  });
+  document.getElementById('cr-save').addEventListener('click', () => {
+    const v = document.getElementById('cr-text').value.trim();
+    state.meta.copyright.text = (v === defaultNoticeLines().join('\n').trim()) ? '' : v;
+    _doSave(); closeModal(true); renderAll(); toast('版权声明已保存');
+  });
+  document.getElementById('cr-reset').addEventListener('click', () => {
+    state.meta.copyright.text = '';
+    _doSave(); closeModal(true); renderAll(); toast('已恢复默认措辞');
+  });
 }
 
 function timelineHTML(){
@@ -4041,7 +4085,7 @@ function openHelp(){
       <div class="help-item"><span class="help-ico">🖼</span><div><strong>插图</strong>每一个文字框下面都有「🖼 插入图片」按钮，上传的图会自动压缩；也可以直接把图片拖进文字框，或者手写 <code>![说明](图片链接)</code>。角色还有专属头像位，首屏有印章图与背景图。</div></div>
       <div class="help-item"><span class="help-ico">🔒</span><div><strong>数据都在哪里</strong>每次点「保存」自动存进这个浏览器；「导出」下载 JSON 备份；「历史快照」每天自动留档；「同步码」可以把表层+上古的全部内容（含图片）搬到手机或其他电脑。</div></div>
       <div class="help-item"><span class="help-ico">↩</span><div><strong>撤销与恢复</strong>编辑模式下 <b>Ctrl+Z</b> 撤销、<b>Ctrl+Shift+Z</b> 重做；删除后 30 秒内右下角提示条可「撤回」。</div></div>
-      <div class="help-item"><span class="help-ico">§</span><div><strong>版权与声明</strong>本站文字、插画均为作者原创，受著作权保护，未经许可禁止转载、复制或用于商业用途；站内音乐来源于网易云音乐等公开平台，仅供个人欣赏交流，权利归原作者及权利方所有；本站为个人非商业性质的原创作品展示站点，内容纯属虚构。全文声明见页面末尾「浮魄」处。</div></div>
+      <div class="help-item"><span class="help-ico">§</span><div><strong>版权与声明</strong>站内文字由作者本人撰写，插画大部分为作者本人绘制、另有部分为委托创作（约稿）作品，音乐为自选与约稿并用；原创与约稿作品的权利分别归作者本人及各原作者所有。全站内容仅供个人欣赏交流，未经许可请勿转载、复制或用于商业用途。完整声明见页面末尾「浮魄」处（编辑模式下可在 ☰ → 版权声明 中自行修改措辞）。</div></div>
     </div>`
   });
 }
@@ -4361,6 +4405,7 @@ document.addEventListener('click', e => {
   if(a === 'appearance'){ if(!editMode){ toast('请先进入编辑，再修改外观'); return; } closeDrawer(); openAppearance(); return; }
   if(a === 'daily'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openDailyNote(); return; }
   if(a === 'changelog'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openChangelog(); return; }
+  if(a === 'copyright'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openCopyright(); return; }
   if(a === 'share'){ closeDrawer(); openShare(); return; }
   if(a === 'sync-code'){ closeDrawer(); openSyncCode(); return; }
   if(a === 'patches'){ closeDrawer(); openPatchManager(); return; }
