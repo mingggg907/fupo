@@ -1790,10 +1790,11 @@ function normalize(d){
   if(!d.meta.copyright || typeof d.meta.copyright !== 'object') d.meta.copyright = { text: '' };
   if(typeof d.meta.copyright.text !== 'string') d.meta.copyright.text = '';
   /* 访客感想墙 */
-  if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true, ownerLabel: '站主', dailyLimit: 3 };
+  if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true, ownerLabel: '站主', dailyLimit: 3, ownerNames: ['站主', 'minggg'] };
   if(typeof d.meta.guest.on !== 'boolean') d.meta.guest.on = true;
   if(typeof d.meta.guest.ownerLabel !== 'string' || !d.meta.guest.ownerLabel.trim()) d.meta.guest.ownerLabel = '站主';
   if(typeof d.meta.guest.dailyLimit !== 'number' || d.meta.guest.dailyLimit < 1) d.meta.guest.dailyLimit = 3;
+  if(!Array.isArray(d.meta.guest.ownerNames) || !d.meta.guest.ownerNames.length) d.meta.guest.ownerNames = ['站主', 'minggg'];
   /* 角色扩展字段：主题色 / 生日 / 资料表 / 立绘画廊 / 语录 */
   const normChar = (c) => {
     if(!c || typeof c !== 'object') return c;
@@ -3368,7 +3369,17 @@ function guestInnerHTML(){
 }
 /* 只渲染留言列表（供自动刷新用，不触碰表单）：分页 + 点赞 + 站主标识 */
 function ownerLabel(){ return ((state.meta && state.meta.guest) || {}).ownerLabel || '站主'; }
-function isOwnerRow(r){ return !!r && !!r.approved && String(r.name || '').trim() === ownerLabel(); }
+/* 站主识别：① 数据库 is_owner 标记 ② 昵称命中站主称呼或曾用名 */
+function ownerNamesList(){
+  const g = (state.meta && state.meta.guest) || {};
+  const list = [ownerLabel()].concat(Array.isArray(g.ownerNames) ? g.ownerNames : []);
+  return [...new Set(list.map(s => String(s || '').trim()).filter(Boolean))];
+}
+function isOwnerRow(r){
+  if(!r || !r.approved) return false;
+  if(r.is_owner === true) return true;
+  return ownerNamesList().indexOf(String(r.name || '').trim()) >= 0;
+}
 function likedSet(){
   try{ return new Set(JSON.parse(localStorage.getItem('fupo-guest-liked') || '[]')); }catch(e){ return new Set(); }
 }
@@ -3473,7 +3484,15 @@ async function postGuest(){
   if(Date.now() - last < 30000){ toast('刚刚已经送出了一条，稍后再写吧'); return; }
   showProgress(null, '正在送出…');
   try{
-    const res = await withTimeout(sb.from(GUEST_TABLE).insert([{ name, text, approved: asOwner }]).select(), 16000);
+    const payload = { name, text, approved: asOwner };
+    if(asOwner && guestState.ownerColOk !== false) payload.is_owner = true;
+    let res = await withTimeout(sb.from(GUEST_TABLE).insert([payload]).select(), 16000);
+    /* is_owner 字段还没建：自动降级重试，不打扰使用者 */
+    if(res.error && asOwner && /is_owner|column/i.test(String(res.error.message || ''))){
+      guestState.ownerColOk = false;
+      delete payload.is_owner;
+      res = await withTimeout(sb.from(GUEST_TABLE).insert([payload]).select(), 16000);
+    }
     hideProgress();
     if(res.error) throw res.error;
     try{ localStorage.setItem('fupo-guest-last', String(Date.now())); }catch(e){}
@@ -3536,6 +3555,41 @@ async function pinGuest(id, on){
       toast('置顶功能需要在 Supabase 建 pinned 字段');
     }else{
       toast('置顶失败：' + (msg.slice(0, 40) || '请检查登录状态'));
+    }
+  }
+}
+/* 一键把「站主曾用名」下的旧留言标为站主并通过审核 */
+async function markOldOwnerMessages(){
+  if(!requireEdit()) return;
+  if(!sbLoggedIn){
+    toast('请先登录云同步');
+    setTimeout(() => { try{ openCloudSettings(); }catch(e){} }, 400);
+    return;
+  }
+  const names = ownerNamesList();
+  if(!confirm('把昵称为「' + names.join('」「') + '」的留言统一标为站主并通过审核？')) return;
+  showProgress(null, '正在处理…');
+  try{
+    const res = await withTimeout(sb.from(GUEST_TABLE).update({ is_owner: true, approved: true }).in('name', names), 20000);
+    hideProgress();
+    if(res.error) throw res.error;
+    toast('已统一标为站主');
+    await loadGuest(true);
+  }catch(e){
+    hideProgress();
+    const msg = String((e && e.message) || '');
+    if(/is_owner|column/i.test(msg)){
+      /* 没有 is_owner 字段：仅按昵称显示头衔也能生效，这里只做审核 */
+      try{
+        const r2 = await withTimeout(sb.from(GUEST_TABLE).update({ approved: true }).in('name', names), 20000);
+        if(r2.error) throw r2.error;
+        toast('已通过审核；头衔按昵称自动显示');
+        await loadGuest(true);
+        return;
+      }catch(e2){ /* 继续走下面提示 */ }
+      toast('请先在 Supabase 建 is_owner 字段');
+    }else{
+      toast('处理失败：' + (msg.slice(0, 40) || '请检查登录状态'));
     }
   }
 }
@@ -5485,7 +5539,7 @@ function openHelp(){
       <div class="help-item"><span class="help-ico">🔒</span><div><strong>数据都在哪里</strong>每次点「保存」自动存进这个浏览器；「导出」下载 JSON 备份；「历史快照」每天自动留档；「同步码」可以把表层+上古的全部内容（含图片）搬到手机或其他电脑。</div></div>
       <div class="help-item"><span class="help-ico">↩</span><div><strong>撤销与恢复</strong>编辑模式下 <b>Ctrl+Z</b> 撤销、<b>Ctrl+Shift+Z</b> 重做；删除后 30 秒内右下角提示条可「撤回」。</div></div>
       <div class="help-item"><span class="help-ico">§</span><div><strong>版权与声明</strong>站内文字由作者本人撰写，插画大部分为作者本人绘制、另有部分为委托创作（约稿）作品，音乐为自选与约稿并用；原创与约稿作品的权利分别归作者本人及各原作者所有。全站内容仅供个人欣赏交流，未经许可请勿转载、复制或用于商业用途。完整声明见页面末尾「浮魄」处（编辑模式下可在 ☰ → 版权声明 中自行修改措辞）。</div></div>
-      <div class="help-item"><span class="help-ico">◱</span><div><strong>感想墙</strong>☰ → 内容工具：可开关、设「每日每人留言上限」与「站主称呼」。留言默认<b>待审核</b>，你在编辑模式（需登录云同步）点「通过」才公开；<b>站主登录后发言免审核</b>，并带站主标识。置顶可同时置顶多条。<br>点赞与置顶需要两张表/字段，在 Supabase 的 SQL Editor 里各跑一次：<br><code>create table if not exists public.fupo_guest_like (id bigint generated by default as identity primary key, created_at timestamptz not null default now(), guest_id bigint not null);<br>alter table public.fupo_guest_like enable row level security;<br>create policy fupo_like_read on public.fupo_guest_like for select using (true);<br>create policy fupo_like_insert on public.fupo_guest_like for insert with check (true);</code><br><code>alter table public.fupo_guest add column if not exists pinned boolean not null default false;</code></div></div>
+      <div class="help-item"><span class="help-ico">◱</span><div><strong>感想墙</strong>☰ → 内容工具：可开关、设「每日每人留言上限」与「站主称呼」。留言默认<b>待审核</b>，你在编辑模式（需登录云同步）点「通过」才公开；<b>站主登录后发言免审核</b>，并带站主标识。置顶可同时置顶多条。<br>点赞与置顶需要两张表/字段，在 Supabase 的 SQL Editor 里各跑一次：<br><code>create table if not exists public.fupo_guest_like (id bigint generated by default as identity primary key, created_at timestamptz not null default now(), guest_id bigint not null);<br>alter table public.fupo_guest_like enable row level security;<br>create policy fupo_like_read on public.fupo_guest_like for select using (true);<br>create policy fupo_like_insert on public.fupo_guest_like for insert with check (true);</code><br><code>alter table public.fupo_guest add column if not exists pinned boolean not null default false;<br>alter table public.fupo_guest add column if not exists is_owner boolean not null default false;</code>（没建 is_owner 时，头衔按「站主曾用名」自动识别，同样能显示。）</div></div>
       <div class="help-item"><span class="help-ico">⌘</span><div><strong>快捷操作</strong><b>Ctrl+K</b> 搜索；<b>Ctrl+Z / Ctrl+Shift+Z</b> 撤销 / 重做；弹窗里 <b>Ctrl+Enter</b> 直接保存；<b>Esc</b> 关闭弹窗；门帘页按 <b>回车</b> 入界；图片点开后 <b>双击</b> 放大、<b>滚轮或双指</b> 缩放、点空白关闭。</div></div>
       <div class="help-item"><span class="help-ico">◱</span><div><strong>内容工具（编辑模式）</strong>☰ → 内容工具：可把「表层」与「上古」的内容**一键互相同步**（覆盖或追加，妖众关系会自动对应），也可以**一键清空**本界选中的栏目；清空后 30 秒内可撤回。</div></div>
     </div>`
@@ -6367,6 +6421,11 @@ function openRealmTools(){
           <span style="font-family:var(--serif);font-size:.82rem;letter-spacing:.1em;color:var(--ink-3)">站主称呼</span>
           <input type="text" id="rt-guest-owner" value="${esc(((state.meta.guest||{}).ownerLabel)||'站主')}" style="width:110px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:5px 8px;font-family:var(--serif)">
         </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap">
+          <span style="font-family:var(--serif);font-size:.82rem;letter-spacing:.1em;color:var(--ink-3)">站主曾用名</span>
+          <input type="text" id="rt-guest-names" value="${esc(((state.meta.guest||{}).ownerNames||[]).join(','))}" placeholder="逗号分隔，例如：站主,minggg" style="flex:1;min-width:180px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:5px 8px;font-family:var(--serif)">
+          <button class="btn small ghost" id="rt-guest-mark" type="button">把旧留言标为站主</button>
+        </div>
         <span class="hint">首次使用需在 Supabase 的 SQL Editor 里建一张 fupo_guest 表（见 ☰ → 使用说明）。未建表时访客看不到这个栏目。</span>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn small" id="rt-guest-save" type="button">保 存 设 置</button>
@@ -6390,11 +6449,15 @@ function openRealmTools(){
     state.meta.guest.dailyLimit = Math.max(1, Math.min(50, lim));
     const ow = ((document.getElementById('rt-guest-owner') || {}).value || '').trim();
     if(ow) state.meta.guest.ownerLabel = ow;
+    const nm = ((document.getElementById('rt-guest-names') || {}).value || '').split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean);
+    if(nm.length) state.meta.guest.ownerNames = nm;
     _doSave(); renderAll();
     toast(state.meta.guest.on ? '感想墙已开启' : '感想墙已关闭');
   });
   const gr = document.getElementById('rt-guest-refresh');
   if(gr) gr.addEventListener('click', async () => { await loadGuest(true); toast('已重新载入留言'); });
+  const gm = document.getElementById('rt-guest-mark');
+  if(gm) gm.addEventListener('click', () => { markOldOwnerMessages(); });
   const src = () => isAb ? state.worlds.surface : state.worlds.abyss;
   const dst = () => isAb ? state.worlds.abyss : state.worlds.surface;
 
