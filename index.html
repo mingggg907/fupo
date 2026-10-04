@@ -87,7 +87,8 @@ body.abyss .abyss-exit{display:inline-block}
 .gate-btn:hover{background:var(--cinnabar-2);transform:translateY(-2px);box-shadow:0 20px 40px -14px rgba(158,51,40,.9)}
 .gate-btn:active{transform:scale(.97)}
 .gate-note{font-family:var(--serif);font-size:.74rem;letter-spacing:.24em;color:var(--ink-3);opacity:.7;margin:22px 0 0;text-indent:.24em;animation:fadeUp 1s var(--ease-out) 1.3s both}
-.drawer{position:fixed;inset:0;z-index:90;background:rgba(31,36,32,.4);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .3s}
+.drawer{position:fixed;inset:0;z-index:90;background:rgba(236,236,230,.6);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .3s}
+body.abyss .drawer{background:rgba(10,11,13,.55)}
 body.abyss .drawer{background:rgba(0,0,0,.6)}
 .drawer.open{opacity:1;pointer-events:auto}
 .drawer-inner{position:absolute;top:0;right:0;bottom:0;width:min(300px,84vw);background:var(--paper);border-left:1px solid var(--line);box-shadow:-24px 0 60px -30px rgba(31,36,32,.6);padding:32px 28px;display:flex;flex-direction:column;gap:4px;transform:translateX(102%);transition:transform .42s var(--ease-out),background .7s;overflow-y:auto}
@@ -97,7 +98,8 @@ body.abyss .drawer{background:rgba(0,0,0,.6)}
 .drawer a:active{color:var(--cinnabar);padding-left:8px}
 .drawer-sep{height:22px}
 .drawer .btn{text-align:center;width:100%;padding:10px;letter-spacing:.24em}
-.search-panel{position:fixed;inset:0;z-index:150;background:rgba(24,28,24,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-start;justify-content:center;padding:clamp(20px,8vh,80px) 16px 16px;opacity:0;pointer-events:none;transition:opacity .28s}
+.search-panel{position:fixed;inset:0;z-index:150;background:rgba(236,236,230,.7);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);display:flex;align-items:flex-start;justify-content:center;padding:clamp(20px,8vh,80px) 16px 16px;opacity:0;pointer-events:none;transition:opacity .28s}
+body.abyss .search-panel{background:rgba(10,11,13,.62)}
 body.abyss .search-panel{background:rgba(0,0,0,.75)}
 .search-panel.open{opacity:1;pointer-events:auto}
 .search-box{width:min(680px,100%);max-height:80vh;display:flex;flex-direction:column;background:var(--paper);border:1px solid rgba(160,134,80,.4);border-radius:3px;box-shadow:0 40px 90px -40px rgba(0,0,0,.75);transform:translateY(-12px) scale(.985);transition:transform .32s var(--ease-out),background .7s;overflow:hidden}
@@ -296,6 +298,24 @@ body.abyss .quote-item{background:rgba(255,255,255,.03)}
 /* 正文里的角色名（可点击跳到该角色档案） */
 .name-link{font:inherit;color:inherit;background:transparent;border:0;border-bottom:1px dashed var(--gold);padding:0 1px;cursor:pointer;transition:.2s}
 .name-link:hover{color:var(--cinnabar);border-bottom-color:var(--cinnabar)}
+.lex-link{border-bottom-style:dotted;border-bottom-color:var(--ink-3)}
+/* 词典 */
+.lex-tools{display:flex;flex-direction:column;gap:14px;align-items:center;margin:0 0 26px}
+.lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:10px 14px;font-family:var(--serif);font-size:.92rem;letter-spacing:.06em;text-align:center}
+body.abyss .lex-input{background:rgba(255,255,255,.05)}
+.lex-input:focus{outline:none;border-color:var(--gold)}
+.lex-cats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.lex-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 30px}
+.lex-item{position:relative;padding:16px 12px 16px 14px;border-bottom:1px solid var(--line-2);min-width:0}
+.lex-term{font-family:var(--serif);font-size:1.02rem;letter-spacing:.1em;color:var(--ink);cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.lex-term:hover{color:var(--cinnabar)}
+.lex-reading{font-size:.72rem;letter-spacing:.06em;color:var(--ink-3);font-family:var(--sans)}
+.lex-cat{display:inline-block;margin-top:6px;font-family:var(--serif);font-size:.68rem;letter-spacing:.14em;color:var(--gold);border:1px solid var(--line-2);border-radius:99px;padding:2px 9px}
+.lex-def{font-family:var(--serif);font-size:.84rem;line-height:1.95;color:var(--ink-2);margin-top:9px;word-break:break-word}
+.lex-alias{font-family:var(--serif);font-size:.74rem;letter-spacing:.06em;color:var(--ink-3);margin-top:7px}
+.lex-empty{font-family:var(--serif);font-size:.84rem;letter-spacing:.2em;color:var(--ink-3);text-align:center;padding:34px 0;grid-column:1/-1}
+.lex-more{text-align:center;margin-top:22px;grid-column:1/-1}
+@media (max-width:640px){.lex-list{grid-template-columns:1fr}}
 .fupo-lightbox .lb-cap{position:absolute;left:0;right:0;bottom:20px;text-align:center;color:rgba(255,255,255,.85);font-family:var(--serif);font-size:.82rem;letter-spacing:.18em;text-indent:.18em;pointer-events:none}
 .fupo-lightbox .lb-close{position:absolute;top:14px;right:20px;width:40px;height:40px;display:grid;place-items:center;color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;opacity:.85;background:rgba(255,255,255,.08);border-radius:50%;border:none}
 .fupo-lightbox .lb-close:hover{opacity:1;background:rgba(255,255,255,.16)}
@@ -645,6 +665,7 @@ a[href]::after{content:""}
     <a href="#chars">妖众</a>
     <a href="#timeline">纪年</a>
     <a href="#stories">卷帙</a>
+    <a href="#lexicon">词典</a>
   </nav>
   <button class="abyss-exit" id="abyss-exit">退 出 上 古</button>
   <button class="icon-btn" id="search-open" aria-label="搜索" title="搜索（Ctrl+K）">⌕</button>
@@ -681,28 +702,28 @@ a[href]::after{content:""}
     <a href="#chars">妖众</a>
     <a href="#timeline">纪年</a>
     <a href="#stories">卷帙</a>
+    <a href="#lexicon">词典</a>
     <div class="drawer-sep"></div>
     <p class="drawer-title">管 理</p>
     <button class="btn" data-action="search">搜索</button>
     <button class="btn" data-action="music">音乐设置</button>
-    <button class="btn" data-action="edit">编辑</button>
-    <button class="btn" data-action="cloud">云同步设置</button>
     <button class="btn" data-action="read">阅读设置</button>
+    <button class="btn" data-action="share">分享 / 手机访问</button>
+    <button class="btn" data-action="edit">编辑</button>
+    <p class="drawer-title edit-only">编 辑 工 具</p>
+    <button class="btn edit-only" data-action="cloud">云同步设置</button>
     <button class="btn edit-only" data-action="appearance">外观设置</button>
     <button class="btn edit-only" data-action="daily">每日寄语</button>
     <button class="btn edit-only" data-action="changelog">更新日志</button>
     <button class="btn edit-only" data-action="copyright">版权声明</button>
     <button class="btn edit-only" data-action="realm-tools">内容工具</button>
-    <button class="btn" data-action="help">使用说明</button>
-    <button class="btn" data-action="share">分享 / 手机访问</button>
-    <button class="btn" data-action="sync-code">生成同步码</button>
-    <button class="btn ghost" data-action="export">导出备份</button>
-    <button class="btn ghost" data-action="import">导入备份</button>
-    <div class="drawer-sep"></div>
-    <p class="drawer-title">安 全</p>
-    <button class="btn ghost" data-action="patches">补丁管理</button>
-    <button class="btn ghost" data-action="snapshots">历史快照</button>
-    <button class="btn ghost" data-action="reset-del-warn">恢复删除提醒</button>
+    <button class="btn edit-only" data-action="help">使用说明</button>
+    <button class="btn edit-only" data-action="sync-code">生成同步码</button>
+    <button class="btn edit-only ghost" data-action="export">导出备份</button>
+    <button class="btn edit-only ghost" data-action="import">导入备份</button>
+    <button class="btn edit-only ghost" data-action="patches">补丁管理</button>
+    <button class="btn edit-only ghost" data-action="snapshots">历史快照</button>
+    <button class="btn edit-only ghost" data-action="reset-del-warn">恢复删除提醒</button>
   </div>
 </div>
 
@@ -948,7 +969,7 @@ const DEFAULT_DATA = {
     gate:{ enabled:true, sub:"FU PO · YAO ZHI JIE", title:"浮魄", tip:"月夜 · 水涯 · 银雾", btn:"入 界", note:"点击进入，音乐随之响起" },
     abyssEntry:{ label:"上古力量", sub:"点 此 揭 开 另 一 层" },
     abyssExit:{ label:"归 返 表 层", sub:"回到你熟悉的那层浮魄" },
-    labels:{ abyssMark:"上 古 之 力", abyssExitBtn:"退 出 上 古", worldSurface:"妖界", worldAbyss:"上古秘录", chars:"妖众", timeline:"纪年", stories:"卷帙" },
+    labels:{ abyssMark:"上 古 之 力", abyssExitBtn:"退 出 上 古", worldSurface:"妖界", worldAbyss:"上古秘录", chars:"妖众", timeline:"纪年", stories:"卷帙", lexicon:"词典" },
   },
   worlds:{
     surface:{
@@ -1155,11 +1176,20 @@ async function cloudLoad(opts){
   return { ok:false, error: lastErr };
 }
 /* 左下角状态标签：让"到底连上没有"一眼可见，读取失败可点击重试 */
+function isEditorNow(){
+  try{ return !!(editMode || sbLoggedIn || (typeof editUnlocked === 'function' && editUnlocked())); }catch(e){ return !!editMode; }
+}
+/* 只给编辑者看的提示（访客界面保持干净，不出现同步/保存类提示） */
+function editorToast(msg){
+  if(isEditorNow()) toast(msg);
+}
 function setCloudStatus(kind, text){
   try{
     if(!sbConfigured()) return;
     const el = document.getElementById('cloud-chip');
     if(!el) return;
+    /* 访客不显示同步状态标签（只有编辑者/已登录者看得到） */
+    if(!isEditorNow()){ el.style.display = 'none'; return; }
     el.dataset.kind = kind;
     el.textContent = text;
     el.style.display = '';
@@ -1205,7 +1235,7 @@ async function pollCloudOnce(){
       applyState(r.state);
       if(Array.isArray(r.patches)) patches = r.patches;
       applyPatches(); renderAllKeepScroll(); reloadMusicKeepState();
-      toast('已 同 步 到 最 新 内 容');
+      editorToast('已 同 步 到 最 新 内 容');
     }
   }finally{
     pollInFlight = false;
@@ -1252,7 +1282,7 @@ async function cloudSave(opts){
     saveCloudCache(state, patches, stamp);   /* 保存成功也刷新本地缓存 */
     /* 如果覆盖掉的是比本页更新的一版，明确告知（已自动备份，可找回） */
     if(curRow && curRow.updated_at && opts.baseStamp && curRow.updated_at !== opts.baseStamp){
-      toast('已保存到云端（覆盖了较新的一版，可在「云同步设置 → 恢复云端上一版」找回）');
+      editorToast('已保存到云端（覆盖了较新的一版，可在「云同步设置 → 恢复云端上一版」找回）');
     }
     return true;
   }catch(e){
@@ -1287,7 +1317,7 @@ function subscribeCloud(){
           if(Array.isArray(row[SB_COL_PATCHES])) patches = row[SB_COL_PATCHES];
           if(row.updated_at) lastCloudStamp = row.updated_at;
           applyPatches(); renderAllKeepScroll(); reloadMusicKeepState();
-          toast('已 从 云 端 同 步 最 新 内 容');
+          editorToast('已 从 云 端 同 步 最 新 内 容');
         }catch(err){ console.warn('云端数据解析失败', err); }
       })
       .subscribe((status, err) => {
@@ -1507,7 +1537,8 @@ function normalize(d){
       worldAbyss: '上古秘录',
       chars: '妖众',
       timeline: '纪年',
-      stories: '卷帙'
+      stories: '卷帙',
+      lexicon: '词典'
     };
     Object.keys(defs).forEach(k => { if(typeof L[k] !== 'string') L[k] = defs[k]; });
   }
@@ -1543,13 +1574,15 @@ function normalize(d){
         sections: stripAbyssFields(surfaceSections),
         characters: Array.isArray(d.characters) ? clone(d.characters) : [],
         timeline: Array.isArray(d.timeline) ? clone(d.timeline) : [],
-        stories: Array.isArray(d.stories) ? clone(d.stories) : []
+        stories: Array.isArray(d.stories) ? clone(d.stories) : [],
+        lexicon: []
       },
       abyss:{
         sections: buildAbyssSections(surfaceSections),
         characters: Array.isArray(d.characters) ? clone(d.characters) : [],
         timeline: Array.isArray(d.timeline) ? clone(d.timeline) : [],
-        stories: Array.isArray(d.stories) ? clone(d.stories) : []
+        stories: Array.isArray(d.stories) ? clone(d.stories) : [],
+        lexicon: []
       }
     };
     delete d.sections; delete d.characters; delete d.timeline; delete d.stories;
@@ -1572,6 +1605,18 @@ function normalize(d){
     w.characters = w.characters.map(c => { if(!Array.isArray(c.relations)) c.relations = []; if(!Array.isArray(c.tags)) c.tags = []; return normChar(c); });
     w.timeline = w.timeline.filter(t => t && typeof t === 'object');
     w.stories = w.stories.filter(s => s && typeof s === 'object');
+    /* 词典（词条）：独立栏目，像字典一样按词条收录设定名词 */
+    if(!Array.isArray(w.lexicon)) w.lexicon = [];
+    w.lexicon = w.lexicon.filter(x => x && typeof x === 'object').map(x => ({
+      id: x.id || uid(),
+      term: typeof x.term === 'string' ? x.term : '',
+      reading: typeof x.reading === 'string' ? x.reading : '',
+      aliases: typeof x.aliases === 'string' ? x.aliases : '',
+      cat: typeof x.cat === 'string' ? x.cat : '',
+      def: typeof x.def === 'string' ? x.def : '',
+      note: typeof x.note === 'string' ? x.note : ''
+    }));
+    if(!Array.isArray(w.storiesChapters)) w.storiesChapters = [];
     if(rk === 'surface'){
       w.sections.forEach(sec => { delete sec.abyssTitle; delete sec.abyssIcon; (sec.entries||[]).forEach(e => { delete e.abyssTitle; delete e.abyssContent; }); });
     }
@@ -2499,7 +2544,12 @@ function heroHTML(){
 }
 
 function sectionsHTML(){
-  const list = W().sections;
+  let list = W().sections;
+  /* 访客界面：完全空的内容不显示（编辑时才显示「完善中」占位） */
+  if(!editMode){
+    list = list.filter(s => (s.entries || []).length);
+    if(!list.length) return '';
+  }
   const ae = state.meta.abyssEntry || {};
   const isAbyss = realm === 'abyss';
   return `<section class="sec" id="world">
@@ -2586,6 +2636,7 @@ function charCardsHTML(list){
 }
 function charactersHTML(){
   const all = W().characters;
+  if(!editMode && !all.length) return '';
   const facets = [...new Set(all.flatMap(c => (c.status ? [c.status] : []).concat(c.tags || [])))].filter(Boolean).slice(0, 14);
   const list = charFilter ? all.filter(c => c.status === charFilter || (c.tags || []).includes(charFilter)) : all;
   return `<section class="sec" id="chars">
@@ -2616,8 +2667,148 @@ function applyLabels(){
   if(exit) exit.textContent = LBL('abyssExitBtn', '退 出 上 古');
   const nav = document.querySelectorAll('.topbar .nav a');
   const worldLabel = (realm === 'abyss') ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '妖界');
-  const navTexts = [worldLabel, LBL('chars', '妖众'), LBL('timeline', '纪年'), LBL('stories', '卷帙')];
+  const navTexts = [worldLabel, LBL('chars', '妖众'), LBL('timeline', '纪年'), LBL('stories', '卷帙'), LBL('lexicon', '词典')];
   nav.forEach((a, i) => { if(navTexts[i]) a.textContent = navTexts[i]; });
+}
+
+/* ============================================================
+   词典（独立栏目）：像字典一样收录名词
+   ============================================================ */
+let lexQuery = '';
+let lexCat = '';
+let lexLimit = 60;            /* 减压：一次最多渲染这么多条，其余按需载入 */
+const LEX_STEP = 60;
+
+function lexMatch(x, q){
+  if(!q) return true;
+  const hay = (x.term + ' ' + x.reading + ' ' + x.aliases + ' ' + x.cat + ' ' + x.def + ' ' + x.note).toLowerCase();
+  return hay.indexOf(q.toLowerCase()) >= 0;
+}
+function lexCats(list){
+  return [...new Set(list.map(x => (x.cat || '').trim()).filter(Boolean))].slice(0, 18);
+}
+function lexEntryHTML(x){
+  return `<div class="lex-item" data-act="open-lex" data-id="${x.id}">
+    <div class="lex-term">${esc(x.term || '未命名')}${x.reading ? `<span class="lex-reading">${esc(x.reading)}</span>` : ''}</div>
+    ${x.cat ? `<span class="lex-cat">${esc(x.cat)}</span>` : ''}
+    <div class="lex-def">${esc(plain(x.def || '', 90)) || '<span class="pf-empty">释义完善中</span>'}</div>
+    ${x.aliases ? `<div class="lex-alias">别名：${esc(x.aliases)}</div>` : ''}
+    ${editMode ? `<div class="tools">
+      <button data-act="edit-lex" data-id="${x.id}" title="编辑">✎</button>
+      <button data-act="up-lex" data-id="${x.id}" title="上移">↑</button>
+      <button data-act="down-lex" data-id="${x.id}" title="下移">↓</button>
+      <button data-act="del-lex" data-id="${x.id}" title="删除">✕</button>
+    </div>` : ''}
+  </div>`;
+}
+function lexiconHTML(){
+  const all = W().lexicon || [];
+  if(!editMode && !all.length) return '';
+  const cats = lexCats(all);
+  const filtered = all.filter(x => lexMatch(x, lexQuery) && (!lexCat || (x.cat || '').trim() === lexCat));
+  const shown = filtered.slice(0, lexLimit);
+  return `<section class="sec" id="lexicon">
+    <div class="sec-head">
+      <h2>${esc(LBL('lexicon', '词典'))}</h2>
+      ${editMode ? `<button class="btn small" data-act="add-lex">+ 新增词条</button>` : ''}
+    </div>
+    ${all.length ? `<div class="lex-tools">
+      <input type="text" id="lex-search" class="lex-input" placeholder="检索词条…" value="${esc(lexQuery)}">
+      ${cats.length ? `<div class="lex-cats">
+        <button class="cf-btn${lexCat ? '' : ' on'}" data-lex-cat="">全部</button>
+        ${cats.map(c => `<button class="cf-btn${lexCat === c ? ' on' : ''}" data-lex-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+      </div>` : ''}
+    </div>` : ''}
+    <div class="lex-list" id="lex-list">
+      ${filtered.length ? shown.map(lexEntryHTML).join('')
+        : (all.length ? '<div class="lex-empty">没有匹配的词条</div>' : wipHTML('词典完善中', true))}
+    </div>
+    ${filtered.length > shown.length ? `<div class="lex-more"><button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button></div>` : ''}
+  </section>`;
+}
+function renderLexList(){
+  const box = document.getElementById('lex-list');
+  if(!box) return;
+  const all = W().lexicon || [];
+  const filtered = all.filter(x => lexMatch(x, lexQuery) && (!lexCat || (x.cat || '').trim() === lexCat));
+  const shown = filtered.slice(0, lexLimit);
+  box.innerHTML = filtered.length ? shown.map(lexEntryHTML).join('') : '<div class="lex-empty">没有匹配的词条</div>';
+  const more = document.querySelector('.lex-more');
+  if(more){
+    if(filtered.length > shown.length) more.innerHTML = `<button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button>`;
+    else more.innerHTML = '';
+  }
+}
+function openLex(id){
+  const x = (W().lexicon || []).find(y => y.id === id);
+  if(!x) return;
+  showModal({
+    title: x.term || '未命名', wide: true, hideFooter: true,
+    body: `<div class="reader">
+      <p class="reader-meta">${esc([x.reading, x.cat].filter(Boolean).join(' · ') || '词 条')}</p>
+      ${x.aliases ? `<p class="lex-alias" style="margin-bottom:14px">别名：${esc(x.aliases)}</p>` : ''}
+      ${x.def ? `<div class="entry-content">${linkTerms(fmt(x.def))}</div>` : wipHTML('释义完善中', true)}
+      ${x.note ? `<p class="reader-meta" style="margin-top:22px">补 充</p><div class="entry-content">${linkTerms(fmt(x.note))}</div>` : ''}
+    </div>`
+  });
+}
+function openLexEditor(id, isNew){
+  const list = W().lexicon;
+  const x = isNew ? {} : list.find(y => y.id === id);
+  if(!isNew && !x) return;
+  showModal({
+    title: (isNew ? '新 增 词 条' : '编 辑 词 条') + '（' + rl() + '）', wide: true,
+    body: realmHint() + `<div class="form">
+      <div class="field" data-field="term"><label>词条</label><input type="text" value="${esc(x.term || '')}" placeholder="例如：沉生树"></div>
+      <div class="field" data-field="reading"><label>读音 / 拼音</label><input type="text" value="${esc(x.reading || '')}" placeholder="chén shēng shù"></div>
+      <div class="field" data-field="cat"><label>分类</label><input type="text" value="${esc(x.cat || '')}" placeholder="草木 / 地理 / 器物 / 术法 / 称谓"></div>
+      <div class="field" data-field="aliases"><label>别名（逗号分隔）</label><input type="text" value="${esc(x.aliases || '')}" placeholder="恒春树，沉生"></div>
+      <div class="field full" data-field="def"><label>释义</label><textarea rows="6" placeholder="一两句话写清它是什么">${esc(x.def || '')}</textarea><span class="hint">空行分段，支持 **加粗** 与插图</span></div>
+      <div class="field full" data-field="note"><label>补充（出处 / 典故 / 备注）</label><textarea rows="4">${esc(x.note || '')}</textarea></div>
+    </div>`,
+    onOk(){
+      const get = k => modalRoot.querySelector(`[data-field="${k}"] input[type=text]`)?.value.trim() || '';
+      const getTa = k => modalRoot.querySelector(`[data-field="${k}"] textarea`)?.value.trim() || '';
+      const data = { term: get('term') || '未命名', reading: get('reading'), cat: get('cat'), aliases: get('aliases'), def: getTa('def'), note: getTa('note') };
+      if(isNew) list.push({ id: uid(), ...data });
+      else Object.assign(x, data);
+      save(); renderAll(); toast('已 保 存（' + rl() + '）');
+    }
+  });
+}
+async function doDeleteLex(id){
+  const list = W().lexicon;
+  const x = list.find(y => y.id === id);
+  if(!x) return;
+  const ok = await confirmDelete(x.term || '未命名', '词条 · ' + rl());
+  if(!ok) return;
+  pushHistory();
+  const idx = list.findIndex(y => y.id === id);
+  const backup = deep(x);
+  list.splice(idx, 1);
+  _doSave(); renderAll();
+  showUndoToast('已删除词条「' + (x.term || '') + '」', () => { list.splice(idx, 0, backup); _doSave(); renderAll(); });
+}
+
+/* 正文里的名词/角色名 → 可点链接（词典与妖众联动） */
+function linkTerms(html){
+  const chars = (W().characters || []).filter(c => c && c.name && String(c.name).length >= 2);
+  const terms = (W().lexicon || []).filter(x => x && x.term && String(x.term).length >= 2);
+  if(!chars.length && !terms.length) return html;
+  return String(html).split(/(<[^>]+>)/).map(part => {
+    if(!part || part.charAt(0) === '<') return part;
+    chars.forEach(c => {
+      const name = String(c.name);
+      if(part.indexOf(name) < 0) return;
+      part = part.split(name).join(`<button class="name-link" data-act="open-character" data-id="${esc(c.id)}">${esc(name)}</button>`);
+    });
+    terms.forEach(x => {
+      const t = String(x.term);
+      if(part.indexOf(t) < 0) return;
+      part = part.split(t).join(`<button class="name-link lex-link" data-act="open-lex" data-id="${esc(x.id)}">${esc(t)}</button>`);
+    });
+    return part;
+  }).join('');
 }
 
 /* 每日寄语（只有编辑过才显示） */
@@ -2769,6 +2960,7 @@ function openCopyright(){
 
 function timelineHTML(){
   const list = W().timeline;
+  if(!editMode && !list.length) return '';
   return `<section class="sec" id="timeline">
     <div class="sec-head">
       <h2>${esc(LBL('timeline', '纪年'))}</h2>
@@ -2794,6 +2986,7 @@ function timelineHTML(){
 
 function storiesHTML(){
   const list = W().stories;
+  if(!editMode && !list.length) return '';
   return `<section class="sec" id="stories">
     <div class="sec-head">
       <h2>${esc(LBL('stories', '卷帙'))}</h2>
@@ -2870,7 +3063,7 @@ function renderAll(){
     seal.innerHTML = esc(isAbyss ? '◈' : (title || '浮').slice(0, 1));
     seal.style.background = '';
   }
-  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + storiesHTML() + changelogHTML() + noticeHTML();
+  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + storiesHTML() + lexiconHTML() + changelogHTML() + noticeHTML();
   document.body.classList.toggle('editing', editMode);
   document.querySelectorAll('[data-action="edit"]').forEach(b => {
     b.textContent = editMode ? '完成编辑' : '编辑';
@@ -2894,6 +3087,17 @@ function renderAll(){
   try{ buildToc(); }catch(e){}
   try{ refreshResumePill(); }catch(e){}
   try{ updateTocActive(); }catch(e){}
+  /* 词典检索框（输入即筛选，不重画整页） */
+  try{
+    const ls = document.getElementById('lex-search');
+    if(ls){
+      ls.addEventListener('input', () => {
+        lexQuery = ls.value.trim();
+        lexLimit = LEX_STEP;
+        renderLexList();
+      });
+    }
+  }catch(e){}
 }
 
 let richIO = null;
@@ -3327,20 +3531,8 @@ function openCharacter(id){
     </div>`
   });
 }
-/* 纪年 × 妖众联动：正文里出现的角色名自动变成可点链接 */
-function linkCharNames(html){
-  const chars = (W().characters || []).filter(c => c && c.name && String(c.name).length >= 2);
-  if(!chars.length) return html;
-  return String(html).split(/(<[^>]+>)/).map(part => {
-    if(!part || part.charAt(0) === '<') return part;
-    chars.forEach(c => {
-      const name = String(c.name);
-      if(part.indexOf(name) < 0) return;
-      part = part.split(name).join(`<button class="name-link" data-act="open-character" data-id="${esc(c.id)}">${esc(name)}</button>`);
-    });
-    return part;
-  }).join('');
-}
+/* 兼容保留：正文里的角色名 → 可点链接（现统一走 linkTerms） */
+function linkCharNames(html){ return linkTerms(html); }
 function openTimeline(id){
   const t = W().timeline.find(x => x.id === id);
   if(!t) return;
@@ -3348,7 +3540,7 @@ function openTimeline(id){
     title: t.title, hideFooter: true,
     body: `<div class="reader">
       ${t.time ? `<p class="reader-meta">${esc(t.time)}</p>` : ''}
-      <div class="entry-content">${linkCharNames(fmt(t.desc))}</div>
+      <div class="entry-content">${linkTerms(fmt(t.desc))}</div>
     </div>`
   });
 }
@@ -3396,6 +3588,16 @@ app.addEventListener('click', e => {
     return;
   }
   const el = e.target.closest('[data-act]');
+  /* 词典：分类筛选 / 载入更多 */
+  const lc = e.target.closest('[data-lex-cat]');
+  if(lc){
+    lexCat = lc.dataset.lexCat || '';
+    lexLimit = LEX_STEP;
+    document.querySelectorAll('[data-lex-cat]').forEach(b => b.classList.toggle('on', (b.dataset.lexCat || '') === lexCat));
+    renderLexList();
+    return;
+  }
+  if(e.target.closest && e.target.closest('#lex-more-btn')){ lexLimit += LEX_STEP; renderLexList(); return; }
   /* 关系图导出 */
   if(e.target.closest && e.target.closest('#graph-export')){ exportRelationGraph(); return; }
   /* 妖众筛选：只重画角色列表，不整页刷新（更省、更不打断阅读） */
@@ -3420,6 +3622,12 @@ app.addEventListener('click', e => {
   if(act === 'enter-realm'){ const r = el.getBoundingClientRect(); setRealm('abyss', { x: r.left + r.width/2, y: r.top + r.height/2 }); return; }
   if(act === 'exit-realm'){ const r = el.getBoundingClientRect(); setRealm('surface', { x: r.left + r.width/2, y: r.top + r.height/2 }); return; }
   if(act === 'open-character'){ openCharacter(id); return; }
+  if(act === 'open-lex'){ openLex(id); return; }
+  if(act === 'edit-lex'){ openLexEditor(id, false); return; }
+  if(act === 'add-lex'){ openLexEditor(null, true); return; }
+  if(act === 'up-lex'){ moveArr('lexicon', id, -1); return; }
+  if(act === 'down-lex'){ moveArr('lexicon', id, 1); return; }
+  if(act === 'del-lex'){ doDeleteLex(id); return; }
   if(act === 'open-timeline'){ openTimeline(id); return; }
   if(act === 'open-story'){ openStory(id); return; }
   if(act === 'edit-meta'){ openMetaEditor(); return; }
@@ -3686,6 +3894,7 @@ function openMetaEditor(){
       <div class="field" data-field="lb_chars"><label>妖众栏目名</label><input type="text" value="${esc(L.chars || '')}" placeholder="妖众"></div>
       <div class="field" data-field="lb_timeline"><label>纪年栏目名</label><input type="text" value="${esc(L.timeline || '')}" placeholder="纪年"></div>
       <div class="field" data-field="lb_stories"><label>卷帙栏目名</label><input type="text" value="${esc(L.stories || '')}" placeholder="卷帙"></div>
+      <div class="field" data-field="lb_lexicon"><label>词典栏目名</label><input type="text" value="${esc(L.lexicon || '')}" placeholder="词典"></div>
     </div>`;
   })();
   showModal({
@@ -3726,6 +3935,7 @@ function openMetaEditor(){
       state.meta.labels.chars = get('lb_chars') || '妖众';
       state.meta.labels.timeline = get('lb_timeline') || '纪年';
       state.meta.labels.stories = get('lb_stories') || '卷帙';
+      state.meta.labels.lexicon = get('lb_lexicon') || '词典';
       if(isAb){
         state.meta.abyssTitle = get('title');
         state.meta.abyssSubtitle = get('subtitle');
@@ -3988,6 +4198,11 @@ function buildIndex(){
         sectionTitle:'卷帙', entryTitle:s.title, title:s.title,
         text: (s.summary||'') + ' ' + (s.content||''), keywords: s.keywords || '' });
     });
+    (W().lexicon || []).forEach(x => {
+      items.push({ type:'lex', sectionId:'lexicon', entryId:x.id,
+        sectionTitle: LBL('lexicon','词典'), entryTitle:x.term, title:x.term,
+        text: (x.def || '') + ' ' + (x.note || '') + ' ' + (x.aliases || ''), keywords: [x.cat||'', x.reading||'', x.aliases||''].join(' ') });
+    });
   }
   return items;
 }
@@ -4125,6 +4340,7 @@ searchResults.addEventListener('click', e => {
   if(type === 'character'){ closeSearch(); setTimeout(() => openCharacter(eid), 200); }
   else if(type === 'timeline'){ closeSearch(); setTimeout(() => openTimeline(eid), 200); }
   else if(type === 'story'){ closeSearch(); setTimeout(() => openStory(eid), 200); }
+  else if(type === 'lex'){ closeSearch(); setTimeout(() => openLex(eid), 200); }
   else jumpToSection(sid, eid);
 });
 searchHint.addEventListener('click', e => {
@@ -4765,7 +4981,7 @@ function setRealm(r, origin){
       applyPatches();
       renderAll();
       loadMusic();
-      toast(draft ? '已 载 入 云 端 内 容（本机另有一份未上传的修改，可在云同步设置里上传）' : '已 加 载 云 端 内 容');
+      editorToast(draft ? '已 载 入 云 端 内 容（本机另有一份未上传的修改，可在云同步设置里上传）' : '已 加 载 云 端 内 容');
     }else{
       /* 云端还没有内容：把当前内容（优先本机草稿）作为第一版上传 */
       _doSave();
@@ -5337,9 +5553,10 @@ function buildToc(){
     const t = w.querySelector('.world-title');
     if(t) items.push({ el: w, label: t.textContent.trim().slice(0, 10) });
   });
-  push('#chars', '妖众');
-  push('#timeline', '纪年');
-  push('#stories', '卷帙');
+  push('#chars', LBL('chars', '妖众'));
+  push('#timeline', LBL('timeline', '纪年'));
+  push('#stories', LBL('stories', '卷帙'));
+  push('#lexicon', LBL('lexicon', '词典'));
   push('#changelog', '更新');
   push('#site-notice', '声明');
   if(items.length < 3){ if(toc) toc.remove(); return; }
