@@ -185,6 +185,100 @@ html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjus
 .site-notice .nt-copy{margin-top:24px;font-size:.72rem;letter-spacing:.18em;opacity:.85;text-indent:.18em}
 /* 图片防盗：禁止拖拽另存与长按菜单（文字仍可正常选中） */
 .rich-img, .inline-img, .fupo-lightbox img, .img-preview, .hero-cover, .char-avatar{-webkit-user-drag:none;user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+/* 「完善中」标记：内容尚未撰写时的雅致占位 */
+.wip{display:inline-flex;align-items:center;gap:6px;font-family:var(--serif);font-size:.72rem;letter-spacing:.22em;color:var(--gold);border:1px solid var(--line-2);border-radius:99px;padding:4px 14px;text-indent:.22em;opacity:.9}
+.wip::before{content:"✎";font-size:.7rem;opacity:.7}
+.wip-block{display:flex;justify-content:center;padding:44px 0 52px;grid-column:1/-1}
+/* 每日寄语 */
+.daily-note{max-width:760px;margin:6px auto 54px;padding:26px 30px 28px;border:1px solid var(--line-2);border-radius:3px;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.12));position:relative;box-shadow:0 20px 46px -34px rgba(0,0,0,.5)}
+body.abyss .daily-note{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012))}
+.daily-note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--gold),transparent)}
+.daily-note .dn-head{font-family:var(--serif);font-size:.74rem;letter-spacing:.42em;color:var(--gold);text-indent:.42em;margin-bottom:14px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.daily-note .dn-date{font-size:.68rem;letter-spacing:.16em;color:var(--ink-3);text-indent:0;flex:none}
+.daily-note .dn-text{font-family:var(--serif);font-size:1rem;line-height:2.2;color:var(--ink);white-space:pre-wrap;word-break:break-word;text-indent:0;margin:0}
+/* 更新日志 */
+.log-list{display:flex;flex-direction:column;gap:0;max-width:820px;margin:0 auto}
+.log-item{display:flex;gap:18px;padding:14px 4px;border-bottom:1px dashed var(--line-2)}
+.log-item:last-child{border-bottom:none}
+.log-date{flex:none;font-family:var(--serif);font-size:.76rem;letter-spacing:.12em;color:var(--gold);min-width:96px;padding-top:3px}
+.log-text{font-family:var(--serif);font-size:.88rem;line-height:2;color:var(--ink-2);min-width:0;word-break:break-word}
+/* 妖众：筛选条 / 生辰 / 主题色 */
+.char-filter{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 26px}
+.cf-btn{font-family:var(--serif);font-size:.76rem;letter-spacing:.14em;padding:6px 15px;border:1px solid var(--line);border-radius:99px;background:transparent;color:var(--ink-3);cursor:pointer;transition:.22s}
+.cf-btn:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
+.cf-btn.on{color:var(--paper);background:var(--ink);border-color:var(--ink)}
+body.abyss .cf-btn.on{color:var(--ink);background:var(--gold-2,#c9a35c);border-color:transparent}
+.char-card{--accent:var(--gold)}
+.char-card h3{color:var(--ink)}
+.char-card::before{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:linear-gradient(90deg,var(--accent),transparent 70%);opacity:.85}
+.tag.status{border-color:var(--accent);color:var(--accent)}
+.bd-badge{font-family:var(--serif);font-size:.62rem;letter-spacing:.14em;color:var(--cinnabar);border:1px solid var(--cinnabar);border-radius:99px;padding:2px 8px;vertical-align:middle;margin-left:6px}
+/* 角色详情页 */
+.char-page{--accent:var(--gold)}
+.cp-head{display:flex;gap:22px;align-items:center;margin-bottom:26px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.cp-avatar{width:104px;height:104px;flex:none;border-radius:3px;overflow:hidden;border:1px solid var(--line);background:var(--paper-2);display:grid;place-items:center}
+.cp-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.cp-meta{min-width:0;display:flex;flex-direction:column;gap:10px}
+.cp-bd{font-family:var(--serif);font-size:.78rem;letter-spacing:.2em;color:var(--cinnabar)}
+.cp-sec{margin-bottom:26px}
+.pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0 26px;border-top:1px solid var(--line-2)}
+.pf-row{display:flex;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line-2);font-family:var(--serif);font-size:.86rem;line-height:1.9}
+.pf-k{flex:none;width:62px;color:var(--ink-3);letter-spacing:.1em}
+.pf-v{flex:1;min-width:0;color:var(--ink);word-break:break-word}
+.pf-empty{color:var(--ink-3);opacity:.55;letter-spacing:.12em;font-size:.94em}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.gal-item{margin:0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--paper-2)}
+.gal-item img{width:100%;display:block;aspect-ratio:3/4;object-fit:cover;cursor:zoom-in}
+.gal-item figcaption{font-family:var(--serif);font-size:.74rem;letter-spacing:.1em;color:var(--ink-3);padding:8px 10px;text-align:center}
+.quote-list{display:flex;flex-direction:column;gap:12px}
+.quote-item{margin:0;padding:14px 18px;border-left:2px solid var(--accent);background:rgba(255,255,255,.35);font-family:var(--serif);font-size:.92rem;line-height:2.1;color:var(--ink-2)}
+body.abyss .quote-item{background:rgba(255,255,255,.03)}
+.rel-list{display:flex;gap:10px;flex-wrap:wrap}
+.rel-chip{font-family:var(--serif);font-size:.84rem;letter-spacing:.1em;padding:7px 14px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--ink);cursor:pointer;transition:.22s;display:inline-flex;align-items:center;gap:8px}
+.rel-chip:hover{border-color:var(--accent);color:var(--accent)}
+.rel-label{font-size:.72rem;color:var(--ink-3);letter-spacing:.06em}
+.appear-list{display:flex;flex-direction:column;gap:8px}
+.appear-item{display:flex;gap:14px;align-items:baseline;width:100%;text-align:left;padding:9px 12px;border:1px solid var(--line-2);border-radius:2px;background:transparent;cursor:pointer;transition:.2s}
+.appear-item:hover{border-color:var(--accent)}
+.ap-time{flex:none;font-family:var(--serif);font-size:.74rem;letter-spacing:.12em;color:var(--gold);min-width:92px}
+.ap-title{font-family:var(--serif);font-size:.88rem;color:var(--ink);min-width:0}
+/* 图库编辑（角色编辑里的多图） */
+.gal-edit{display:flex;flex-direction:column;gap:10px}
+.gal-row{display:flex;gap:10px;align-items:center}
+.gal-row .img-preview{width:54px;height:54px;flex:none}
+.gal-row input[type=text]{flex:1;min-width:0}
+@media (max-width:640px){
+  .cp-head{gap:16px}
+  .cp-avatar{width:82px;height:82px}
+  .pf-grid{grid-template-columns:1fr}
+  .gallery{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+}
+/* 侧边目录（长页面导航） */
+#toc{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:2px;max-width:180px;opacity:0;pointer-events:none;transition:opacity .35s}
+#toc.on{opacity:1;pointer-events:auto}
+.toc-item{font-family:var(--serif);font-size:.7rem;letter-spacing:.1em;color:var(--ink-3);text-align:right;padding:4px 11px;border:0;border-right:2px solid transparent;background:transparent;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.2s}
+.toc-item:hover{color:var(--cinnabar)}
+.toc-item.on{color:var(--ink);border-right-color:var(--cinnabar)}
+@media (max-width:1080px){#toc{display:none}}
+/* 继续阅读 */
+#resume-pill{position:fixed;right:20px;bottom:134px;z-index:70;display:none;align-items:center;gap:8px;font-family:var(--serif);font-size:.76rem;letter-spacing:.14em;padding:9px 16px;border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--ink);box-shadow:0 14px 30px -18px rgba(0,0,0,.55);cursor:pointer}
+#resume-pill.on{display:inline-flex}
+#resume-pill:hover{border-color:var(--cinnabar);color:var(--cinnabar)}
+/* 大图水印层 */
+.wm-layer{position:absolute;inset:0;pointer-events:none;background-repeat:repeat;opacity:.42;mix-blend-mode:overlay}
+.gal-item{position:relative}
+.fupo-lightbox .wm-layer{opacity:.3}
+/* 关系图：节点用角色主题色，连线按关系类型着色 */
+.rel-node circle{stroke:var(--nc,var(--gold))}
+.rel-node .rel-node-name{fill:var(--ink)}
+/* 阅读行距（访客可调） */.entry-content{line-height:var(--read-lh,2.15)}
+.dn-text{line-height:var(--read-lh,2.2)}
+.log-text{line-height:var(--read-lh,2)}
+.quote-item{line-height:var(--read-lh,2.1)}
+.story-sum{line-height:var(--read-lh,2)}
+/* 正文里的角色名（可点击跳到该角色档案） */
+.name-link{font:inherit;color:inherit;background:transparent;border:0;border-bottom:1px dashed var(--gold);padding:0 1px;cursor:pointer;transition:.2s}
+.name-link:hover{color:var(--cinnabar);border-bottom-color:var(--cinnabar)}
 .fupo-lightbox .lb-cap{position:absolute;left:0;right:0;bottom:20px;text-align:center;color:rgba(255,255,255,.85);font-family:var(--serif);font-size:.82rem;letter-spacing:.18em;text-indent:.18em;pointer-events:none}
 .fupo-lightbox .lb-close{position:absolute;top:14px;right:20px;width:40px;height:40px;display:grid;place-items:center;color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;opacity:.85;background:rgba(255,255,255,.08);border-radius:50%;border:none}
 .fupo-lightbox .lb-close:hover{opacity:1;background:rgba(255,255,255,.16)}
@@ -576,7 +670,10 @@ a[href]::after{content:""}
     <button class="btn" data-action="music">音乐设置</button>
     <button class="btn" data-action="edit">编辑</button>
     <button class="btn" data-action="cloud">云同步设置</button>
-    <button class="btn" data-action="appearance">外观设置</button>
+    <button class="btn" data-action="read">阅读设置</button>
+    <button class="btn edit-only" data-action="appearance">外观设置</button>
+    <button class="btn edit-only" data-action="daily">每日寄语</button>
+    <button class="btn edit-only" data-action="changelog">更新日志</button>
     <button class="btn" data-action="help">使用说明</button>
     <button class="btn" data-action="share">分享 / 手机访问</button>
     <button class="btn" data-action="sync-code">生成同步码</button>
@@ -1233,9 +1330,9 @@ function fmt(text){
   return String(text).trim().split(/\n{2,}/).map(p=>{
     const t = p.trim();
     const only = t.match(/^!\[(.*?)\]\((.*?)\)$/);
-    if(only) return `<figure class="rich-img"><img src="${esc(only[2])}" alt="${esc(only[1])}" loading="lazy">${only[1]?`<figcaption>${esc(only[1])}</figcaption>`:''}</figure>`;
+    if(only) return `<figure class="rich-img"><img src="${esc(only[2])}" alt="${esc(only[1])}" loading="lazy" decoding="async">${only[1]?`<figcaption>${esc(only[1])}</figcaption>`:''}</figure>`;
     let html = esc(p);
-    html = html.replace(/!\[(.*?)\]\((.*?)\)/g,(m,alt,url)=>`<img src="${url}" alt="${alt}" class="inline-img" loading="lazy">`);
+    html = html.replace(/!\[(.*?)\]\((.*?)\)/g,(m,alt,url)=>`<img src="${url}" alt="${alt}" class="inline-img" loading="lazy" decoding="async">`);
     html = html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     return `<p>${html}</p>`;
   }).join('');
@@ -1367,6 +1464,29 @@ function normalize(d){
   if(typeof d.meta.bgImage.abyss !== 'string') d.meta.bgImage.abyss = '';
   if(typeof d.meta.bgImage.dim !== 'number' || !isFinite(d.meta.bgImage.dim)) d.meta.bgImage.dim = 72;
   d.meta.bgImage.dim = Math.max(0, Math.min(92, Math.round(d.meta.bgImage.dim)));
+  /* 每日寄语（编辑了才显示） */
+  if(!d.meta.notice || typeof d.meta.notice !== 'object') d.meta.notice = { text: '', at: 0 };
+  if(typeof d.meta.notice.text !== 'string') d.meta.notice.text = '';
+  if(typeof d.meta.notice.at !== 'number') d.meta.notice.at = 0;
+  /* 更新日志 */
+  if(!Array.isArray(d.meta.changelog)) d.meta.changelog = [];
+  /* 大图水印 */
+  if(!d.meta.watermark || typeof d.meta.watermark !== 'object') d.meta.watermark = { on: false, text: '' };
+  if(typeof d.meta.watermark.on !== 'boolean') d.meta.watermark.on = false;
+  if(typeof d.meta.watermark.text !== 'string') d.meta.watermark.text = '';
+  /* 角色扩展字段：主题色 / 生日 / 资料表 / 立绘画廊 / 语录 */
+  const normChar = (c) => {
+    if(!c || typeof c !== 'object') return c;
+    if(typeof c.color !== 'string') c.color = '';
+    if(typeof c.birthday !== 'string') c.birthday = '';
+    if(typeof c.status !== 'string') c.status = '';
+    if(!Array.isArray(c.gallery)) c.gallery = [];
+    else c.gallery = c.gallery.filter(g => g && typeof g.url === 'string').map(g => ({ url: g.url, caption: typeof g.caption === 'string' ? g.caption : '' }));
+    if(!Array.isArray(c.quotes)) c.quotes = [];
+    else c.quotes = c.quotes.filter(q => typeof q === 'string');
+    if(!c.profile || typeof c.profile !== 'object') c.profile = {};
+    return c;
+  };
 
   d.meta.music = normMusic(d.meta.music);
   if(!d.meta.abyssMusic || typeof d.meta.abyssMusic !== 'object' || (!Array.isArray(d.meta.abyssMusic.tracks) && !d.meta.abyssMusic.url && !d.meta.abyssMusic.localId)){
@@ -1409,7 +1529,7 @@ function normalize(d){
       s.entries = s.entries.map(e => (e && typeof e === 'object') ? e : { id: uid(), title:'未命名', content:'' });
       return s;
     });
-    w.characters = w.characters.map(c => { if(!Array.isArray(c.relations)) c.relations = []; if(!Array.isArray(c.tags)) c.tags = []; return c; });
+    w.characters = w.characters.map(c => { if(!Array.isArray(c.relations)) c.relations = []; if(!Array.isArray(c.tags)) c.tags = []; return normChar(c); });
     w.timeline = w.timeline.filter(t => t && typeof t === 'object');
     w.stories = w.stories.filter(s => s && typeof s === 'object');
     if(rk === 'surface'){
@@ -2353,12 +2473,12 @@ function sectionsHTML(){
                     <div class="entry-content">${fmt(e.content)}</div>
                     ${itemTools('entry', e.id, j, s.entries.length, s.id)}
                   </div>`).join('')
-                  : `<p style="color:var(--ink-3);font-family:var(--serif);letter-spacing:.2em;padding:18px 0">尚 无 子 条 目</p>`}
+                  : wipHTML('此篇完善中', true)}
               </div>
             </div>
           </div>
         </div>`).join('')
-        : `<p style="color:var(--ink-3);font-family:var(--serif);letter-spacing:.2em;text-align:center;padding:48px 0">尚 无 大 分 区</p>`}
+        : wipHTML('本卷完善中', true)}
     </div>
     ${isAbyss ? `
       <div class="abyss-entry" data-act="exit-realm">
@@ -2374,38 +2494,146 @@ function sectionsHTML(){
   </section>`;
 }
 
+let charFilter = '';
+function charAccent(c){ return (c && c.color) ? c.color : 'var(--gold)'; }
+function charBirthdayToday(c){
+  const b = String((c && c.birthday) || '').trim();
+  const m = b.match(/^(\d{1,2})-(\d{1,2})$/);
+  if(!m) return false;
+  const t = new Date();
+  return (t.getMonth() + 1) === Number(m[1]) && t.getDate() === Number(m[2]);
+}
+function charCardsHTML(list){
+  if(!list.length) return wipHTML(charFilter ? '此类妖众完善中' : '妖众名录完善中', true);
+  return list.map((c, i) => `
+    <article class="char-card" data-act="open-character" data-id="${c.id}" style="--accent:${esc(charAccent(c))}">
+      <div class="char-top">
+        <div class="avatar">
+          ${c.avatar ? `<img src="${esc(c.avatar)}" alt="${esc(c.name)}" loading="lazy">`
+                     : `<span class="avatar-ph">${esc((c.name || '？').slice(0,1))}</span>`}
+        </div>
+        <div style="min-width:0">
+          <h3>${esc(c.name)}${charBirthdayToday(c) ? ' <span class="bd-badge">今日生辰</span>' : ''}</h3>
+          ${(c.status || (c.tags && c.tags.length)) ? `<div class="tags">${c.status ? `<span class="tag status">${esc(c.status)}</span>` : ''}${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+        </div>
+      </div>
+      <p class="char-excerpt">${c.desc ? esc(plain(c.desc, 56)) : '资料完善中'}</p>
+      ${editMode ? `<div class="tools">
+        <button data-act="edit-character" data-id="${c.id}">✎</button>
+        <button data-act="del-character" data-id="${c.id}">✕</button>
+      </div>` : ''}
+    </article>`).join('');
+}
 function charactersHTML(){
-  const list = W().characters;
+  const all = W().characters;
+  const facets = [...new Set(all.flatMap(c => (c.status ? [c.status] : []).concat(c.tags || [])))].filter(Boolean).slice(0, 14);
+  const list = charFilter ? all.filter(c => c.status === charFilter || (c.tags || []).includes(charFilter)) : all;
   return `<section class="sec" id="chars">
     <div class="sec-head">
       <h2>妖众</h2>
       ${editMode ? `<button class="btn small" data-act="add-character">+ 新增角色</button>` : ''}
     </div>
-    <div class="char-grid">
-      ${list.length ? list.map((c, i) => `
-        <article class="char-card" data-act="open-character" data-id="${c.id}">
-          <div class="char-top">
-            <div class="avatar">
-              ${c.avatar ? `<img src="${esc(c.avatar)}" alt="${esc(c.name)}" loading="lazy">`
-                         : `<span class="avatar-ph">${esc((c.name || '？').slice(0,1))}</span>`}
-            </div>
-            <div style="min-width:0">
-              <h3>${esc(c.name)}</h3>
-              ${(c.tags && c.tags.length) ? `<div class="tags">${c.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
-            </div>
-          </div>
-          <p class="char-excerpt">${esc(plain(c.desc, 56))}</p>
-          ${editMode ? `<div class="tools">
-            <button data-act="edit-character" data-id="${c.id}">✎</button>
-            <button data-act="up-character" data-id="${c.id}" ${i === 0 ? 'disabled' : ''}>↑</button>
-            <button data-act="down-character" data-id="${c.id}" ${i === list.length - 1 ? 'disabled' : ''}>↓</button>
-            <button data-act="del-character" data-id="${c.id}">✕</button>
-          </div>` : ''}
-        </article>`).join('')
-        : `<p style="color:var(--ink-3);font-family:var(--serif);letter-spacing:.2em;text-align:center;padding:48px 0;grid-column:1/-1">尚 无 角 色</p>`}
-    </div>
-    ${list.length ? `<div class="relation-wrap"><span class="relation-title">关 系 网</span><div id="relation-graph"></div></div>` : ''}
+    ${(facets.length && all.length > 1) ? `<div class="char-filter">
+      <button class="cf-btn${charFilter ? '' : ' on'}" data-char-filter="">全部</button>
+      ${facets.map(t => `<button class="cf-btn${charFilter === t ? ' on' : ''}" data-char-filter="${esc(t)}">${esc(t)}</button>`).join('')}
+    </div>` : ''}
+    <div class="char-grid" id="char-grid">${charCardsHTML(list)}</div>
+    ${all.length ? `<div class="relation-wrap"><span class="relation-title">关 系 网</span><div id="relation-graph"></div>
+      <div style="text-align:center;margin-top:14px"><button class="btn small ghost" type="button" id="graph-export">导 出 关 系 图</button></div>
+    </div>` : ''}
   </section>`;
+}
+
+/* 每日寄语（只有编辑过才显示） */
+function dailyNoteHTML(){
+  const n = (state.meta && state.meta.notice) || {};
+  const text = (n.text || '').trim();
+  if(!text) return '';
+  const when = n.at ? new Date(n.at) : null;
+  const dateStr = when ? `${when.getFullYear()}·${String(when.getMonth()+1).padStart(2,'0')}·${String(when.getDate()).padStart(2,'0')}` : '';
+  return `<section class="daily-note" id="daily-note">
+    <div class="dn-head"><span>寄 语</span>${dateStr ? `<span class="dn-date">${dateStr}</span>` : ''}</div>
+    <p class="dn-text">${esc(text)}</p>
+  </section>`;
+}
+
+/* 「完善中」占位 */
+function wipHTML(label, block){
+  const el = `<span class="wip">${esc(label || '完善中')}</span>`;
+  return block ? `<div class="wip-block">${el}</div>` : el;
+}
+
+/* 更新日志（有内容才显示） */
+function changelogHTML(){
+  const list = (state.meta && Array.isArray(state.meta.changelog)) ? state.meta.changelog : [];
+  if(!list.length) return '';
+  const rows = list.slice().sort((a, b) => String((b && b.date) || '').localeCompare(String((a && a.date) || '')));
+  return `<section class="sec" id="changelog">
+    <div class="sec-head"><h2>志 · 更 新</h2></div>
+    <div class="log-list">
+      ${rows.map(r => `<div class="log-item">
+        <span class="log-date">${esc((r && r.date) || '')}</span>
+        <div class="log-text">${fmt((r && r.text) || '')}</div>
+      </div>`).join('')}
+    </div>
+  </section>`;
+}
+
+/* 每日寄语编辑（编辑模式） */
+function openDailyNote(){
+  const n = (state.meta && state.meta.notice) || { text: '', at: 0 };
+  showModal({
+    title: '每 日 寄 语', wide: true, hideFooter: true,
+    body: `<div class="form">
+      <div class="field full"><label>寄语内容</label>
+        <textarea id="dn-text" rows="6" placeholder="今天想说的话…">${esc(n.text || '')}</textarea>
+        <span class="hint">保存后会显示在页面顶部（不写就不显示）</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn small primary" id="dn-save">保 存</button>
+      <button class="btn small ghost" id="dn-clear">清 空</button>
+    </div>`,
+  });
+  const apply = (text) => {
+    state.meta.notice.text = text;
+    state.meta.notice.at = text ? Date.now() : 0;
+    _doSave();
+    closeModal(true);
+    renderAll();
+    toast(text ? '寄语已展示在页面顶部' : '寄语已清空');
+  };
+  document.getElementById('dn-save').addEventListener('click', () => apply(document.getElementById('dn-text').value.trim()));
+  document.getElementById('dn-clear').addEventListener('click', () => apply(''));
+}
+
+/* 更新日志编辑（编辑模式） */
+function openChangelog(){
+  const list = (state.meta && Array.isArray(state.meta.changelog)) ? state.meta.changelog : [];
+  const text = list.map(r => ((r && r.date) ? r.date + ' ' : '') + ((r && r.text) || '')).join('\n');
+  showModal({
+    title: '更 新 日 志', wide: true, hideFooter: true,
+    body: `<div class="form">
+      <div class="field full"><label>每行一条</label>
+        <textarea id="cl-text" rows="10" placeholder="2026-10-05 新增妖众名录与关系网">${esc(text)}</textarea>
+        <span class="hint">行首写日期（2026-10-05）即可，不写则记为今天</span>
+      </div>
+    </div>
+    <div style="margin-top:16px"><button class="btn small primary" id="cl-save">保 存</button></div>`,
+  });
+  document.getElementById('cl-save').addEventListener('click', () => {
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const rows = document.getElementById('cl-text').value.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const m = line.match(/^(\d{4}-\d{1,2}-\d{1,2})\s*(.*)$/);
+      return m ? { date: m[1], text: m[2] } : { date: todayStr, text: line };
+    });
+    state.meta.changelog = rows;
+    _doSave();
+    closeModal(true);
+    renderAll();
+    toast('更新日志已保存');
+  });
 }
 
 /* 站内声明（访客可见）：版权 / 插图 / 音乐 / 性质 / 制作 */
@@ -2443,7 +2671,7 @@ function timelineHTML(){
             <button data-act="del-timeline" data-id="${t.id}">✕</button>
           </div>` : ''}
         </div>`).join('')
-        : `<p style="color:var(--ink-3);font-family:var(--serif);letter-spacing:.2em;text-align:center;padding:32px 0">尚 无 纪 年</p>`}
+        : wipHTML('纪年完善中', true)}
     </div>
   </section>`;
 }
@@ -2471,7 +2699,7 @@ function storiesHTML(){
             <button data-act="del-story" data-id="${s.id}">✕</button>
           </div>` : ''}
         </div>`).join('')
-        : `<p style="color:var(--ink-3);font-family:var(--serif);letter-spacing:.2em;text-align:center;padding:32px 0">尚 无 卷 帙</p>`}
+        : wipHTML('卷帙完善中', true)}
     </div>
   </section>`;
 }
@@ -2526,7 +2754,7 @@ function renderAll(){
     seal.innerHTML = esc(isAbyss ? '◈' : (title || '浮').slice(0, 1));
     seal.style.background = '';
   }
-  app.innerHTML = heroHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + storiesHTML() + noticeHTML();
+  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + storiesHTML() + changelogHTML() + noticeHTML();
   document.body.classList.toggle('editing', editMode);
   document.querySelectorAll('[data-action="edit"]').forEach(b => {
     b.textContent = editMode ? '完成编辑' : '编辑';
@@ -2540,11 +2768,14 @@ function renderAll(){
   try{ if(typeof FUPO_BG !== 'undefined') FUPO_BG.apply(); }catch(e){}
   /* 自定义背景图（表层 / 上古 各一张） */
   try{ if(typeof applyCustomBg === 'function') applyCustomBg(); }catch(e){}
-  /* 「外观设置」只在编辑模式出现（访客看不到入口） */
+  /* 「外观设置 / 每日寄语 / 更新日志」只在编辑模式出现（访客看不到入口） */
   try{
-    const ap = document.querySelector('[data-action="appearance"]');
-    if(ap) ap.style.display = editMode ? '' : 'none';
+    document.querySelectorAll('.edit-only').forEach(b => { b.style.display = editMode ? '' : 'none'; });
   }catch(e){}
+  /* 阅读辅助：侧边目录 + 继续阅读 */
+  try{ buildToc(); }catch(e){}
+  try{ refreshResumePill(); }catch(e){}
+  try{ updateTocActive(); }catch(e){}
 }
 
 let richIO = null;
@@ -2611,7 +2842,9 @@ function renderRelationGraph(){
   let svg = `<svg class="relation-svg" viewBox="0 0 ${GRAPH_W} ${GRAPH_H}" preserveAspectRatio="xMidYMid meet">`;
   svg += `<defs><clipPath id="${clipId}"><circle r="26" cx="0" cy="0"/></clipPath></defs>`;
   lines.forEach(l => {
-    svg += `<line class="rel-line" data-a="${l.from.id}" data-b="${l.to.id}" x1="${l.from._x}" y1="${l.from._y}" x2="${l.to._x}" y2="${l.to._y}"/>`;
+    const hue = String(l.label || '').split('').reduce((a, ch) => a + ch.charCodeAt(0), 0) % 360;
+    const lc = l.label ? `hsl(${hue} 40% 52%)` : '';
+    svg += `<line class="rel-line" data-a="${l.from.id}" data-b="${l.to.id}" x1="${l.from._x}" y1="${l.from._y}" x2="${l.to._x}" y2="${l.to._y}"${lc ? ` style="stroke:${lc}"` : ''}/>`;
     if(l.label){
       const mx = (l.from._x + l.to._x) / 2, my = (l.from._y + l.to._y) / 2;
       svg += `<text class="rel-label" data-a="${l.from.id}" data-b="${l.to.id}" x="${mx}" y="${my}" text-anchor="middle">${esc(l.label)}</text>`;
@@ -2620,7 +2853,7 @@ function renderRelationGraph(){
   chars.forEach(c => {
     const name = esc(c.name || '？');
     const initial = esc((c.name || '？').slice(0, 1));
-    svg += `<g class="rel-node" data-id="${c.id}" transform="translate(${c._x},${c._y})">
+    svg += `<g class="rel-node" data-id="${c.id}" transform="translate(${c._x},${c._y})" style="--nc:${esc(charAccent(c))}">
       <circle r="30"/>
       ${c.avatar
         ? `<image href="${esc(c.avatar)}" x="-26" y="-26" width="52" height="52" clip-path="url(#${clipId})" preserveAspectRatio="xMidYMid slice"/>`
@@ -2920,25 +3153,75 @@ function compressImage(file){
 function openCharacter(id){
   const c = W().characters.find(x => x.id === id);
   if(!c) return;
+  const accent = charAccent(c);
   const rels = (c.relations || []).map(r => {
     const t = W().characters.find(x => x.id === r.target);
-    return t ? `与「${esc(t.name)}」：${esc(r.label || '')}` : '';
+    return t ? { id: t.id, name: t.name, label: r.label || '' } : null;
   }).filter(Boolean);
+  const prof = c.profile || {};
+  const PROF_LABELS = [['race','种族'],['age','年龄'],['height','身高'],['birthday','生日'],['camp','阵营'],['role','身份'],['weapon','武器'],['element','属性'],['voice','口头禅'],['like','喜好'],['hate','厌恶']];
+  const profRows = PROF_LABELS.map(([k, label]) => {
+    let v = prof[k] || '';
+    if(k === 'birthday' && !v && c.birthday) v = c.birthday;
+    return `<div class="pf-row"><span class="pf-k">${label}</span><span class="pf-v">${v ? esc(v) : '<span class="pf-empty">待完善</span>'}</span></div>`;
+  }).join('');
+  const gallery = (c.gallery || []);
+  const quotes = (c.quotes || []);
+  const name = c.name || '';
+  const appears = name ? W().timeline.filter(t => ((t.title || '') + (t.desc || '') + (t.time || '')).indexOf(name) >= 0) : [];
+  const bdToday = charBirthdayToday(c) || (function(){
+    const b = String(c.birthday || '').trim(); const m = b.match(/^(\d{1,2})-(\d{1,2})$/); const p = prof.birthday ? String(prof.birthday).match(/(\d{1,2})-(\d{1,2})/) : null;
+    const mm = m || p; if(!mm) return false; const t = new Date();
+    return (t.getMonth() + 1) === Number(mm[1]) && t.getDate() === Number(mm[2]);
+  })();
   showModal({
-    title: c.name, hideFooter: true,
-    body: `<div class="reader">
-      <div class="char-top" style="margin-bottom:20px">
-        <div class="avatar" style="width:88px;height:88px">
-          ${c.avatar ? `<img src="${esc(c.avatar)}" alt="${esc(c.name)}">` : `<span class="avatar-ph">${esc((c.name||'？').slice(0,1))}</span>`}
+    title: name || '未命名', wide: true, hideFooter: true,
+    body: `<div class="char-page" style="--accent:${esc(accent)}">
+      <div class="cp-head">
+        <div class="cp-avatar">
+          ${c.avatar ? `<img src="${esc(c.avatar)}" alt="${esc(name)}">` : `<span class="avatar-ph">${esc((name || '？').slice(0,1))}</span>`}
         </div>
-        <div style="min-width:0">
-          ${(c.tags && c.tags.length) ? `<div class="tags">${c.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+        <div class="cp-meta">
+          ${(c.status || (c.tags && c.tags.length)) ? `<div class="tags">${c.status ? `<span class="tag status">${esc(c.status)}</span>` : ''}${(c.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+          ${bdToday ? `<div class="cp-bd">今日生辰 · 谨贺</div>` : ''}
         </div>
       </div>
-      <div class="entry-content">${fmt(c.desc)}</div>
-      ${rels.length ? `<p class="reader-meta" style="margin-top:24px">关 系</p><div class="entry-content">${rels.map(r => `<p>${r}</p>`).join('')}</div>` : ''}
+
+      <div class="cp-sec">
+        <p class="reader-meta">资 料</p>
+        <div class="pf-grid">${profRows}</div>
+      </div>
+
+      ${c.desc ? `<div class="cp-sec"><p class="reader-meta">小 传</p><div class="entry-content">${fmt(c.desc)}</div></div>` : `<div class="cp-sec"><p class="reader-meta">小 传</p>${wipHTML('小传完善中', true)}</div>`}
+
+      <div class="cp-sec">
+        <p class="reader-meta">立 绘</p>
+        ${gallery.length ? `<div class="gallery">${gallery.map((g, i) => `
+          <figure class="gal-item"><img class="inline-img" src="${esc(g.url)}" alt="${esc(g.caption || (name + ' 立绘'))}" loading="lazy">${(state.meta && state.meta.watermark && state.meta.watermark.on) ? wmLayerHTML() : ''}${g.caption ? `<figcaption>${esc(g.caption)}</figcaption>` : ''}</figure>`).join('')}</div>`
+          : wipHTML('立绘完善中', true)}
+      </div>
+
+      ${quotes.length ? `<div class="cp-sec"><p class="reader-meta">语 录</p><div class="quote-list">${quotes.map(q => `<blockquote class="quote-item">${esc(q)}</blockquote>`).join('')}</div></div>` : ''}
+
+      ${rels.length ? `<div class="cp-sec"><p class="reader-meta">关 系</p><div class="rel-list">${rels.map(r => `<button class="rel-chip" data-act="open-character" data-id="${esc(r.id)}">${esc(r.name)}${r.label ? `<span class="rel-label">${esc(r.label)}</span>` : ''}</button>`).join('')}</div></div>` : ''}
+
+      ${appears.length ? `<div class="cp-sec"><p class="reader-meta">出 场 纪 年</p><div class="appear-list">${appears.map(t => `<button class="appear-item" data-act="open-timeline" data-id="${esc(t.id)}"><span class="ap-time">${esc(t.time || '')}</span><span class="ap-title">${esc(t.title || '')}</span></button>`).join('')}</div></div>` : ''}
     </div>`
   });
+}
+/* 纪年 × 妖众联动：正文里出现的角色名自动变成可点链接 */
+function linkCharNames(html){
+  const chars = (W().characters || []).filter(c => c && c.name && String(c.name).length >= 2);
+  if(!chars.length) return html;
+  return String(html).split(/(<[^>]+>)/).map(part => {
+    if(!part || part.charAt(0) === '<') return part;
+    chars.forEach(c => {
+      const name = String(c.name);
+      if(part.indexOf(name) < 0) return;
+      part = part.split(name).join(`<button class="name-link" data-act="open-character" data-id="${esc(c.id)}">${esc(name)}</button>`);
+    });
+    return part;
+  }).join('');
 }
 function openTimeline(id){
   const t = W().timeline.find(x => x.id === id);
@@ -2947,7 +3230,7 @@ function openTimeline(id){
     title: t.title, hideFooter: true,
     body: `<div class="reader">
       ${t.time ? `<p class="reader-meta">${esc(t.time)}</p>` : ''}
-      <div class="entry-content">${fmt(t.desc)}</div>
+      <div class="entry-content">${linkCharNames(fmt(t.desc))}</div>
     </div>`
   });
 }
@@ -2995,6 +3278,20 @@ app.addEventListener('click', e => {
     return;
   }
   const el = e.target.closest('[data-act]');
+  /* 关系图导出 */
+  if(e.target.closest && e.target.closest('#graph-export')){ exportRelationGraph(); return; }
+  /* 妖众筛选：只重画角色列表，不整页刷新（更省、更不打断阅读） */
+  const cf = e.target.closest('[data-char-filter]');
+  if(cf){
+    charFilter = cf.dataset.charFilter || '';
+    document.querySelectorAll('[data-char-filter]').forEach(b => b.classList.toggle('on', (b.dataset.charFilter || '') === charFilter));
+    const grid = document.getElementById('char-grid');
+    if(grid){
+      const all = W().characters;
+      grid.innerHTML = charCardsHTML(charFilter ? all.filter(c => c.status === charFilter || (c.tags || []).includes(charFilter)) : all);
+    }
+    return;
+  }
   if(!el) return;
   const { act, id } = el.dataset;
   if(act === 'toggle-section'){
@@ -3294,16 +3591,33 @@ function openMetaEditor(){
 }
 function openCharacterEditor(id, isNew){
   const list = W().characters;
-  const c = isNew ? { tags:[], relations:[] } : list.find(x => x.id === id);
+  const c = isNew ? { tags:[], relations:[], gallery:[], quotes:[], profile:{} } : list.find(x => x.id === id);
   if(!isNew && !c) return;
   const relText = (c.relations || []).map(r => `${r.target}:${r.label || ''}`).join(', ');
   const otherChars = list.filter(x => x.id !== id);
+  const prof = c.profile || {};
+  const PF = [['race','种族'],['age','年龄'],['height','身高'],['camp','阵营'],['role','身份'],['weapon','武器'],['element','属性'],['voice','口头禅'],['like','喜好'],['hate','厌恶']];
+  const galRows = (c.gallery || []).map((g, i) => galRowHTML(g, i)).join('');
   showModal({
     title: (isNew ? '新 增 角 色' : '编 辑 角 色') + '（' + rl() + '）',
+    wide: true,
     body: realmHint() + `<div class="form">
       <div class="field" data-field="name"><label>姓名</label><input type="text" value="${esc(c.name || '')}"></div>
+      <div class="field" data-field="status"><label>状态（如：登场 / 待登场 / 已故）</label><input type="text" value="${esc(c.status || '')}"></div>
       <div class="field" data-field="tags"><label>标签（逗号分隔）</label><input type="text" value="${(c.tags||[]).join('，')}"></div>
+      <div class="field" data-field="color"><label>主题色</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="color" id="pf-color" value="${/^#[0-9a-f]{6}$/i.test(c.color || '') ? c.color : '#a08650'}" style="width:52px;height:34px;padding:2px;background:transparent;border:1px solid var(--line);border-radius:2px">
+          <button class="btn small ghost" type="button" id="pf-color-clear">用默认</button>
+        </div>
+      </div>
+      <div class="field" data-field="birthday"><label>生日（月-日，如 03-14）</label><input type="text" value="${esc(c.birthday || '')}" placeholder="03-14"></div>
       <div class="field full" data-field="keywords"><label>检索关键词（逗号分隔）</label><input type="text" value="${esc(c.keywords || '')}"></div>
+      <div class="field full"><label>资料（空着的地方访客会看到「待完善」）</label>
+        <div class="form" style="gap:12px">
+          ${PF.map(([k, label]) => `<div class="field" data-pf="${k}"><label class="mini">${label}</label><input type="text" value="${esc(prof[k] || '')}"></div>`).join('')}
+        </div>
+      </div>
       <div class="field full" data-field="avatar"><label>头像</label>
         <div class="img-row">
           <div class="img-preview" style="background-image:${c.avatar ? esc(cssUrl(c.avatar)) : 'none'}"></div>
@@ -3312,6 +3626,11 @@ function openCharacterEditor(id, isNew){
         </div>
       </div>
       <div class="field full" data-field="desc"><label>角色简介</label><textarea rows="8">${esc(c.desc || '')}</textarea><span class="hint">可在简介里插图：点「🖼 插入图片」或直接拖图进来</span></div>
+      <div class="field full"><label>立绘画廊（可多张）</label>
+        <div class="gal-edit" id="gal-edit">${galRows}</div>
+        <div style="margin-top:10px"><button class="btn small" type="button" id="gal-add">+ 添加一张</button></div>
+      </div>
+      <div class="field full" data-field="quotes"><label>语录（每行一句）</label><textarea rows="4">${esc((c.quotes||[]).join('\n'))}</textarea></div>
       <div class="field full" data-field="relations"><label>关系（角色ID:关系名）</label>
         <input type="text" value="${esc(relText)}" placeholder="c2:同源">
         <span class="hint">可用 ID：${otherChars.map(x => `${esc(x.id)}（${esc(x.name)}）`).join('、') || '暂无其他角色'}</span>
@@ -3324,8 +3643,22 @@ function openCharacterEditor(id, isNew){
         const [t, l] = s.split(':').map(x => (x || '').trim());
         return t ? { target: t, label: l || '' } : null;
       }).filter(Boolean);
+      const profile = {};
+      modalRoot.querySelectorAll('[data-pf]').forEach(el => {
+        const k = el.dataset.pf;
+        const v = (el.querySelector('input') || {}).value;
+        if(v && v.trim()) profile[k] = v.trim();
+      });
+      const gallery = [...modalRoot.querySelectorAll('#gal-edit .gal-row')].map(row => ({
+        url: (row.querySelector('.gal-url') || {}).value?.trim() || '',
+        caption: (row.querySelector('.gal-cap') || {}).value?.trim() || ''
+      })).filter(g => g.url);
+      const quotes = (modalRoot.querySelector('[data-field="quotes"] textarea')?.value || '').split('\n').map(s => s.trim()).filter(Boolean);
       const data = {
-        name: get('name') || '未命名', tags, keywords: get('keywords'),
+        name: get('name') || '未命名', tags, keywords: get('keywords'), status: get('status'),
+        color: (modalRoot.querySelector('#pf-color')?.value || '').trim(),
+        birthday: get('birthday'),
+        profile, gallery, quotes,
         avatar: get('avatar'),
         desc: modalRoot.querySelector('[data-field="desc"] textarea').value.trim(),
         relations
@@ -3335,6 +3668,41 @@ function openCharacterEditor(id, isNew){
       save(); renderAll(); toast('已 保 存（' + rl() + '）');
     }
   });
+  /* 画廊行：新增 / 删除 / 上传 */
+  const box = document.getElementById('gal-edit');
+  document.getElementById('gal-add').addEventListener('click', () => {
+    box.insertAdjacentHTML('beforeend', galRowHTML({ url: '', caption: '' }, box.children.length));
+  });
+  document.getElementById('pf-color-clear').addEventListener('click', () => { document.getElementById('pf-color').value = '#a08650'; });
+  box.addEventListener('click', e => {
+    const del = e.target.closest('.gal-del');
+    if(del){ del.closest('.gal-row').remove(); }
+  });
+  box.addEventListener('change', async e => {
+    const inp = e.target.closest('.gal-file');
+    if(!inp) return;
+    const f = inp.files && inp.files[0];
+    if(!f) return;
+    const row = inp.closest('.gal-row');
+    try{
+      showProgress(null, '正在处理立绘…');
+      const url = await imageUrlFor(f);
+      row.querySelector('.gal-url').value = url;
+      const pv = row.querySelector('.img-preview');
+      if(pv) pv.style.backgroundImage = 'url("' + String(url).replace(/["\\]/g, '') + '")';
+      hideProgress();
+      toast('立绘已就绪');
+    }catch(err){ hideProgress(); toast('立绘上传失败'); }
+  });
+}
+function galRowHTML(g, i){
+  return `<div class="gal-row" data-gal="${i}">
+    <div class="img-preview" style="background-image:${g && g.url ? esc(cssUrl(g.url)) : 'none'}"></div>
+    <input type="text" class="gal-url" value="${esc((g && g.url) || '')}" placeholder="图片链接">
+    <input type="text" class="gal-cap" value="${esc((g && g.caption) || '')}" placeholder="说明（可空）" style="max-width:150px">
+    <label class="upload-btn" style="margin:0">上传<input type="file" class="gal-file" accept="image/*"></label>
+    <button class="btn small ghost gal-del" type="button" title="删除这张">✕</button>
+  </div>`;
 }
 function openTimelineEditor(id, isNew){
   const list = W().timeline;
@@ -3989,7 +4357,10 @@ document.addEventListener('click', e => {
   if(a === 'music'){ closeDrawer(); if(editMode) openMusicEditor(null); else toast('点右上角「编辑」后即可设置音乐'); return; }
   if(a === 'help'){ closeDrawer(); openHelp(); return; }
   if(a === 'cloud'){ closeDrawer(); openCloudSettings(); return; }
+  if(a === 'read'){ closeDrawer(); openReadSettings(); return; }
   if(a === 'appearance'){ if(!editMode){ toast('请先进入编辑，再修改外观'); return; } closeDrawer(); openAppearance(); return; }
+  if(a === 'daily'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openDailyNote(); return; }
+  if(a === 'changelog'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openChangelog(); return; }
   if(a === 'share'){ closeDrawer(); openShare(); return; }
   if(a === 'sync-code'){ closeDrawer(); openSyncCode(); return; }
   if(a === 'patches'){ closeDrawer(); openPatchManager(); return; }
@@ -4125,6 +4496,8 @@ window.addEventListener('scroll', () => {
   scrollSaveTimer = setTimeout(() => {
     scrollSaveTimer = null;
     try{ realmScroll[realm] = window.scrollY || 0; }catch(e){}
+    try{ updateTocActive(); }catch(e){}
+    try{ saveReadPos(); }catch(e){}
   }, 180);
 }, { passive: true });
 
@@ -4170,6 +4543,8 @@ function setRealm(r, origin){
    启动
    ============================================================ */
 (async function boot(){
+  /* 访客本机的阅读偏好（字号/行距）先应用，避免闪烁 */
+  try{ applyReadPrefs(); }catch(e){}
   /* 立刻用「本机缓存的云端内容」渲染：网络被拦截时也不会退回默认内容 */
   const cache = loadCloudCache();
   const draft = loadDraft();
@@ -4521,6 +4896,11 @@ function openAppearance(){
         <label>蒙层浓度</label>
         <input type="range" id="bg-dim" min="0" max="92" step="2" value="${bi.dim}" style="width:100%">
       </div>
+      <div class="field full">
+        <label>大图水印</label>
+        <label class="field-check" style="padding:0"><input type="checkbox" id="wm-on" ${(state.meta.watermark && state.meta.watermark.on) ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.12em">在立绘与放大图上叠加淡印</span></label>
+        <input type="text" id="wm-text" value="${esc((state.meta.watermark && state.meta.watermark.text) || '')}" placeholder="水印文字（留空则用作者署名）">
+      </div>
     </div>
     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn small primary" id="bg-save">保 存</button>
@@ -4532,6 +4912,8 @@ function openAppearance(){
     state.meta.bgEffect.enabled = document.getElementById('bg-enable').checked;
     state.meta.bgEffect.density = document.getElementById('bg-density').value;
     state.meta.bgImage.dim = Number(dimEl().value) || 0;
+    state.meta.watermark.on = !!document.getElementById('wm-on').checked;
+    state.meta.watermark.text = (document.getElementById('wm-text').value || '').trim();
   };
   const paintThumbs = () => {
     const s = document.getElementById('bgpv-surface'), a = document.getElementById('bgpv-abyss');
@@ -4577,6 +4959,7 @@ function openAppearance(){
     applyCustomBg();
     _doSave();
     closeModal(true);
+    renderAll();
     toast('已 保 存');
   });
 }
@@ -4598,6 +4981,191 @@ function retireLegacyBgPatches(){
     setTimeout(() => { try{ toast('旧的「动态背景」补丁已自动停用（该功能已内置到「外观设置」，门帘已恢复不透明）'); }catch(e){} }, 2400);
   }
   return changed;
+}
+
+/* ============================================================
+   阅读辅助：侧边目录 / 继续阅读 / 字号行距 / 大图水印
+   ============================================================ */
+const READ_POS_KEY = 'fupo-read-pos';
+const READ_SCALE_KEY = 'fupo-read-scale';
+const READ_LH_KEY = 'fupo-read-lh';
+
+/* 大图水印：把文字做成可平铺的 SVG 图案 */
+function wmLayerHTML(){
+  const wm = (state.meta && state.meta.watermark) || {};
+  if(!wm.on) return '';
+  const text = String(wm.text || state.meta.author || state.meta.title || '浮魄').slice(0, 24);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="140"><text x="14" y="80" font-size="13" font-family="serif" fill="rgba(255,255,255,.85)" transform="rotate(-22 110 70)">${text.replace(/[<>&"]/g, '')}</text></svg>`;
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  return `<span class="wm-layer" style="background-image:url('${url}')"></span>`;
+}
+
+/* 字号 / 行距（访客本机偏好） */
+function applyReadPrefs(){
+  let sc = Number(localStorage.getItem(READ_SCALE_KEY) || 1);
+  let lh = Number(localStorage.getItem(READ_LH_KEY) || 0);
+  if(!isFinite(sc) || sc < 0.9 || sc > 1.3) sc = 1;
+  document.documentElement.style.fontSize = (16 * sc).toFixed(2) + 'px';
+  if(lh >= 1.6 && lh <= 2.6) document.documentElement.style.setProperty('--read-lh', lh.toFixed(2));
+  else document.documentElement.style.removeProperty('--read-lh');
+}
+function openReadSettings(){
+  const sc = Number(localStorage.getItem(READ_SCALE_KEY) || 1);
+  const lh = Number(localStorage.getItem(READ_LH_KEY) || 0) || 2.15;
+  showModal({
+    title: '阅 读 设 置', hideFooter: true,
+    body: `<div class="form">
+      <div class="field full"><label>字号</label><input type="range" id="rd-scale" min="0.9" max="1.3" step="0.02" value="${sc}" style="width:100%"></div>
+      <div class="field full"><label>行距</label><input type="range" id="rd-lh" min="1.6" max="2.6" step="0.05" value="${lh}" style="width:100%"></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn small primary" id="rd-save">保 存</button>
+      <button class="btn small ghost" id="rd-reset">恢 复 默 认</button>
+    </div>`,
+  });
+  const live = () => {
+    localStorage.setItem(READ_SCALE_KEY, document.getElementById('rd-scale').value);
+    localStorage.setItem(READ_LH_KEY, document.getElementById('rd-lh').value);
+    applyReadPrefs();
+  };
+  document.getElementById('rd-scale').addEventListener('input', live);
+  document.getElementById('rd-lh').addEventListener('input', live);
+  document.getElementById('rd-save').addEventListener('click', () => { live(); closeModal(true); toast('已 保 存'); });
+  document.getElementById('rd-reset').addEventListener('click', () => {
+    localStorage.removeItem(READ_SCALE_KEY); localStorage.removeItem(READ_LH_KEY);
+    applyReadPrefs(); closeModal(true); toast('已 恢 复 默 认');
+  });
+}
+
+/* 继续阅读：记住访客读到哪 */
+function saveReadPos(){
+  try{
+    const y = Math.round(window.scrollY || 0);
+    if(y < 300) return;
+    localStorage.setItem(READ_POS_KEY, JSON.stringify({ realm, y, at: Date.now() }));
+  }catch(e){}
+}
+function refreshResumePill(){
+  let pill = document.getElementById('resume-pill');
+  let rec = null;
+  try{ rec = JSON.parse(localStorage.getItem(READ_POS_KEY) || 'null'); }catch(e){}
+  const ok = rec && rec.realm === realm && rec.y > 400 && (Date.now() - (rec.at || 0) < 7 * 864e5);
+  if(!ok){ if(pill) pill.classList.remove('on'); return; }
+  if(!pill){
+    pill = document.createElement('button');
+    pill.id = 'resume-pill';
+    pill.type = 'button';
+    pill.addEventListener('click', () => { window.scrollTo({ top: rec.y, behavior: 'smooth' }); pill.classList.remove('on'); });
+    document.body.appendChild(pill);
+  }
+  pill.textContent = '继 续 阅 读';
+  pill.classList.add('on');
+}
+
+/* 侧边目录 + 滚动高亮 */
+let tocTick = null;
+function buildToc(){
+  let toc = document.getElementById('toc');
+  const items = [];
+  const push = (sel, label) => { const el = document.querySelector(sel); if(el) items.push({ el, label }); };
+  push('#top', '首屏');
+  push('#daily-note', '寄语');
+  document.querySelectorAll('#world .world-item').forEach(w => {
+    const t = w.querySelector('.world-title');
+    if(t) items.push({ el: w, label: t.textContent.trim().slice(0, 10) });
+  });
+  push('#chars', '妖众');
+  push('#timeline', '纪年');
+  push('#stories', '卷帙');
+  push('#changelog', '更新');
+  push('#site-notice', '声明');
+  if(items.length < 3){ if(toc) toc.remove(); return; }
+  if(!toc){
+    toc = document.createElement('nav');
+    toc.id = 'toc';
+    document.body.appendChild(toc);
+  }
+  toc.innerHTML = items.map((it, i) => `<button class="toc-item" data-toc="${i}">${esc(it.label)}</button>`).join('');
+  toc.dataset.count = String(items.length);
+  toc._items = items;
+  toc.querySelectorAll('[data-toc]').forEach((b, i) => {
+    b.addEventListener('click', () => {
+      const el = items[i] && items[i].el;
+      if(!el) return;
+      if(el.classList && el.classList.contains('world-item')) el.classList.add('open');
+      const y = el.getBoundingClientRect().top + window.scrollY - 20;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    });
+  });
+}
+function updateTocActive(){
+  const toc = document.getElementById('toc');
+  if(!toc || !toc._items) return;
+  const mid = window.innerHeight * 0.34;
+  let best = 0;
+  toc._items.forEach((it, i) => {
+    const r = it.el.getBoundingClientRect();
+    if(r.top - mid <= 0) best = i;
+  });
+  toc.classList.toggle('on', (window.scrollY || 0) > 240);
+  toc.querySelectorAll('[data-toc]').forEach((b, i) => b.classList.toggle('on', i === best));
+}
+
+/* 关系图导出为图片 */
+async function exportRelationGraph(){
+  const svg = document.querySelector('#relation-graph svg');
+  if(!svg){ toast('暂无可导出的关系图'); return; }
+  try{
+    showProgress(null, '正在生成关系图…');
+    const clone = svg.cloneNode(true);
+    /* 头像转成内嵌数据，避免导出时跨域失败 */
+    const imgs = [...clone.querySelectorAll('image')];
+    await Promise.all(imgs.map(async (im) => {
+      const href = im.getAttribute('href') || '';
+      if(!href || href.startsWith('data:')) return;
+      try{
+        const r = await fetch(href, { mode: 'cors' });
+        const b = await r.blob();
+        const dataUrl = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(''); fr.readAsDataURL(b); });
+        if(dataUrl) im.setAttribute('href', dataUrl); else im.remove();
+      }catch(e){ im.remove(); }
+    }));
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.style.background = getComputedStyle(document.body).backgroundColor || '#ecece6';
+    const xml = new XMLSerializer().serializeToString(clone);
+    const svgUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = svgUrl; });
+    const scale = 2;
+    const cv = document.createElement('canvas');
+    cv.width = 680 * scale; cv.height = 460 * scale;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#ecece6';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    hideProgress();
+    cv.toBlob(blob => {
+      if(!blob){ toast('导出失败，请重试'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '浮魄-关系图.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      toast('关系图已导出');
+    }, 'image/png');
+  }catch(e){
+    hideProgress();
+    /* 退路：导出 SVG 文件 */
+    try{
+      const svg2 = document.querySelector('#relation-graph svg');
+      const xml = new XMLSerializer().serializeToString(svg2);
+      const a = document.createElement('a');
+      a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+      a.download = '浮魄-关系图.svg';
+      document.body.appendChild(a); a.click(); a.remove();
+      toast('已导出 SVG 关系图');
+    }catch(e2){ toast('导出失败'); }
+  }
 }
 
 /* ★ 控制台小工具 */
@@ -4655,6 +5223,7 @@ function openLightbox(img){
   tip.className = 'lb-tip';
   tip.textContent = '双击放大 · 点空白关闭';
   lb.appendChild(im);
+  if((state.meta && state.meta.watermark && state.meta.watermark.on)) lb.insertAdjacentHTML('beforeend', wmLayerHTML());
   if(cap.textContent) lb.appendChild(cap);
   lb.appendChild(tip);
   lb.appendChild(close);
