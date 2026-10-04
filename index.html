@@ -5975,7 +5975,7 @@ function renderGate(){
     document.body.style.overflow = '';
     musicIntent = true;   /* 点「入界」= 想听音乐：即使歌单还在加载，加载完会自动响起 */
     if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
-    setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); }, 900);
+    setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); try{ FUPO_BG.attach(); }catch(e){} }, 900);
     document.removeEventListener('keydown', gateKey);
   }
   /* 回车也可以入界 */
@@ -6326,7 +6326,7 @@ const FUPO_BG = (function(){
     let reduced = false;
     try{ reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
     const key = want + '|' + reduced + '|' + ((state.meta.bgEffect || {}).density || '') + '|' + (W < 820);
-    if(key === cfgKey) return;
+    if(key === cfgKey && (!want || (cv && cv.parentNode))) return;   /* 画布丢了也要重建 */
     cfgKey = key;
     if(!want || reduced){ stop(); return; }
     start();
@@ -6349,12 +6349,35 @@ const FUPO_BG = (function(){
   document.addEventListener('visibilitychange', () => { if(!document.hidden) last = 0; });
 
   /* 有浮层（搜索/弹窗/目录）时暂停动画：避免与 backdrop-filter 模糊层叠加导致手机端闪屏 */
+  /* 画布守护：门帘移除、外部脚本清理等原因导致画布脱离文档时，自动接回并补画
+     （手机端是"单帧静态"模式，没有下一帧去自动修复，必须靠这个守护） */
+  setInterval(() => {
+    try{
+      if(!running || !cv) return;
+      if(cv.parentNode) return;
+      cv.id = ID;
+      document.body.insertBefore(cv, document.body.firstChild);
+      resizeCanvas();
+      if(W < 820 && !window.__fupoAnimForce) paint(0.016);
+    }catch(e){}
+  }, 1200);
+
   /* 暂停：只停帧，不动 opacity —— 之前瞬间隐藏画布会造成"打开弹窗闪一下" */
   function pauseAnim(){ paused = true; }
   function resumeAnim(){ paused = false; last = 0; }
+  /* 立即把画布接回文档（入界后门帘被移除时调用） */
+  function attachCanvas(){
+    try{
+      if(!running || !cv) return;
+      if(cv.parentNode && cv.parentNode !== document.getElementById('gate')) return;
+      document.body.insertBefore(cv, document.body.firstChild);
+      resizeCanvas();
+      if(W < 820 && !window.__fupoAnimForce) paint(0.016);
+    }catch(e){}
+  }
 
   return {
-    apply, stop, start, pause: pauseAnim, resume: resumeAnim,
+    apply, stop, start, pause: pauseAnim, resume: resumeAnim, attach: attachCanvas,
     get running(){ return running; },
     get count(){ return parts.length; },
     setDensity(d){ if(state.meta && state.meta.bgEffect){ state.meta.bgEffect.density = d; } cfgKey = ''; apply(); }
