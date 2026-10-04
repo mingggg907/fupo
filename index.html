@@ -310,6 +310,15 @@ body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-ini:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
 .lex-ini.on{color:var(--paper);background:var(--ink);border-color:var(--ink)}
 body.abyss .lex-ini.on{color:var(--ink);background:var(--gold-2,#c9a35c);border-color:transparent}
+.lex-ini-n{font-size:.62rem;opacity:.6;margin-left:3px}
+.sec-count{font-family:var(--serif);font-size:.72rem;letter-spacing:.1em;color:var(--ink-3);margin-left:10px;vertical-align:middle}
+/* 完整词典（大词典专用一屏） */
+.lexv{display:flex;flex-direction:column;gap:14px}
+.lexv-top{display:flex;flex-direction:column;gap:12px;position:sticky;top:-24px;background:var(--paper);padding:6px 0 10px;z-index:2;border-bottom:1px solid var(--line-2)}
+.lexv-top .lex-input{width:100%;text-align:left;padding-left:34px;background-image:none}
+.lexv-list{max-height:none}
+.lexv-count{font-family:var(--serif);font-size:.74rem;letter-spacing:.16em;color:var(--ink-3);text-align:center;margin-top:12px}
+@media (max-width:640px){.lexv-top{top:-18px}}
 .lex-cats{display:flex;gap:8px;flex-wrap:wrap}
 .lex-cats .cf-btn{font-size:.72rem;padding:4px 12px}
 .lex-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:0 26px}
@@ -361,7 +370,19 @@ body.abyss .ch-row{background:rgba(255,255,255,.03)}
 .ch-title{font-family:var(--serif);font-size:.88rem;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ch-len{font-size:.7rem;color:var(--ink-3);flex:none}
 .ch-empty{padding:16px;font-family:var(--serif);font-size:.8rem;color:var(--ink-3);text-align:center;letter-spacing:.1em}
-/* 访客感想墙 */
+/* 访客感想墙（更醒目：独立卡片 + 明确说明） */
+.guest-box{max-width:820px;margin:0 auto;border:1px solid var(--line-2);border-radius:3px;padding:22px 22px 16px;background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.08))}
+body.abyss .guest-box{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
+.guest-intro{font-family:var(--serif);font-size:.82rem;letter-spacing:.12em;color:var(--gold);text-align:center;margin-bottom:18px}
+.guest-intro b{color:var(--cinnabar);font-weight:400}
+.guest-form{display:flex;flex-direction:column;gap:12px;max-width:620px;margin:0 auto 22px}
+.guest-send-row{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.guest-hint{font-family:var(--serif);font-size:.72rem;letter-spacing:.08em;color:var(--ink-3)}
+.guest-done{display:flex;align-items:center;gap:14px;justify-content:center;flex-wrap:wrap;padding:18px 10px 22px;font-family:var(--serif);font-size:.88rem;letter-spacing:.1em;color:var(--ink)}
+.guest-done-mark{width:26px;height:26px;display:grid;place-items:center;border-radius:99px;background:rgba(61,90,82,.9);color:#f4f1e8;font-size:.9rem}
+.guest-count{font-family:var(--serif);font-size:.72rem;letter-spacing:.16em;color:var(--ink-3);text-align:center;margin:0 0 10px}
+.guest-item.pending{background:rgba(201,74,58,.05)}
+.guest-badge{font-family:var(--serif);font-size:.66rem;letter-spacing:.12em;color:var(--cinnabar);border:1px solid var(--cinnabar);border-radius:99px;padding:1px 8px}
 .guest-form{display:flex;flex-direction:column;gap:12px;align-items:center;max-width:620px;margin:0 auto 30px}
 .guest-textarea{width:100%;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:12px 14px;font-family:var(--serif);font-size:.9rem;line-height:1.95;resize:vertical}
 body.abyss .guest-textarea{background:rgba(255,255,255,.05)}
@@ -2797,8 +2818,15 @@ function applyLabels(){
 let lexQuery = '';
 let lexCat = '';
 let lexInitial = '';
-let lexLimit = 120;            /* 减压：一次最多渲染这么多条，其余按需载入 */
-const LEX_STEP = 120;
+let lexLimit = 60;             /* 减压：一次最多渲染这么多条，其余按需载入 */
+const LEX_STEP = 60;
+/* 词典会越来越大：首页只给索引 + 精简列表，完整词典单独开一屏 */
+let lexvQuery = '';
+let lexvCat = '';
+let lexvInitial = '';
+let lexvLimit = 120;
+const LEXV_STEP = 120;
+const LEX_BIG = 80;            /* 超过这个数量，首页只显示前 30 条 + 入口 */
 
 function lexMatch(x, q){
   if(!q) return true;
@@ -2817,14 +2845,27 @@ function lexIndexOf(x){
   return t ? t.charAt(0) : '#';
 }
 function lexInitials(list){
-  const set = new Set(list.map(lexIndexOf));
-  return [...set].sort((a, b) => {
+  const map = new Map();
+  list.forEach(x => { const k = lexIndexOf(x); map.set(k, (map.get(k) || 0) + 1); });
+  const keys = [...map.keys()].sort((a, b) => {
     const la = /[A-Z]/.test(a), lb = /[A-Z]/.test(b);
     if(la && lb) return a.localeCompare(b);
     if(la) return -1;
     if(lb) return 1;
     return a.localeCompare(b, 'zh');
   });
+  return keys.map(k => ({ key: k, n: map.get(k) }));
+}
+function lexFilter(list, { q, cat, initial }){
+  return list.filter(x => lexMatch(x, q || '')
+    && (!cat || (x.cat || '').trim() === cat)
+    && (!initial || lexIndexOf(x) === initial));
+}
+function lexIndexHTML(initials, opts){
+  const o = opts || {};
+  const chips = `<button class="${o.cls || 'lex-ini'}${(!o.cat && !o.initial) ? ' on' : ''}" data-${o.attr}="">全部</button>`
+    + initials.map(k => `<button class="${o.cls || 'lex-ini'}${o.initial === k.key ? ' on' : ''}" data-${o.attr}="${esc(k.key)}">${esc(k.key)}<span class="lex-ini-n">${k.n}</span></button>`).join('');
+  return `<div class="lex-initials">${chips}</div>`;
 }
 function lexEntryHTML(x){
   return `<div class="lex-item" data-act="open-lex" data-id="${x.id}">
@@ -2848,20 +2889,19 @@ function lexiconHTML(){
   if(!editMode && !all.length) return '';
   const cats = lexCats(all);
   const initials = lexInitials(all);
-  const filtered = all.filter(x => lexMatch(x, lexQuery)
-    && (!lexCat || (x.cat || '').trim() === lexCat)
-    && (!lexInitial || lexIndexOf(x) === lexInitial));
-  const shown = filtered.slice(0, lexLimit);
+  const filtered = lexFilter(all, { q: lexQuery, cat: lexCat, initial: lexInitial });
+  const cap = (all.length > LEX_BIG && !lexCat && !lexInitial && !lexQuery) ? 30 : lexLimit;
+  const shown = filtered.slice(0, cap);
   return `<section class="sec" id="lexicon">
     <div class="sec-head">
-      <h2>${esc(LBL('lexicon', '词典'))}</h2>
-      ${editMode ? `<button class="btn small" data-act="add-lex">+ 新增词条</button>` : ''}
+      <h2>${esc(LBL('lexicon', '词典'))}${all.length ? `<span class="sec-count">${all.length} 条</span>` : ''}</h2>
+      <div class="sec-tools">
+        ${all.length ? `<button class="btn small" data-act="open-lexicon">查 看 全 部</button>` : ''}
+        ${editMode ? `<button class="btn small" data-act="add-lex">+ 新增词条</button>` : ''}
+      </div>
     </div>
     ${all.length ? `<div class="lex-index">
-      <div class="lex-initials">
-        <button class="lex-ini${(lexCat || lexInitial) ? '' : ' on'}" data-lex-initial="">全部</button>
-        ${initials.map(k => `<button class="lex-ini${lexInitial === k ? ' on' : ''}" data-lex-initial="${esc(k)}">${esc(k)}</button>`).join('')}
-      </div>
+      ${lexIndexHTML(initials, { attr: 'lex-initial', initial: lexInitial, cat: lexCat })}
       ${cats.length > 1 ? `<div class="lex-cats">
         ${cats.map(c => `<button class="cf-btn${lexCat === c ? ' on' : ''}" data-lex-cat="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>` : ''}
@@ -2871,16 +2911,15 @@ function lexiconHTML(){
       ${filtered.length ? shown.map(lexEntryHTML).join('')
         : (all.length ? '<div class="lex-empty">此索引下暂无词条</div>' : wipHTML('词典完善中', true))}
     </div>
-    ${filtered.length > shown.length ? `<div class="lex-more"><button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button></div>` : ''}
+    ${(filtered.length > shown.length) ? `<div class="lex-more"><button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button>
+      ${all.length > LEX_BIG ? `<button class="btn small ghost" data-act="open-lexicon" style="margin-left:8px">打开完整词典</button>` : ''}</div>` : ''}
   </section>`;
 }
 function renderLexList(){
   const box = document.getElementById('lex-list');
   if(!box) return;
   const all = W().lexicon || [];
-  const filtered = all.filter(x => lexMatch(x, lexQuery)
-    && (!lexCat || (x.cat || '').trim() === lexCat)
-    && (!lexInitial || lexIndexOf(x) === lexInitial));
+  const filtered = lexFilter(all, { q: lexQuery, cat: lexCat, initial: lexInitial });
   const shown = filtered.slice(0, lexLimit);
   box.innerHTML = filtered.length ? shown.map(lexEntryHTML).join('') : '<div class="lex-empty">此索引下暂无词条</div>';
   const more = document.querySelector('.lex-more');
@@ -2888,6 +2927,61 @@ function renderLexList(){
     if(filtered.length > shown.length) more.innerHTML = `<button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button>`;
     else more.innerHTML = '';
   }
+}
+/* 完整词典：独立一屏（大词典专用，索引 + 边打边找 + 分页渲染） */
+function openLexiconView(){
+  const all = W().lexicon || [];
+  if(!all.length){ toast('还没有词条'); return; }
+  lexvLimit = LEXV_STEP;
+  showModal({
+    title: esc(LBL('lexicon', '词典')) + ' · 全 部 词 条', wide: true, hideFooter: true,
+    body: `<div class="lexv">
+      <div class="lexv-top">
+        <input type="text" id="lexv-q" class="lex-input" placeholder="找词条…（也可用下方索引翻）" value="${esc(lexvQuery)}">
+        <div id="lexv-index">${lexvIndexHTML()}</div>
+      </div>
+      <div class="lex-list lexv-list" id="lexv-list">${lexvListHTML()}</div>
+      <div class="lex-more" id="lexv-more">${lexvMoreHTML()}</div>
+    </div>`
+  });
+  const q = document.getElementById('lexv-q');
+  q.addEventListener('input', () => { lexvQuery = q.value.trim(); lexvLimit = LEXV_STEP; redrawLexv(); });
+  const redrawIdx = () => { const box = document.getElementById('lexv-index'); if(box) box.innerHTML = lexvIndexHTML(); };
+  document.getElementById('lexv-index').addEventListener('click', e => {
+    const ini = e.target.closest('[data-lexv-initial]');
+    if(ini){ lexvInitial = ini.dataset.lexvInitial || ''; lexvLimit = LEXV_STEP; redrawIdx(); redrawLexv(); return; }
+    const cat = e.target.closest('[data-lexv-cat]');
+    if(cat){ lexvCat = (lexvCat === cat.dataset.lexvCat) ? '' : (cat.dataset.lexvCat || ''); lexvLimit = LEXV_STEP; redrawIdx(); redrawLexv(); }
+  });
+  document.getElementById('lexv-more').addEventListener('click', e => {
+    if(e.target.closest('#lexv-more-btn')){ lexvLimit += LEXV_STEP; redrawLexv(); }
+  });
+}
+function lexvFiltered(){
+  return lexFilter(W().lexicon || [], { q: lexvQuery, cat: lexvCat, initial: lexvInitial });
+}
+function lexvIndexHTML(){
+  const all = W().lexicon || [];
+  const initials = lexInitials(lexvCat ? all.filter(x => (x.cat || '').trim() === lexvCat) : all);
+  const cats = lexCats(all);
+  return `${lexIndexHTML(initials, { attr: 'lexv-initial', initial: lexvInitial, cat: lexvCat })}
+    ${cats.length > 1 ? `<div class="lex-cats">${cats.map(c => `<button class="cf-btn${lexvCat === c ? ' on' : ''}" data-lexv-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}`;
+}
+function lexvListHTML(){
+  const f = lexvFiltered();
+  if(!f.length) return '<div class="lex-empty">此索引下暂无词条</div>';
+  return f.slice(0, lexvLimit).map(lexEntryHTML).join('');
+}
+function lexvMoreHTML(){
+  const f = lexvFiltered();
+  if(f.length <= lexvLimit) return `<div class="lexv-count">共 ${f.length} 条</div>`;
+  return `<button class="btn small" id="lexv-more-btn">载入更多（还有 ${f.length - lexvLimit} 条）</button><div class="lexv-count">共 ${f.length} 条</div>`;
+}
+function redrawLexv(){
+  const list = document.getElementById('lexv-list');
+  if(list) list.innerHTML = lexvListHTML();
+  const more = document.getElementById('lexv-more');
+  if(more) more.innerHTML = lexvMoreHTML();
 }
 function openLex(id){
   const x = (W().lexicon || []).find(y => y.id === id);
@@ -2995,7 +3089,7 @@ function seedLexicon(){
    访客感想墙（Supabase 表 fupo_guest；未建表则自动隐藏）
    ============================================================ */
 const GUEST_TABLE = 'fupo_guest';
-const guestState = { ok: null, rows: [], pending: [], err: '', loaded: false };
+const guestState = { ok: null, rows: [], pending: [], err: '', loaded: false, sent: false };
 
 async function loadGuest(force){
   if(!sbConfigured() || !sbReady()){ guestState.ok = null; return; }
@@ -3041,19 +3135,34 @@ function guestInnerHTML(){
   }
   if(guestState.ok === null) return `<div class="guest-empty">留言区正在载入…</div>`;
   const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
-  return `
+  const sent = !!guestState.sent;
+  return `<div class="guest-box">
+    <div class="guest-intro">${editMode
+      ? '这里是访客留言区：别人写下的内容<b>要先经你通过</b>才会公开显示。'
+      : '欢迎留下你想说的话 · 留言经作者查看后公开显示'}</div>
     ${editMode && guestState.pending.length ? `<div class="guest-note">有 ${guestState.pending.length} 条待审核留言（只有你看得到）</div>` : ''}
-    <div class="guest-form">
-      <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20">
-      <textarea id="guest-text" class="guest-textarea" rows="3" placeholder="写下你想说的话…" maxlength="500"></textarea>
-      <button class="btn small primary" id="guest-send" type="button">送 出 留 言</button>
-    </div>
+    ${sent
+      ? `<div class="guest-done">
+          <span class="guest-done-mark">✓</span>
+          <div>已送出 · 作者查看后就会显示在这里</div>
+          <button class="btn small ghost" id="guest-again" type="button">再 写 一 条</button>
+        </div>`
+      : `<div class="guest-form">
+          <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20">
+          <textarea id="guest-text" class="guest-textarea" rows="3" placeholder="想对作者说的话…（最多 500 字）" maxlength="500"></textarea>
+          <div class="guest-send-row">
+            <span class="guest-hint">送出后需作者审核通过才公开</span>
+            <button class="btn small primary" id="guest-send" type="button">送 出</button>
+          </div>
+        </div>`}
+    <div class="guest-count">${rows.length ? '共 ' + rows.length + ' 条感想' : ''}</div>
     <div class="guest-list">
       ${rows.length ? rows.map(r => `
-        <div class="guest-item">
+        <div class="guest-item${r.approved ? '' : ' pending'}">
           <div class="guest-head">
             <span class="guest-name">${esc(String(r.name || '').trim() || '匿名')}</span>
             <span class="guest-time">${esc(String(r.created_at || '').slice(0, 10))}</span>
+            ${r.approved ? '' : '<span class="guest-badge">待审核</span>'}
             ${editMode ? `<span class="guest-acts">
               ${r.approved ? '' : '<button class="btn small" data-guest-approve="' + esc(String(r.id)) + '" type="button">通 过</button>'}
               <button class="btn small ghost" data-guest-del="${esc(String(r.id))}" type="button">删 除</button>
@@ -3062,7 +3171,8 @@ function guestInnerHTML(){
           <div class="guest-text">${esc(String(r.text || ''))}</div>
         </div>`).join('')
         : `<div class="guest-empty">还没有留言 · 欢迎写下第一句</div>`}
-    </div>`;
+    </div>
+  </div>`;
 }
 function guestHTML(){
   if(!guestOn()) return '';
@@ -3088,7 +3198,8 @@ async function postGuest(){
     hideProgress();
     if(res.error) throw res.error;
     try{ localStorage.setItem('fupo-guest-last', String(Date.now())); }catch(e){}
-    if(textEl) textEl.value = '';
+    guestState.sent = true;
+    renderGuest();
     toast('留言已送达 · 作者看过后会显示出来');
   }catch(e){
     hideProgress();
@@ -3992,6 +4103,7 @@ app.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   /* 感想墙：提交 / 审核 / 删除 */
   if(e.target.closest && e.target.closest('#guest-send')){ postGuest(); return; }
+  if(e.target.closest && e.target.closest('#guest-again')){ guestState.sent = false; renderGuest(); return; }
   const ga = e.target.closest && e.target.closest('[data-guest-approve]');
   if(ga){ modGuest(ga.dataset.guestApprove, true); return; }
   const gd = e.target.closest && e.target.closest('[data-guest-del]');
@@ -4054,6 +4166,7 @@ app.addEventListener('click', e => {
   if(act === 'down-lex'){ moveArr('lexicon', id, 1); return; }
   if(act === 'del-lex'){ doDeleteLex(id); return; }
   if(act === 'lex-seed'){ seedLexicon(); return; }
+  if(act === 'open-lexicon'){ openLexiconView(); return; }
   if(act === 'open-timeline'){ openTimeline(id); return; }
   if(act === 'open-story'){ openStory(id); return; }
   if(act === 'edit-meta'){ openMetaEditor(); return; }
