@@ -299,7 +299,24 @@ body.abyss .quote-item{background:rgba(255,255,255,.03)}
 .name-link{font:inherit;color:inherit;background:transparent;border:0;border-bottom:1px dashed var(--gold);padding:0 1px;cursor:pointer;transition:.2s}
 .name-link:hover{color:var(--cinnabar);border-bottom-color:var(--cinnabar)}
 .lex-link{border-bottom-style:dotted;border-bottom-color:var(--ink-3)}
-/* 通用小输入框（感想墙昵称等） */
+/* 版本号角落标记 + 版本历程 */
+#ver-badge{position:fixed;left:12px;bottom:12px;z-index:45;font-family:var(--serif);font-size:.68rem;letter-spacing:.14em;color:var(--ink-3);background:rgba(236,236,230,.82);border:1px solid var(--line);border-radius:99px;padding:4px 11px;cursor:pointer;opacity:.75;transition:.25s;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#ver-badge:hover{opacity:1;color:var(--cinnabar);border-color:var(--cinnabar)}
+body.abyss #ver-badge{background:rgba(10,11,13,.7)}
+body.editing #ver-badge{display:none}
+.ver-wrap{display:flex;flex-direction:column;gap:14px}
+.ver-cur{font-family:var(--serif);font-size:.82rem;letter-spacing:.1em;color:var(--ink-2);margin:0;padding-bottom:12px;border-bottom:1px solid var(--line-2)}
+.ver-cur b{color:var(--gold)}
+.ver-list{display:flex;flex-direction:column}
+.ver-item{display:flex;gap:14px;align-items:baseline;padding:9px 4px;border-bottom:1px dashed var(--line-2);font-family:var(--serif)}
+.ver-item:last-child{border-bottom:0}
+.ver-item.now{background:linear-gradient(90deg,rgba(160,134,80,.10),transparent)}
+.ver-no{flex:none;min-width:38px;font-size:.78rem;letter-spacing:.08em;color:var(--gold)}
+.ver-item.now .ver-no{color:var(--cinnabar)}
+.ver-date{flex:none;min-width:82px;font-size:.72rem;letter-spacing:.06em;color:var(--ink-3)}
+.ver-text{flex:1;min-width:0;font-size:.82rem;line-height:1.85;color:var(--ink-2);word-break:break-word}
+.ver-foot{font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--ink-3);text-align:center;margin:6px 0 0}
+@media (max-width:640px){.ver-item{flex-wrap:wrap;gap:6px}.ver-date{min-width:0}.ver-text{flex-basis:100%}}
 .lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:9px 13px;font-family:var(--serif);font-size:.9rem;letter-spacing:.04em;text-align:center}
 body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-input:focus{outline:none;border-color:var(--gold)}
@@ -408,7 +425,7 @@ body.abyss .guest-textarea{background:rgba(255,255,255,.05)}
 @keyframes progSlide{0%{margin-left:-35%}100%{margin-left:100%}}
 .fupo-progress .p-text{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--ink);background:var(--paper,#ecece6);border:1px solid var(--line);padding:4px 13px;border-radius:99px;box-shadow:0 10px 26px -14px rgba(0,0,0,.45);white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
 /* 动态背景（落叶）：页面底层；门帘内时垫在门帘文字之下 */
-#fupo-bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:block}
+#fupo-bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:block;transform:translateZ(0);will-change:transform}
 #gate > #fupo-bg-canvas{position:absolute;z-index:0}
 /* 自定义背景图（表层 / 上古 各一张）+ 蒙层，保证正文清晰可读 */
 #fupo-bg-photo{position:fixed;inset:0;z-index:0;pointer-events:none;background-position:center;background-size:cover;background-repeat:no-repeat;background-attachment:fixed}
@@ -417,6 +434,14 @@ body.abyss .guest-textarea{background:rgba(255,255,255,.05)}
   #fupo-bg-photo{background-attachment:scroll}
   .search-panel{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
   .drawer{-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+  /* 手机端防闪屏 & 减卡顿：关掉噪点混合层、关掉图片毛玻璃渐显、长内容按需绘制 */
+  body::after{display:none!important}
+  .rich-img img{opacity:1!important;filter:sepia(.14)!important;transform:none!important;transition:none!important}
+  body.abyss .rich-img img{filter:sepia(.3) contrast(1.08) brightness(.82)!important}
+  .rich-img{content-visibility:auto;contain-intrinsic-size:auto 300px}
+  .entry{content-visibility:auto;contain-intrinsic-size:auto 200px}
+  .world-body{transition-duration:.26s}
+  .char-card,.story-item,.lex-item,.tl-item{transition-duration:.16s}
 }
 #fupo-bg-photo::after{content:"";position:absolute;inset:0;background:rgba(236,236,230,var(--bg-dim,.72))}
 body.abyss #fupo-bg-photo::after{background:rgba(8,9,11,var(--bg-dim,.72))}
@@ -887,7 +912,57 @@ a[href]::after{content:""}
 
 <script>
 /* 版本号：用于确认设备加载的是不是最新版本 */
-const FUPO_BUILD = '2026-10-05 00:45 (自定义背景图)';
+const FUPO_BUILD = '2026-10-05 05:20 (v41 · 防闪屏+审核修复+版本历程)';
+/* 版本历程（点左下角版本号可看） */
+const FUPO_HISTORY = [
+  ['v41','2026-10-05','手机防闪屏（滑动/浮层时暂停背景动画）、感想审核修复、展开卡顿优化、版本历程上线'],
+  ['v40','2026-10-05','词典首字索引 + 完整词典独立一屏；感想墙上移并加导航入口'],
+  ['v39','2026-10-05','词典释义完整显示、整行可点、弹窗内可滑动'],
+  ['v38','2026-10-05','词典紧凑化、索引带计数、为"词条很多"做减压'],
+  ['v37','2026-10-05','感想墙（留言+审核）上线；卷帙章节化与设定/二创分类'],
+  ['v36','2026-10-05','词典栏目上线（词条/读音/分类/别名/释义/相关词条）'],
+  ['v35','2026-10-05','访客界面清理：隐藏编辑入口与同步提示、空栏目不留死链'],
+  ['v34','2026-10-05','内容工具：表层↔上古一键同步/清空（含空源护栏与撤回）'],
+  ['v33','2026-10-05','界面文字可编辑（上古之力、栏目名、导航、退出按钮）'],
+  ['v32','2026-10-05','版权声明（原创+约稿并重）、图片防盗保护'],
+  ['v31','2026-10-05','每日寄语、更新日志、外观设置（自定义背景图与蒙层）'],
+  ['v30','2026-10-05','页面禁止缩放（图片仍可放大）、阅读位置记忆、字号行距'],
+  ['v29','2026-10-04','自定义域名 minggg.top + Cloudflare 接口中转'],
+  ['v28','2026-10-04','修复保存/读取卡死、离线缓存兜底、实时通道与轮询'],
+  ['v27','2026-10-04','表层 / 上古 双世界独立（内容·音乐·时间线各自成篇）'],
+  ['v26','2026-10-04','云端同步、图片自动上云、手机端全面适配'],
+  ['v25','2026-10-03','浮魄首版：门帘、妖界、妖众、纪年、卷帙、背景音乐']
+];
+function openVersionLog(){
+  showModal({
+    title: '版 本 历 程', hideFooter: true, wide: true,
+    body: `<div class="ver-wrap">
+      <p class="ver-cur">当前版本：<b>${esc(FUPO_BUILD)}</b></p>
+      <div class="ver-list">
+        ${FUPO_HISTORY.map(([v, d, t], i) => `<div class="ver-item${i === 0 ? ' now' : ''}">
+          <span class="ver-no">${esc(v)}</span>
+          <span class="ver-date">${esc(d)}</span>
+          <span class="ver-text">${esc(t)}</span>
+        </div>`).join('')}
+      </div>
+      <p class="ver-foot">从第一版到现在的每一步，都记在这里。</p>
+    </div>`
+  });
+}
+function mountVersionBadge(){
+  try{
+    if(document.getElementById('ver-badge')) return;
+    const m = String(FUPO_BUILD).match(/\(([^)]+)\)/);
+    const label = m ? m[1].split('·')[0].trim() : 'v';
+    const el = document.createElement('button');
+    el.id = 'ver-badge';
+    el.type = 'button';
+    el.title = '查看版本历程';
+    el.textContent = label;
+    el.addEventListener('click', openVersionLog);
+    document.body.appendChild(el);
+  }catch(e){}
+}
 /* ============================================================
    常量
    ============================================================ */
@@ -3241,14 +3316,41 @@ async function postGuest(){
 }
 async function modGuest(id, approve){
   if(!requireEdit()) return;
+  /* 审核需要「已登录云同步」：未登录时服务端会拒绝（RLS 只允许登录用户改） */
+  if(!sbLoggedIn){
+    toast('请先登录云同步，才能审核留言');
+    setTimeout(() => { try{ openCloudSettings(); }catch(e){} }, 400);
+    return;
+  }
   try{
     const res = approve
       ? await withTimeout(sb.from(GUEST_TABLE).update({ approved: true }).eq('id', id), 14000)
       : await withTimeout(sb.from(GUEST_TABLE).delete().eq('id', id), 14000);
     if(res.error) throw res.error;
-    toast(approve ? '已通过，访客可见' : '已删除');
-    await loadGuest(true);
-  }catch(e){ toast('操作失败（可能未登录或表权限不足）'); }
+    /* 本地立即生效（不等重新拉取），再后台刷新一次保持一致 */
+    if(approve){
+      const row = guestState.pending.find(r => String(r.id) === String(id));
+      if(row){ row.approved = true; guestState.pending = guestState.pending.filter(r => String(r.id) !== String(id)); guestState.rows.unshift(row); }
+    }else{
+      guestState.pending = guestState.pending.filter(r => String(r.id) !== String(id));
+      guestState.rows = guestState.rows.filter(r => String(r.id) !== String(id));
+    }
+    renderGuest();
+    toast(approve ? '已通过 · 访客现在能看到这条' : '已删除');
+    loadGuest(true);
+  }catch(e){
+    toast('操作失败：' + ((e && e.message) ? e.message.slice(0, 40) : '请检查网络或登录状态'));
+  }
+}
+/* 感想墙自动刷新（访客也能及时看到你刚通过的留言） */
+let guestTimer = null;
+function startGuestPoll(){
+  if(guestTimer) return;
+  guestTimer = setInterval(() => {
+    if(document.hidden) return;
+    if(!guestOn()) return;
+    if(document.getElementById('guest')) loadGuest(true);
+  }, 45000);
 }
 
 function linkTerms(html){
@@ -3581,8 +3683,10 @@ function renderAll(){
   try{ if(typeof applyCustomBg === 'function') applyCustomBg(); }catch(e){}
   /* 界面文字（顶部小字 / 导航 / 栏目名） */
   try{ if(typeof applyLabels === 'function') applyLabels(); }catch(e){}
-  /* 感想墙：首次渲染后按需拉取（未建表则自动隐藏） */
-  try{ if(guestOn()) loadGuest(false); }catch(e){}
+  /* 版本号角落标记 */
+  try{ mountVersionBadge(); }catch(e){}
+  /* 感想墙：首次渲染后按需拉取（未建表则自动隐藏）+ 定时刷新 */
+  try{ if(guestOn()){ loadGuest(false); startGuestPoll(); } }catch(e){}
   /* 「外观设置 / 每日寄语 / 更新日志」只在编辑模式出现（访客看不到入口） */
   try{
     document.querySelectorAll('.edit-only').forEach(b => { b.style.display = editMode ? '' : 'none'; });
@@ -5547,7 +5651,12 @@ function renderGate(){
    ============================================================ */
 const realmScroll = { surface: 0, abyss: 0 };
 let scrollSaveTimer = null;
+let bgScrollTimer = null;
 window.addEventListener('scroll', () => {
+  /* 滑动时暂停背景动画（手机滚动 + 固定画布重绘是闪屏主因），停下后再按浮层状态决定是否恢复 */
+  try{ if(typeof FUPO_BG !== 'undefined') FUPO_BG.pause(); }catch(e){}
+  clearTimeout(bgScrollTimer);
+  bgScrollTimer = setTimeout(() => { try{ syncBgAnim(); }catch(e){} }, 240);
   if(scrollSaveTimer) return;
   scrollSaveTimer = setTimeout(() => {
     scrollSaveTimer = null;
