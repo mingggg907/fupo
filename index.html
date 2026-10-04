@@ -2954,6 +2954,22 @@ async function loadGuest(force){
 }
 function guestOn(){ return !!((state.meta && state.meta.guest) || {}).on; }
 function renderGuest(){
+  let sec = document.getElementById('guest');
+  /* 表不存在（或读不到）且不是编辑者 → 整个栏目移除，不留空壳 */
+  if(guestState.ok === false && !editMode){ if(sec) sec.remove(); return; }
+  if(!guestOn()){ if(sec) sec.remove(); return; }
+  if(!sec){
+    /* 首次确认可用后再插入（避免访客先看到一个空壳） */
+    const anchor = document.getElementById('changelog') || document.getElementById('site-notice');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = guestHTML();
+    const node = tmp.firstElementChild;
+    if(node){
+      if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(node, anchor);
+      else { const app = document.getElementById('app'); if(app) app.appendChild(node); }
+    }
+    return;
+  }
   const box = document.getElementById('guest-body');
   if(box) box.innerHTML = guestInnerHTML();
 }
@@ -2989,7 +3005,8 @@ function guestInnerHTML(){
 }
 function guestHTML(){
   if(!guestOn()) return '';
-  if(guestState.ok === false && !editMode) return '';
+  /* 尚未确认留言表可用时，访客不显示（编辑者可以看到建表提示） */
+  if(guestState.ok !== true && !editMode) return '';
   return `<section class="sec" id="guest">
     <div class="sec-head"><h2>${esc(LBL('guest', '感想'))}</h2></div>
     <div id="guest-body">${guestInnerHTML()}</div>
