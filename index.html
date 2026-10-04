@@ -3449,6 +3449,7 @@ function guestListHTML(){
         ${r.approved ? '' : '<span class="guest-badge">待审核</span>'}
         ${editMode ? `<span class="guest-acts">
           ${r.approved ? '' : '<button class="btn small" data-guest-approve="' + esc(id) + '" type="button">通 过</button>'}
+          <button class="btn small ghost" data-guest-edit="${esc(id)}" type="button">编 辑</button>
           ${pinOk ? `<button class="btn small ghost" data-guest-pin="${esc(id)}" data-guest-pin-on="${isPin ? '0' : '1'}" type="button">${isPin ? '取消置顶' : '置顶'}</button>` : ''}
           <button class="btn small ghost" data-guest-del="${esc(id)}" type="button">删 除</button>
         </span>` : ''}
@@ -3549,6 +3550,68 @@ async function likeGuest(id){
   }
 }
 /* 置顶（可多项）——需要登录云同步；pinned 字段未建时按钮自动隐藏 */
+/* 编辑留言（站主专用：改昵称/内容/名称标识，也能直接改通过状态与置顶） */
+function openGuestEditor(id){
+  if(!requireEdit()) return;
+  const all = guestState.rows.concat(guestState.pending);
+  const r = all.find(x => String(x.id) === String(id));
+  if(!r){ toast('找不到这条留言'); return; }
+  showModal({
+    title: '编 辑 留 言', okText: '保 存',
+    body: `<div class="field">
+        <label>昵称</label>
+        <input type="text" id="ge-name" value="${esc(String(r.name || ''))}" maxlength="20" placeholder="留空显示为匿名">
+      </div>
+      <div class="field">
+        <label>内容</label>
+        <textarea id="ge-text" rows="6" maxlength="500" style="width:100%;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:12px;font-family:var(--serif);font-size:.9rem;line-height:1.9;resize:vertical">${esc(String(r.text || ''))}</textarea>
+      </div>
+      <div class="field">
+        <label>状态</label>
+        <label class="field-check" style="padding:0"><input type="checkbox" id="ge-approved" ${r.approved ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.1em">已通过（勾选后所有人可见）</span></label>
+        <label class="field-check" style="padding:0"><input type="checkbox" id="ge-pinned" ${r.pinned ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.1em">置顶</span></label>
+      </div>
+      <p class="hint" style="font-family:var(--serif);font-size:.76rem;color:var(--ink-3);letter-spacing:.08em">保存后立即对所有人生效。</p>`,
+    onOk: async () => {
+      if(!sbLoggedIn){
+        toast('请先登录云同步，才能修改留言');
+        setTimeout(() => { try{ openCloudSettings(); }catch(e){} }, 400);
+        return false;
+      }
+      const name = (document.getElementById('ge-name').value || '').trim().slice(0, 20);
+      const text = (document.getElementById('ge-text').value || '').trim().slice(0, 500);
+      const approved = document.getElementById('ge-approved').checked;
+      const pinned = document.getElementById('ge-pinned').checked;
+      if(!text){ toast('内容不能为空'); return false; }
+      const patch = { name, text, approved };
+      if(guestState.pinOk !== false) patch.pinned = pinned;
+      showProgress(null, '正在保存…');
+      try{
+        let res = await withTimeout(sb.from(GUEST_TABLE).update(patch).eq('id', r.id), 15000);
+        if(res.error && /pinned|column/i.test(String(res.error.message || ''))){
+          delete patch.pinned;
+          res = await withTimeout(sb.from(GUEST_TABLE).update(patch).eq('id', r.id), 15000);
+        }
+        hideProgress();
+        if(res.error) throw res.error;
+        r.name = name; r.text = text; r.approved = approved;
+        if('pinned' in patch) r.pinned = pinned;
+        guestState.rows = guestState.rows.filter(x => x.approved !== false);
+        guestState.rows = [].concat(guestState.rows.filter(x => String(x.id) !== String(r.id)), approved ? [r] : []);
+        guestState.pending = guestState.pending.filter(x => String(x.id) !== String(r.id));
+        if(!approved) guestState.pending.push(r);
+        renderGuest();
+        toast('已保存');
+        loadGuest(true);
+        return true;
+      }catch(e){
+        hideProgress();
+        toast('保存失败：' + String((e && e.message) || '').slice(0, 40));
+        return false;
+      }
+    }
+  });
+}
 async function pinGuest(id, on){
   if(!requireEdit()) return;
   if(!sbLoggedIn){
@@ -4609,6 +4672,8 @@ app.addEventListener('click', e => {
   if(ld){ if(confirm('删除这条留言？')) modGuest(ld.dataset.guestDel, false); return; }
   const pn = e.target.closest && e.target.closest('[data-guest-pin]');
   if(pn){ pinGuest(pn.dataset.guestPin, pn.dataset.guestPinOn === '1'); return; }
+  const ge2 = e.target.closest && e.target.closest('[data-guest-edit]');
+  if(ge2){ openGuestEditor(ge2.dataset.guestEdit); return; }
   /* 卷帙分类筛选 */
   const sk = e.target.closest('[data-story-kind]');
   if(sk){
