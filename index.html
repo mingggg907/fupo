@@ -741,11 +741,12 @@ a[href]::after{content:""}
     <span id="brand-name">浮魄</span>
   </a>
   <nav class="nav">
-    <a href="#world">妖界</a>
-    <a href="#chars">妖众</a>
-    <a href="#timeline">纪年</a>
-    <a href="#stories">卷帙</a>
-    <a href="#lexicon">词典</a>
+    <a href="#world" data-lk="world">妖界</a>
+    <a href="#chars" data-lk="chars">妖众</a>
+    <a href="#timeline" data-lk="timeline">纪年</a>
+    <a href="#guest" data-lk="guest">感想</a>
+    <a href="#stories" data-lk="stories">卷帙</a>
+    <a href="#lexicon" data-lk="lexicon">词典</a>
   </nav>
   <button class="abyss-exit" id="abyss-exit">退 出 上 古</button>
   <button class="icon-btn" id="search-open" aria-label="搜索" title="搜索（Ctrl+K）">⌕</button>
@@ -781,6 +782,7 @@ a[href]::after{content:""}
     <a href="#world">妖界</a>
     <a href="#chars">妖众</a>
     <a href="#timeline">纪年</a>
+    <a href="#guest">感想</a>
     <a href="#stories">卷帙</a>
     <a href="#lexicon">词典</a>
     <div class="drawer-sep"></div>
@@ -2792,22 +2794,24 @@ function applyLabels(){
   if(exit) exit.textContent = LBL('abyssExitBtn', '退 出 上 古');
   const nav = document.querySelectorAll('.topbar .nav a');
   const worldLabel = (realm === 'abyss') ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '妖界');
-  const navTexts = [worldLabel, LBL('chars', '妖众'), LBL('timeline', '纪年'), LBL('stories', '卷帙'), LBL('lexicon', '词典')];
-  nav.forEach((a, i) => { if(navTexts[i]) a.textContent = navTexts[i]; });
+  const NAV_LABEL = { world: worldLabel, chars: LBL('chars', '妖众'), timeline: LBL('timeline', '纪年'), guest: LBL('guest', '感想'), stories: LBL('stories', '卷帙'), lexicon: LBL('lexicon', '词典') };
+  nav.forEach(a => {
+    const key = a.dataset.lk;
+    if(key && NAV_LABEL[key]) a.textContent = NAV_LABEL[key];
+  });
   /* 空栏目不留死链：对应区块不存在时隐藏导航项（编辑模式下保留，方便去填内容） */
   try{
+    const alive = id => !!document.getElementById(id);
+    const setVis = (el, ok) => { el.style.display = ok ? '' : 'none'; };
     if(!editMode){
-      const alive = id => !!document.getElementById(id);
-      nav.forEach(a => {
+      nav.forEach(a => { const href = (a.getAttribute('href') || '').replace('#', ''); if(href) setVis(a, alive(href)); });
+      document.querySelectorAll('.drawer a[href^="#"]').forEach(a => {
         const href = (a.getAttribute('href') || '').replace('#', '');
-        if(!href) return;
-        a.style.display = alive(href) ? '' : 'none';
+        if(href) setVis(a, alive(href));
       });
-      const lexLinks = document.querySelectorAll('.drawer a[href="#lexicon"]');
-      lexLinks.forEach(a => { a.style.display = alive('lexicon') ? '' : 'none'; });
     }else{
       nav.forEach(a => { a.style.display = ''; });
-      document.querySelectorAll('.drawer a[href="#lexicon"]').forEach(a => { a.style.display = ''; });
+      document.querySelectorAll('.drawer a[href^="#"]').forEach(a => { a.style.display = ''; });
     }
   }catch(e){}
 }
@@ -2890,8 +2894,11 @@ function lexiconHTML(){
   const cats = lexCats(all);
   const initials = lexInitials(all);
   const filtered = lexFilter(all, { q: lexQuery, cat: lexCat, initial: lexInitial });
-  const cap = (all.length > LEX_BIG && !lexCat && !lexInitial && !lexQuery) ? 30 : lexLimit;
+  /* 首页只放少量词条，完整内容进「完整词典」一屏 —— 手机上不用划半天 */
+  const inPageCap = (window.innerWidth < 820) ? 6 : 12;
+  const cap = (lexCat || lexInitial || lexQuery) ? Math.min(30, lexLimit) : Math.min(inPageCap, lexLimit);
   const shown = filtered.slice(0, cap);
+  const rest = Math.max(0, all.length - shown.length);
   return `<section class="sec" id="lexicon">
     <div class="sec-head">
       <h2>${esc(LBL('lexicon', '词典'))}${all.length ? `<span class="sec-count">${all.length} 条</span>` : ''}</h2>
@@ -2911,8 +2918,10 @@ function lexiconHTML(){
       ${filtered.length ? shown.map(lexEntryHTML).join('')
         : (all.length ? '<div class="lex-empty">此索引下暂无词条</div>' : wipHTML('词典完善中', true))}
     </div>
-    ${(filtered.length > shown.length) ? `<div class="lex-more"><button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button>
-      ${all.length > LEX_BIG ? `<button class="btn small ghost" data-act="open-lexicon" style="margin-left:8px">打开完整词典</button>` : ''}</div>` : ''}
+    ${(filtered.length > shown.length) ? `<div class="lex-more">
+      <button class="btn small" data-act="open-lexicon">查 看 全 部 ${all.length} 条 词 条</button>
+      ${(!lexCat && !lexInitial && !lexQuery && all.length > shown.length) ? `<button class="btn small ghost" id="lex-more-btn" style="margin-left:8px">继续看下面 ${Math.min(LEX_STEP, filtered.length - shown.length)} 条</button>` : (filtered.length > shown.length ? `<button class="btn small ghost" id="lex-more-btn" style="margin-left:8px">载入更多（还有 ${filtered.length - shown.length} 条）</button>` : '')}
+    </div>` : `<div class="lex-more"><button class="btn small ghost" data-act="open-lexicon">打 开 完 整 词 典</button></div>`}
   </section>`;
 }
 function renderLexList(){
@@ -3532,7 +3541,7 @@ function renderAll(){
     seal.innerHTML = esc(isAbyss ? '◈' : (title || '浮').slice(0, 1));
     seal.style.background = '';
   }
-  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + storiesHTML() + lexiconHTML() + guestHTML() + changelogHTML() + noticeHTML();
+  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + guestHTML() + storiesHTML() + lexiconHTML() + changelogHTML() + noticeHTML();
   document.body.classList.toggle('editing', editMode);
   document.querySelectorAll('[data-action="edit"]').forEach(b => {
     b.textContent = editMode ? '完成编辑' : '编辑';
@@ -6204,6 +6213,7 @@ function buildToc(){
   });
   push('#chars', LBL('chars', '妖众'));
   push('#timeline', LBL('timeline', '纪年'));
+  push('#guest', LBL('guest', '感想'));
   push('#stories', LBL('stories', '卷帙'));
   push('#lexicon', LBL('lexicon', '词典'));
   push('#changelog', '更新');
