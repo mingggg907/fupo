@@ -5017,7 +5017,13 @@ function openRealmTools(){
   document.getElementById('rt-copy').addEventListener('click', () => {
     const ks = picked('cp-part');
     if(!ks.length){ toast('请先选择要同步的内容'); return; }
-    if(!confirm('用「' + other + '」的所选内容覆盖「' + me + '」？\n\n（' + me + '里对应的部分会被替换，可用 Ctrl+Z 撤销）')) return;
+    /* 安全护栏：源内容为空时，覆盖会把目标清空 —— 必须二次确认 */
+    const emptyOnes = ks.filter(k => !(src()[k] || []).length);
+    if(emptyOnes.length){
+      const names = emptyOnes.map(k => (GROUPS.find(g => g[0] === k) || [])[1]).join('、');
+      if(!confirm('注意：「' + other + '」的 ' + names + ' 目前是空的。\n\n继续覆盖会把「' + me + '」的对应内容也清空。\n\n确定要继续吗？')) return;
+      if(!confirm('再次确认：真的要清空「' + me + '」的 ' + names + ' 吗？')) return;
+    }else if(!confirm('用「' + other + '」的所选内容覆盖「' + me + '」？\n\n（' + me + '里对应的部分会被替换，可用 Ctrl+Z 撤销）')) return;
     pushHistory();
     ks.forEach(k => { dst()[k] = regenIds(src()[k], k); });
     _doSave(); renderAll(); closeModal(true);
