@@ -330,6 +330,9 @@ button, a, [data-act], [data-action], .cf-btn, .lex-ini, .toc-item, input, texta
   .world-body{transition:none!important}          /* 手机上不做展开高度动画：点下去立刻出来 */
   .world-arrow{transition:transform .18s var(--ease-out)}
   .btn,.cf-btn,.lex-ini{min-height:34px}
+  /* 手机端弹窗不做毛玻璃（X5/QQ 叠在动画上有闪屏风险，也更省性能） */
+  .overlay{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(24,28,24,.72)!important;animation-fill-mode:both}
+  .modal{animation-duration:.18s}
 }
 .lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:9px 13px;font-family:var(--serif);font-size:.9rem;letter-spacing:.04em;text-align:center}
 body.abyss .lex-input{background:rgba(255,255,255,.05)}
@@ -425,6 +428,19 @@ body.abyss .guest-box{background:linear-gradient(180deg,rgba(255,255,255,.04),rg
 .guest-like.on{color:var(--cinnabar);border-color:var(--cinnabar);opacity:.85}
 .guest-like .gl-heart{font-size:.9rem}
 .guest-more{text-align:center;padding:14px 0 4px}
+/* 留言墙：排序 / 表情 / 回复 / 我 */
+.guest-bar{display:flex;gap:8px;justify-content:center;margin:0 0 14px}
+.gbar{font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;padding:4px 14px;border:1px solid var(--line-2);border-radius:99px;background:transparent;color:var(--ink-3);cursor:pointer;transition:.2s;touch-action:manipulation}
+.gbar.on{color:var(--paper);background:var(--ink);border-color:var(--ink)}
+body.abyss .gbar.on{color:var(--ink);background:var(--gold-2,#c9a35c);border-color:transparent}
+.guest-emojis{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.gemj{width:32px;height:32px;display:grid;place-items:center;font-size:1rem;background:transparent;border:1px solid var(--line-2);border-radius:2px;cursor:pointer;transition:.18s;touch-action:manipulation}
+.gemj:active{background:rgba(160,134,80,.14)}
+.guest-reply{font-family:var(--serif);font-size:.74rem;letter-spacing:.08em;color:var(--ink-3);background:transparent;border:1px solid var(--line-2);border-radius:99px;padding:3px 12px;cursor:pointer;transition:.2s;touch-action:manipulation}
+.guest-reply:hover{color:var(--gold);border-color:var(--gold)}
+.guest-badge.mine{color:var(--ink-3);border-color:var(--line-2)}
+.guest-item.mine{background:rgba(160,134,80,.05)}
+.guest-hint b{color:var(--gold);font-weight:400}
 /* 手机端快速通道：顶部横向导航（不用点三条杠也能跳转） */
 @media (max-width:820px){
   .topbar{flex-wrap:wrap;row-gap:2px}
@@ -1761,9 +1777,10 @@ function normalize(d){
   if(!d.meta.copyright || typeof d.meta.copyright !== 'object') d.meta.copyright = { text: '' };
   if(typeof d.meta.copyright.text !== 'string') d.meta.copyright.text = '';
   /* 访客感想墙 */
-  if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true, ownerLabel: '站主' };
+  if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true, ownerLabel: '站主', dailyLimit: 3 };
   if(typeof d.meta.guest.on !== 'boolean') d.meta.guest.on = true;
   if(typeof d.meta.guest.ownerLabel !== 'string' || !d.meta.guest.ownerLabel.trim()) d.meta.guest.ownerLabel = '站主';
+  if(typeof d.meta.guest.dailyLimit !== 'number' || d.meta.guest.dailyLimit < 1) d.meta.guest.dailyLimit = 3;
   /* 角色扩展字段：主题色 / 生日 / 资料表 / 立绘画廊 / 语录 */
   const normChar = (c) => {
     if(!c || typeof c !== 'object') return c;
@@ -3309,8 +3326,11 @@ function guestInnerHTML(){
           ${sbLoggedIn ? `<div class="guest-owner-hint">你已登录 · 以「${esc(ownerLabel())}」身份发言（免审核，立刻显示）</div>` : ''}
           <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20" value="${sbLoggedIn ? esc(ownerLabel()) : ''}">
           <textarea id="guest-text" class="guest-textarea" rows="3" placeholder="想对作者说的话…（最多 500 字）" maxlength="500"></textarea>
+          <div class="guest-emojis">
+            ${['🌙','✨','🍃','🌸','🔥','💧','🐾','📖'].map(e => `<button class="gemj" type="button" data-guest-emoji="${e}">${e}</button>`).join('')}
+          </div>
           <div class="guest-send-row">
-            <span class="guest-hint">${sbLoggedIn ? '站主发言免审核' : '送出后需作者审核通过才公开'}</span>
+            <span class="guest-hint">${sbLoggedIn ? '站主发言免审核' : '送出后需作者审核通过才公开'} · 今天还可以写 <b id="guest-left">${guestDailyLeft()}</b> 条</span>
             <button class="btn small primary" id="guest-send" type="button">送 出</button>
           </div>
         </div>`}
@@ -3327,31 +3347,67 @@ function likedSet(){
 function markLiked(id){
   try{ const s = likedSet(); s.add(String(id)); localStorage.setItem('fupo-guest-liked', JSON.stringify([...s].slice(-500))); }catch(e){}
 }
+/* 每日留言次数（本机记录；默认 3 条/天，可在内容工具里改） */
+function guestDaily(){
+  const today = new Date().toISOString().slice(0, 10);
+  let rec = null;
+  try{ rec = JSON.parse(localStorage.getItem('fupo-guest-daily') || 'null'); }catch(e){}
+  if(!rec || rec.d !== today) rec = { d: today, n: 0 };
+  return rec;
+}
+function guestDailyLeft(){
+  const lim = ((state.meta.guest) || {}).dailyLimit || 3;
+  return Math.max(0, lim - guestDaily().n);
+}
+function guestDailyBump(){
+  const rec = guestDaily(); rec.n += 1;
+  try{ localStorage.setItem('fupo-guest-daily', JSON.stringify(rec)); }catch(e){}
+}
+function myGuestIds(){
+  try{ return new Set(JSON.parse(localStorage.getItem('fupo-guest-mine') || '[]')); }catch(e){ return new Set(); }
+}
+function markMine(id){
+  try{ const s = myGuestIds(); s.add(String(id)); localStorage.setItem('fupo-guest-mine', JSON.stringify([...s].slice(-200))); }catch(e){}
+}
+let guestSort = 'new';   /* new = 最新 / hot = 最热 */
 function guestListHTML(){
-  const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
+  let rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows.slice();
   if(!rows.length) return `<div class="guest-empty">还没有留言 · 欢迎写下第一句</div>`;
+  if(guestSort === 'hot'){
+    rows.sort((a, b) => (guestState.likes[String(b.id)] || 0) - (guestState.likes[String(a.id)] || 0));
+  }
   const liked = likedSet();
+  const mine = myGuestIds();
   const shown = rows.slice(0, guestState.limit);
   const rest = rows.length - shown.length;
-  return shown.map(r => `
-    <div class="guest-item${r.approved ? '' : ' pending'}${isOwnerRow(r) ? ' owner' : ''}">
+  return `<div class="guest-bar">
+      <button class="gbar${guestSort === 'new' ? ' on' : ''}" data-guest-sort="new" type="button">最 新</button>
+      <button class="gbar${guestSort === 'hot' ? ' on' : ''}" data-guest-sort="hot" type="button">最 热</button>
+    </div>`
+    + shown.map(r => {
+    const id = String(r.id);
+    const n = guestState.likes[id] || 0;
+    return `
+    <div class="guest-item${r.approved ? '' : ' pending'}${isOwnerRow(r) ? ' owner' : ''}${mine.has(id) ? ' mine' : ''}">
       <div class="guest-head">
         <span class="guest-name">${esc(String(r.name || '').trim() || '匿名')}</span>
         ${isOwnerRow(r) ? `<span class="guest-badge owner">${esc(ownerLabel())}</span>` : ''}
+        ${mine.has(id) ? '<span class="guest-badge mine">我</span>' : ''}
         <span class="guest-time">${esc(String(r.created_at || '').slice(0, 10))}</span>
         ${r.approved ? '' : '<span class="guest-badge">待审核</span>'}
         ${editMode ? `<span class="guest-acts">
-          ${r.approved ? '' : '<button class="btn small" data-guest-approve="' + esc(String(r.id)) + '" type="button">通 过</button>'}
-          <button class="btn small ghost" data-guest-del="${esc(String(r.id))}" type="button">删 除</button>
+          ${r.approved ? '' : '<button class="btn small" data-guest-approve="' + esc(id) + '" type="button">通 过</button>'}
+          <button class="btn small ghost" data-guest-del="${esc(id)}" type="button">删 除</button>
         </span>` : ''}
       </div>
       <div class="guest-text">${esc(String(r.text || ''))}</div>
       <div class="guest-foot">
-        ${guestState.likeOk === false ? '' : `<button class="guest-like${liked.has(String(r.id)) ? ' on' : ''}" data-guest-like="${esc(String(r.id))}" type="button" ${liked.has(String(r.id)) ? 'disabled' : ''}>
-          <span class="gl-heart">${liked.has(String(r.id)) ? '♥' : '♡'}</span>${guestState.likes[String(r.id)] || 0}
+        ${guestState.likeOk === false ? '' : `<button class="guest-like${liked.has(id) ? ' on' : ''}" data-guest-like="${esc(id)}" type="button" ${liked.has(id) ? 'disabled' : ''}>
+          <span class="gl-heart">${liked.has(id) ? '♥' : '♡'}</span>${n}
         </button>`}
+        <button class="guest-reply" data-guest-reply="${esc(String(r.name || '').trim() || '匿名')}" type="button">回 复</button>
       </div>
-    </div>`).join('')
+    </div>`; }).join('')
     + (rest > 0 ? `<div class="guest-more"><button class="btn small ghost" id="guest-more-btn" type="button">看更早的留言（还有 ${rest} 条）</button></div>` : '');
 }
 function guestHTML(){
@@ -3371,14 +3427,22 @@ async function postGuest(){
   const text = ((textEl && textEl.value) || '').trim().slice(0, 500);
   if(!text){ toast('请先写点内容'); return; }
   if(!sbReady()){ toast('留言区暂时不可用'); return; }
+  /* 每日次数限制（站主不受限） */
+  if(!asOwner && guestDailyLeft() <= 0){
+    toast('今天的留言次数已用完，明天再来吧');
+    return;
+  }
   const last = Number(localStorage.getItem('fupo-guest-last') || 0);
   if(Date.now() - last < 30000){ toast('刚刚已经送出了一条，稍后再写吧'); return; }
   showProgress(null, '正在送出…');
   try{
-    const res = await withTimeout(sb.from(GUEST_TABLE).insert([{ name, text, approved: asOwner }]), 16000);
+    const res = await withTimeout(sb.from(GUEST_TABLE).insert([{ name, text, approved: asOwner }]).select(), 16000);
     hideProgress();
     if(res.error) throw res.error;
     try{ localStorage.setItem('fupo-guest-last', String(Date.now())); }catch(e){}
+    if(!asOwner) guestDailyBump();
+    const newId = res.data && res.data[0] && res.data[0].id;
+    if(newId) markMine(newId);
     guestState.sent = true;
     renderGuest();
     toast(asOwner ? '已发布（站主身份，立即可见）' : '留言已送达 · 作者看过后会显示出来');
@@ -4375,6 +4439,27 @@ app.addEventListener('click', e => {
   if(e.target.closest && e.target.closest('#guest-again')){ guestState.sent = false; renderGuest(); return; }
   const gl = e.target.closest && e.target.closest('[data-guest-like]');
   if(gl){ likeGuest(gl.dataset.guestLike); return; }
+  const gs2 = e.target.closest && e.target.closest('[data-guest-sort]');
+  if(gs2){ guestSort = gs2.dataset.guestSort || 'new'; renderGuest(); return; }
+  const ge = e.target.closest && e.target.closest('[data-guest-emoji]');
+  if(ge){
+    const t = document.getElementById('guest-text');
+    if(t){ t.value = (t.value || '') + ge.dataset.guestEmoji; t.focus({ preventScroll: true }); }
+    return;
+  }
+  const gr2 = e.target.closest && e.target.closest('[data-guest-reply]');
+  if(gr2){
+    const t = document.getElementById('guest-text');
+    if(t){
+      const who = gr2.dataset.guestReply || '';
+      if(!t.value.trim()) t.value = '回复 @' + who + '：';
+      t.focus({ preventScroll: true });
+      const sec = document.getElementById('guest');
+      if(sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      toast('已在下方留言框写入「回复 @' + who + '」');
+    }
+    return;
+  }
   if(e.target.closest && e.target.closest('#guest-more-btn')){ guestState.limit += GUEST_PAGE; renderGuest(); return; }
   const ga = e.target.closest && e.target.closest('[data-guest-approve]');
   if(ga){ modGuest(ga.dataset.guestApprove, true); return; }
@@ -5330,6 +5415,7 @@ function openHelp(){
       <div class="help-item"><span class="help-ico">🔒</span><div><strong>数据都在哪里</strong>每次点「保存」自动存进这个浏览器；「导出」下载 JSON 备份；「历史快照」每天自动留档；「同步码」可以把表层+上古的全部内容（含图片）搬到手机或其他电脑。</div></div>
       <div class="help-item"><span class="help-ico">↩</span><div><strong>撤销与恢复</strong>编辑模式下 <b>Ctrl+Z</b> 撤销、<b>Ctrl+Shift+Z</b> 重做；删除后 30 秒内右下角提示条可「撤回」。</div></div>
       <div class="help-item"><span class="help-ico">§</span><div><strong>版权与声明</strong>站内文字由作者本人撰写，插画大部分为作者本人绘制、另有部分为委托创作（约稿）作品，音乐为自选与约稿并用；原创与约稿作品的权利分别归作者本人及各原作者所有。全站内容仅供个人欣赏交流，未经许可请勿转载、复制或用于商业用途。完整声明见页面末尾「浮魄」处（编辑模式下可在 ☰ → 版权声明 中自行修改措辞）。</div></div>
+      <div class="help-item"><span class="help-ico">◱</span><div><strong>感想墙</strong>☰ → 内容工具：可开关、设「每日每人留言上限」与「站主称呼」。留言默认<b>待审核</b>，你在编辑模式（需登录云同步）点「通过」才公开；<b>站主登录后发言免审核</b>，并带「站主」标识。<br>点赞功能需要在 Supabase 建一张 <code>fupo_guest_like</code> 表（未建则点赞按钮自动隐藏）：<br><code>create table if not exists public.fupo_guest_like (id bigint generated by default as identity primary key, created_at timestamptz not null default now(), guest_id bigint not null);<br>alter table public.fupo_guest_like enable row level security;<br>create policy fupo_like_read on public.fupo_guest_like for select using (true);<br>create policy fupo_like_insert on public.fupo_guest_like for insert with check (true);</code></div></div>
       <div class="help-item"><span class="help-ico">⌘</span><div><strong>快捷操作</strong><b>Ctrl+K</b> 搜索；<b>Ctrl+Z / Ctrl+Shift+Z</b> 撤销 / 重做；弹窗里 <b>Ctrl+Enter</b> 直接保存；<b>Esc</b> 关闭弹窗；门帘页按 <b>回车</b> 入界；图片点开后 <b>双击</b> 放大、<b>滚轮或双指</b> 缩放、点空白关闭。</div></div>
       <div class="help-item"><span class="help-ico">◱</span><div><strong>内容工具（编辑模式）</strong>☰ → 内容工具：可把「表层」与「上古」的内容**一键互相同步**（覆盖或追加，妖众关系会自动对应），也可以**一键清空**本界选中的栏目；清空后 30 秒内可撤回。</div></div>
     </div>`
@@ -6129,8 +6215,9 @@ const FUPO_BG = (function(){
   document.addEventListener('visibilitychange', () => { if(!document.hidden) last = 0; });
 
   /* 有浮层（搜索/弹窗/目录）时暂停动画：避免与 backdrop-filter 模糊层叠加导致手机端闪屏 */
-  function pauseAnim(){ paused = true; try{ if(cv) cv.style.opacity = '0'; }catch(e){} }
-  function resumeAnim(){ paused = false; last = 0; try{ if(cv) cv.style.opacity = ''; }catch(e){} }
+  /* 暂停：只停帧，不动 opacity —— 之前瞬间隐藏画布会造成"打开弹窗闪一下" */
+  function pauseAnim(){ paused = true; }
+  function resumeAnim(){ paused = false; last = 0; }
 
   return {
     apply, stop, start, pause: pauseAnim, resume: resumeAnim,
@@ -6194,6 +6281,12 @@ function openRealmTools(){
       <div class="field full" style="margin-top:8px;padding-top:16px;border-top:1px solid var(--line-2)">
         <label>访客感想墙</label>
         <label class="field-check" style="padding:0"><input type="checkbox" id="rt-guest" ${(state.meta.guest && state.meta.guest.on) ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.12em">开启（访客可留言，需你审核后才会公开）</span></label>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap">
+          <span style="font-family:var(--serif);font-size:.82rem;letter-spacing:.1em;color:var(--ink-3)">每日每人留言上限</span>
+          <input type="number" id="rt-guest-limit" min="1" max="50" value="${((state.meta.guest||{}).dailyLimit)||3}" style="width:80px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:5px 8px;font-family:var(--serif)">
+          <span style="font-family:var(--serif);font-size:.82rem;letter-spacing:.1em;color:var(--ink-3)">站主称呼</span>
+          <input type="text" id="rt-guest-owner" value="${esc(((state.meta.guest||{}).ownerLabel)||'站主')}" style="width:110px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:5px 8px;font-family:var(--serif)">
+        </div>
         <span class="hint">首次使用需在 Supabase 的 SQL Editor 里建一张 fupo_guest 表（见 ☰ → 使用说明）。未建表时访客看不到这个栏目。</span>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn small" id="rt-guest-save" type="button">保 存 设 置</button>
@@ -6213,6 +6306,10 @@ function openRealmTools(){
   if(gs) gs.addEventListener('click', () => {
     state.meta.guest = state.meta.guest || { on: true };
     state.meta.guest.on = !!document.getElementById('rt-guest').checked;
+    const lim = Number((document.getElementById('rt-guest-limit') || {}).value) || 3;
+    state.meta.guest.dailyLimit = Math.max(1, Math.min(50, lim));
+    const ow = ((document.getElementById('rt-guest-owner') || {}).value || '').trim();
+    if(ow) state.meta.guest.ownerLabel = ow;
     _doSave(); renderAll();
     toast(state.meta.guest.on ? '感想墙已开启' : '感想墙已关闭');
   });
