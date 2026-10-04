@@ -1949,6 +1949,17 @@ function loadPatches(){
 function savePatches(){
   try{ localStorage.setItem(PATCH_KEY, JSON.stringify(patches)); }catch(e){}
 }
+/* ★ 补丁改动后同步到云端（之前只存本机，所以别的设备看不到、换设备就丢） */
+function syncPatches(){
+  try{
+    if(!sbConfigured()) return;
+    if(!window.__fupoBooted) return;          /* 启动阶段不覆盖云端补丁 */
+    if(!sbLoggedIn){ toast('补丁已保存在本机 · 登录云同步后会一起上传'); return; }
+    cloudSave({ skipPrecheck: true, baseStamp: lastCloudStamp }).then(ok => {
+      toast(ok ? '补丁已同步到云端（所有设备生效）' : '补丁已存本机，云端同步失败（稍后再试）');
+    }).catch(()=>{});
+  }catch(e){}
+}
 function mergeContent(data){
   if(data.meta) Object.assign(state.meta, data.meta);
   const target = data.realm === 'abyss' ? state.worlds.abyss : state.worlds.surface;
@@ -2040,6 +2051,7 @@ function openPatchManager(){
       savePatches();
       applyPatches();
       toast('已 ' + (cb.checked ? '启 用' : '停 用'));
+      syncPatches();
     });
   });
   modalRoot.querySelectorAll('[data-patch-act]').forEach(btn => {
@@ -2048,14 +2060,14 @@ function openPatchManager(){
       if(act === 'del'){
         if(!confirm('确定删除这段补丁吗？')) return;
         patches = patches.filter(x => x.id !== pid);
-        savePatches(); closeModal(true); openPatchManager();
+        savePatches(); syncPatches(); closeModal(true); openPatchManager();
         toast('已 删 除');
       }else if(act === 'up' || act === 'down'){
         const i = patches.findIndex(x => x.id === pid);
         const j = i + (act === 'up' ? -1 : 1);
         if(j < 0 || j >= patches.length) return;
         [patches[i], patches[j]] = [patches[j], patches[i]];
-        savePatches(); closeModal(true); openPatchManager();
+        savePatches(); syncPatches(); closeModal(true); openPatchManager();
       }else if(act === 'edit'){
         const p = patches.find(x => x.id === pid);
         closeModal(true);
@@ -2101,6 +2113,7 @@ function openPatchEditor(patch, defaultType){
       applyPatches();
       renderAll();
       toast('已 保 存 并 应 用');
+      syncPatches();
     }
   });
 }
@@ -4115,6 +4128,7 @@ function setRealm(r, origin){
   /* 登录状态：优先读本机会话（不依赖网络），必要时自动登录 */
   if(sbConfigured()) restoreAuthSession();
   updateDraftBanner();
+  window.__fupoBooted = true;   /* 标记启动完成：之后补丁改动才会同步云端 */
   console.log('浮魄 版本：' + (typeof FUPO_BUILD !== 'undefined' ? FUPO_BUILD : '未知') + ' ｜ 数据来源：' + (cache ? '本机缓存' : '默认模板'));
 })();
 
