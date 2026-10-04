@@ -6251,10 +6251,12 @@ const FUPO_BG = (function(){
   }
   /* 门帘在时把画布放进门帘里（垫在文字下），避免门帘透出正文造成"重影" */
   function ensurePlacement(){
+    if(!cv) return;
     const gate = document.getElementById('gate');
     const inGate = !!(gate && gate.parentNode && !gate.classList.contains('hide'));
     const want = inGate ? gate : document.body;
-    if(cv.parentNode !== want){
+    /* 注意：门帘被移除后画布可能"挂"在已脱离文档的节点上，必须用 contains 判断 */
+    if(cv.parentNode !== want || !document.body.contains(cv)){
       want.insertBefore(cv, want.firstChild);
       resizeCanvas();
     }
@@ -6354,7 +6356,7 @@ const FUPO_BG = (function(){
   setInterval(() => {
     try{
       if(!running || !cv) return;
-      if(cv.parentNode) return;
+      if(document.body.contains(cv)) return;
       cv.id = ID;
       document.body.insertBefore(cv, document.body.firstChild);
       resizeCanvas();
@@ -6369,7 +6371,7 @@ const FUPO_BG = (function(){
   function attachCanvas(){
     try{
       if(!running || !cv) return;
-      if(cv.parentNode && cv.parentNode !== document.getElementById('gate')) return;
+      if(document.body.contains(cv) && !(document.getElementById('gate') && document.getElementById('gate').contains(cv))){ return; }
       document.body.insertBefore(cv, document.body.firstChild);
       resizeCanvas();
       if(W < 820 && !window.__fupoAnimForce) paint(0.016);
