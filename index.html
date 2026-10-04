@@ -299,23 +299,38 @@ body.abyss .quote-item{background:rgba(255,255,255,.03)}
 .name-link{font:inherit;color:inherit;background:transparent;border:0;border-bottom:1px dashed var(--gold);padding:0 1px;cursor:pointer;transition:.2s}
 .name-link:hover{color:var(--cinnabar);border-bottom-color:var(--cinnabar)}
 .lex-link{border-bottom-style:dotted;border-bottom-color:var(--ink-3)}
-/* 词典 */
-.lex-tools{display:flex;flex-direction:column;gap:14px;align-items:center;margin:0 0 26px}
-.lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:10px 14px;font-family:var(--serif);font-size:.92rem;letter-spacing:.06em;text-align:center}
+/* 通用小输入框（感想墙昵称等） */
+.lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:9px 13px;font-family:var(--serif);font-size:.9rem;letter-spacing:.04em;text-align:center}
 body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-input:focus{outline:none;border-color:var(--gold)}
-.lex-cats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.lex-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 30px}
-.lex-item{position:relative;padding:16px 12px 16px 14px;border-bottom:1px solid var(--line-2);min-width:0}
-.lex-term{font-family:var(--serif);font-size:1.02rem;letter-spacing:.1em;color:var(--ink);cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.lex-term:hover{color:var(--cinnabar)}
-.lex-reading{font-size:.72rem;letter-spacing:.06em;color:var(--ink-3);font-family:var(--sans)}
-.lex-cat{display:inline-block;margin-top:6px;font-family:var(--serif);font-size:.68rem;letter-spacing:.14em;color:var(--gold);border:1px solid var(--line-2);border-radius:99px;padding:2px 9px}
-.lex-def{font-family:var(--serif);font-size:.84rem;line-height:1.95;color:var(--ink-2);margin-top:9px;word-break:break-word}
-.lex-alias{font-family:var(--serif);font-size:.74rem;letter-spacing:.06em;color:var(--ink-3);margin-top:7px}
-.lex-empty{font-family:var(--serif);font-size:.84rem;letter-spacing:.2em;color:var(--ink-3);text-align:center;padding:34px 0;grid-column:1/-1}
-.lex-more{text-align:center;margin-top:22px;grid-column:1/-1}
-@media (max-width:640px){.lex-list{grid-template-columns:1fr}}
+/* 词典（紧凑版：字典式索引 + 单行释义） */
+.lex-index{display:flex;flex-direction:column;gap:10px;margin:0 0 18px}
+.lex-initials{display:flex;gap:6px;flex-wrap:wrap}
+.lex-ini{min-width:30px;height:28px;padding:0 8px;font-family:var(--serif);font-size:.76rem;letter-spacing:.08em;color:var(--ink-3);background:transparent;border:1px solid var(--line-2);border-radius:2px;cursor:pointer;transition:.18s}
+.lex-ini:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
+.lex-ini.on{color:var(--paper);background:var(--ink);border-color:var(--ink)}
+body.abyss .lex-ini.on{color:var(--ink);background:var(--gold-2,#c9a35c);border-color:transparent}
+.lex-cats{display:flex;gap:8px;flex-wrap:wrap}
+.lex-cats .cf-btn{font-size:.72rem;padding:4px 12px}
+.lex-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:0 26px}
+.lex-item{position:relative;padding:9px 8px 9px 10px;border-bottom:1px dashed var(--line-2);min-width:0;cursor:pointer;transition:background .18s}
+.lex-item:hover{background:rgba(160,134,80,.05)}
+.lex-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.lex-term{font-family:var(--serif);font-size:.92rem;letter-spacing:.06em;color:var(--ink)}
+.lex-item:hover .lex-term{color:var(--cinnabar)}
+.lex-reading{font-size:.68rem;letter-spacing:.04em;color:var(--ink-3);font-family:var(--sans)}
+.lex-cat{font-family:var(--serif);font-size:.62rem;letter-spacing:.1em;color:var(--gold);border:1px solid var(--line-2);border-radius:99px;padding:1px 7px}
+.lex-acts{margin-left:auto;display:flex;gap:4px}
+.lex-acts button{width:22px;height:22px;display:grid;place-items:center;font-size:.68rem;background:rgba(236,236,236,.95);border:1px solid var(--line);border-radius:2px;color:var(--ink-2);cursor:pointer}
+body.abyss .lex-acts button{background:rgba(10,11,13,.9)}
+.lex-acts button:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
+.lex-def{font-family:var(--serif);font-size:.78rem;line-height:1.75;color:var(--ink-3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lex-alias{font-family:var(--serif);font-size:.7rem;color:var(--ink-3);opacity:.85;margin-top:2px}
+.lex-detail-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line-2)}
+.lex-related{display:flex;gap:8px;flex-wrap:wrap}
+.lex-empty{font-family:var(--serif);font-size:.82rem;letter-spacing:.16em;color:var(--ink-3);text-align:center;padding:26px 0;grid-column:1/-1}
+.lex-more{text-align:center;margin-top:20px;grid-column:1/-1}
+@media (max-width:640px){.lex-list{grid-template-columns:1fr}.lex-ini{min-width:26px;height:26px;padding:0 6px}}
 /* 卷帙：分类（设定 / 二创）与章节 */
 .story-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 22px}
 .story-kind{font-family:var(--serif);font-size:.68rem;letter-spacing:.14em;color:var(--gold);border:1px solid var(--line-2);border-radius:99px;padding:2px 9px;margin-left:10px;vertical-align:middle}
@@ -2778,8 +2793,9 @@ function applyLabels(){
    ============================================================ */
 let lexQuery = '';
 let lexCat = '';
-let lexLimit = 60;            /* 减压：一次最多渲染这么多条，其余按需载入 */
-const LEX_STEP = 60;
+let lexInitial = '';
+let lexLimit = 120;            /* 减压：一次最多渲染这么多条，其余按需载入 */
+const LEX_STEP = 120;
 
 function lexMatch(x, q){
   if(!q) return true;
@@ -2789,42 +2805,68 @@ function lexMatch(x, q){
 function lexCats(list){
   return [...new Set(list.map(x => (x.cat || '').trim()).filter(Boolean))].slice(0, 18);
 }
+/* 字典式首字索引：有拼音读音就用首字母（A–Z），否则用词条首字 */
+function lexIndexOf(x){
+  const r = String((x && x.reading) || '').trim();
+  const m = r.match(/^[A-Za-z]/);
+  if(m) return m[0].toUpperCase();
+  const t = String((x && x.term) || '').trim();
+  return t ? t.charAt(0) : '#';
+}
+function lexInitials(list){
+  const set = new Set(list.map(lexIndexOf));
+  return [...set].sort((a, b) => {
+    const la = /[A-Z]/.test(a), lb = /[A-Z]/.test(b);
+    if(la && lb) return a.localeCompare(b);
+    if(la) return -1;
+    if(lb) return 1;
+    return a.localeCompare(b, 'zh');
+  });
+}
 function lexEntryHTML(x){
   return `<div class="lex-item" data-act="open-lex" data-id="${x.id}">
-    <div class="lex-term">${esc(x.term || '未命名')}${x.reading ? `<span class="lex-reading">${esc(x.reading)}</span>` : ''}</div>
-    ${x.cat ? `<span class="lex-cat">${esc(x.cat)}</span>` : ''}
-    <div class="lex-def">${esc(plain(x.def || '', 90)) || '<span class="pf-empty">释义完善中</span>'}</div>
+    <div class="lex-line">
+      <span class="lex-term">${esc(x.term || '未命名')}</span>
+      ${x.reading ? `<span class="lex-reading">${esc(x.reading)}</span>` : ''}
+      ${x.cat ? `<span class="lex-cat">${esc(x.cat)}</span>` : ''}
+      ${editMode ? `<span class="lex-acts">
+        <button data-act="edit-lex" data-id="${x.id}" title="编辑">✎</button>
+        <button data-act="up-lex" data-id="${x.id}" title="上移">↑</button>
+        <button data-act="down-lex" data-id="${x.id}" title="下移">↓</button>
+        <button data-act="del-lex" data-id="${x.id}" title="删除">✕</button>
+      </span>` : ''}
+    </div>
+    <div class="lex-def">${esc(plain(x.def || '', 70)) || '<span class="pf-empty">释义完善中</span>'}</div>
     ${x.aliases ? `<div class="lex-alias">别名：${esc(x.aliases)}</div>` : ''}
-    ${editMode ? `<div class="tools">
-      <button data-act="edit-lex" data-id="${x.id}" title="编辑">✎</button>
-      <button data-act="up-lex" data-id="${x.id}" title="上移">↑</button>
-      <button data-act="down-lex" data-id="${x.id}" title="下移">↓</button>
-      <button data-act="del-lex" data-id="${x.id}" title="删除">✕</button>
-    </div>` : ''}
   </div>`;
 }
 function lexiconHTML(){
   const all = W().lexicon || [];
   if(!editMode && !all.length) return '';
   const cats = lexCats(all);
-  const filtered = all.filter(x => lexMatch(x, lexQuery) && (!lexCat || (x.cat || '').trim() === lexCat));
+  const initials = lexInitials(all);
+  const filtered = all.filter(x => lexMatch(x, lexQuery)
+    && (!lexCat || (x.cat || '').trim() === lexCat)
+    && (!lexInitial || lexIndexOf(x) === lexInitial));
   const shown = filtered.slice(0, lexLimit);
   return `<section class="sec" id="lexicon">
     <div class="sec-head">
       <h2>${esc(LBL('lexicon', '词典'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-lex">+ 新增词条</button>` : ''}
     </div>
-    ${all.length ? `<div class="lex-tools">
-      <input type="text" id="lex-search" class="lex-input" placeholder="检索词条…" value="${esc(lexQuery)}">
-      ${cats.length ? `<div class="lex-cats">
-        <button class="cf-btn${lexCat ? '' : ' on'}" data-lex-cat="">全部</button>
+    ${all.length ? `<div class="lex-index">
+      <div class="lex-initials">
+        <button class="lex-ini${(lexCat || lexInitial) ? '' : ' on'}" data-lex-initial="">全部</button>
+        ${initials.map(k => `<button class="lex-ini${lexInitial === k ? ' on' : ''}" data-lex-initial="${esc(k)}">${esc(k)}</button>`).join('')}
+      </div>
+      ${cats.length > 1 ? `<div class="lex-cats">
         ${cats.map(c => `<button class="cf-btn${lexCat === c ? ' on' : ''}" data-lex-cat="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>` : ''}
     </div>` : (editMode ? `<div class="lex-tools"><button class="btn small" data-act="lex-seed">从现有设定一键生成词条草稿</button>
       <span class="hint" style="font-family:var(--serif);font-size:.76rem;color:var(--ink-3);letter-spacing:.08em">会把「妖界分区」里每条设定的标题变成词条、分区名变成分类，你再补释义即可</span></div>` : '')}
     <div class="lex-list" id="lex-list">
       ${filtered.length ? shown.map(lexEntryHTML).join('')
-        : (all.length ? '<div class="lex-empty">没有匹配的词条</div>' : wipHTML('词典完善中', true))}
+        : (all.length ? '<div class="lex-empty">此索引下暂无词条</div>' : wipHTML('词典完善中', true))}
     </div>
     ${filtered.length > shown.length ? `<div class="lex-more"><button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button></div>` : ''}
   </section>`;
@@ -2833,9 +2875,11 @@ function renderLexList(){
   const box = document.getElementById('lex-list');
   if(!box) return;
   const all = W().lexicon || [];
-  const filtered = all.filter(x => lexMatch(x, lexQuery) && (!lexCat || (x.cat || '').trim() === lexCat));
+  const filtered = all.filter(x => lexMatch(x, lexQuery)
+    && (!lexCat || (x.cat || '').trim() === lexCat)
+    && (!lexInitial || lexIndexOf(x) === lexInitial));
   const shown = filtered.slice(0, lexLimit);
-  box.innerHTML = filtered.length ? shown.map(lexEntryHTML).join('') : '<div class="lex-empty">没有匹配的词条</div>';
+  box.innerHTML = filtered.length ? shown.map(lexEntryHTML).join('') : '<div class="lex-empty">此索引下暂无词条</div>';
   const more = document.querySelector('.lex-more');
   if(more){
     if(filtered.length > shown.length) more.innerHTML = `<button class="btn small" id="lex-more-btn">载入更多（还有 ${filtered.length - shown.length} 条）</button>`;
@@ -2845,15 +2889,29 @@ function renderLexList(){
 function openLex(id){
   const x = (W().lexicon || []).find(y => y.id === id);
   if(!x) return;
+  /* 相关词条：同分类的其他词条 + 释义里提到的词条 */
+  const all = W().lexicon || [];
+  const defText = (x.def || '') + ' ' + (x.note || '');
+  const related = all.filter(y => y.id !== x.id && (
+    (y.cat && x.cat && y.cat === x.cat) || (y.term && defText.indexOf(y.term) >= 0)
+  )).slice(0, 10);
   showModal({
     title: x.term || '未命名', wide: true, hideFooter: true,
     body: `<div class="reader">
-      <p class="reader-meta">${esc([x.reading, x.cat].filter(Boolean).join(' · ') || '词 条')}</p>
-      ${x.aliases ? `<p class="lex-alias" style="margin-bottom:14px">别名：${esc(x.aliases)}</p>` : ''}
+      <div class="lex-detail-head">
+        ${x.reading ? `<span class="lex-reading">${esc(x.reading)}</span>` : ''}
+        ${x.cat ? `<span class="lex-cat">${esc(x.cat)}</span>` : ''}
+        ${x.aliases ? `<span class="lex-alias">别名：${esc(x.aliases)}</span>` : ''}
+        <button class="btn small ghost" id="lex-fullsearch" type="button" style="margin-left:auto">在全文里搜这个词</button>
+      </div>
       ${x.def ? `<div class="entry-content">${linkTerms(fmt(x.def))}</div>` : wipHTML('释义完善中', true)}
       ${x.note ? `<p class="reader-meta" style="margin-top:22px">补 充</p><div class="entry-content">${linkTerms(fmt(x.note))}</div>` : ''}
+      ${related.length ? `<p class="reader-meta" style="margin-top:26px">相 关 词 条</p>
+        <div class="lex-related">${related.map(y => `<button class="rel-chip" data-act="open-lex" data-id="${esc(y.id)}">${esc(y.term)}${y.cat ? `<span class="rel-label">${esc(y.cat)}</span>` : ''}</button>`).join('')}</div>` : ''}
     </div>`
   });
+  const fs2 = document.getElementById('lex-fullsearch');
+  if(fs2) fs2.addEventListener('click', () => { closeModal(true); setTimeout(() => { openSearch(); const i = document.getElementById('search-input'); if(i){ i.value = x.term || ''; i.dispatchEvent(new Event('input', { bubbles: true })); } }, 160); });
 }
 function openLexEditor(id, isNew){
   if(!requireEdit()) return;
@@ -3386,17 +3444,7 @@ function renderAll(){
   try{ buildToc(); }catch(e){}
   try{ refreshResumePill(); }catch(e){}
   try{ updateTocActive(); }catch(e){}
-  /* 词典检索框（输入即筛选，不重画整页） */
-  try{
-    const ls = document.getElementById('lex-search');
-    if(ls){
-      ls.addEventListener('input', () => {
-        lexQuery = ls.value.trim();
-        lexLimit = LEX_STEP;
-        renderLexList();
-      });
-    }
-  }catch(e){}
+  /* 词典：首字 / 分类索引（无需输入框，与全文搜索区分开） */
 }
 
 let richIO = null;
@@ -3954,6 +4002,15 @@ app.addEventListener('click', e => {
     return;
   }
   /* 词典：分类筛选 / 载入更多 */
+  /* 词典：首字索引（真正的字典用法，避免与全文搜索重复） */
+  const li = e.target.closest && e.target.closest('[data-lex-initial]');
+  if(li){
+    lexInitial = li.dataset.lexInitial || '';
+    lexLimit = LEX_STEP;
+    document.querySelectorAll('[data-lex-initial]').forEach(b => b.classList.toggle('on', (b.dataset.lexInitial || '') === lexInitial));
+    renderLexList();
+    return;
+  }
   const lc = e.target.closest('[data-lex-cat]');
   if(lc){
     lexCat = lc.dataset.lexCat || '';
