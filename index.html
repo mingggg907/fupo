@@ -692,6 +692,7 @@ a[href]::after{content:""}
     <button class="btn edit-only" data-action="daily">每日寄语</button>
     <button class="btn edit-only" data-action="changelog">更新日志</button>
     <button class="btn edit-only" data-action="copyright">版权声明</button>
+    <button class="btn edit-only" data-action="realm-tools">内容工具</button>
     <button class="btn" data-action="help">使用说明</button>
     <button class="btn" data-action="share">分享 / 手机访问</button>
     <button class="btn" data-action="sync-code">生成同步码</button>
@@ -945,7 +946,8 @@ const DEFAULT_DATA = {
     music:{ volume:60, cur:0, tracks:[] },
     abyssMusic:{ volume:60, cur:0, tracks:[] },
     gate:{ enabled:true, sub:"FU PO · YAO ZHI JIE", title:"浮魄", tip:"月夜 · 水涯 · 银雾", btn:"入 界", note:"点击进入，音乐随之响起" },
-    abyssEntry:{ label:"上古力量", sub:"点 此 揭 开 另 一 层" }
+    abyssEntry:{ label:"上古力量", sub:"点 此 揭 开 另 一 层" },
+    abyssExit:{ label:"归 返 表 层", sub:"回到你熟悉的那层浮魄" },
   },
   worlds:{
     surface:{
@@ -1470,6 +1472,7 @@ function normalize(d){
   d.meta = (d.meta && typeof d.meta === 'object') ? d.meta : {};
   if(!d.meta.gate || typeof d.meta.gate !== 'object') d.meta.gate = { enabled:true, sub:"", title:"", tip:"", btn:"入 界", note:"" };
   if(!d.meta.abyssEntry || typeof d.meta.abyssEntry !== 'object') d.meta.abyssEntry = { label:"上古力量", sub:"点 此 揭 开 另 一 层" };
+  if(!d.meta.abyssExit || typeof d.meta.abyssExit !== 'object') d.meta.abyssExit = { label:"归 返 表 层", sub:"回到你熟悉的那层浮魄" };
   if(typeof d.meta.abyssCover !== 'string') d.meta.abyssCover = d.meta.cover || '';
   if(typeof d.meta.abyssLogo !== 'string') d.meta.abyssLogo = d.meta.logo || '';
   /* 动态背景（落叶）设置 */
@@ -2517,16 +2520,18 @@ function sectionsHTML(){
         </div>`).join('')
         : wipHTML('本卷完善中', true)}
     </div>
-    ${isAbyss ? `
-      <div class="abyss-entry" data-act="exit-realm">
-        <span class="abyss-icon">◈</span>
-        <span class="abyss-title">归 返 表 层<span class="abyss-sub">回到你熟悉的那层浮魄</span></span>
-        <span class="abyss-arrow">← 归 返</span>
-      </div>` : `
+    ${isAbyss ? (() => {
+      const ax = state.meta.abyssExit || {};
+      return `<div class="abyss-entry" data-act="exit-realm">
+        <span class="abyss-icon">${esc(ax.icon || '◈')}</span>
+        <span class="abyss-title">${esc(ax.label || '归 返 表 层')}<span class="abyss-sub">${esc(ax.sub || '回到你熟悉的那层浮魄')}</span></span>
+        <span class="abyss-arrow">${esc(ax.arrow || '← 归 返')}</span>
+      </div>`;
+    })() : `
       <div class="abyss-entry" data-act="enter-realm">
-        <span class="abyss-icon">◈</span>
+        <span class="abyss-icon">${esc(ae.icon || '◈')}</span>
         <span class="abyss-title">${esc(ae.label || '上古力量')}<span class="abyss-sub">${esc(ae.sub || '点 此 揭 开 另 一 层')}</span></span>
-        <span class="abyss-arrow">进 入 →</span>
+        <span class="abyss-arrow">${esc(ae.arrow || '进 入 →')}</span>
       </div>`}
   </section>`;
 }
@@ -2556,8 +2561,10 @@ function charCardsHTML(list){
       </div>
       <p class="char-excerpt">${c.desc ? esc(plain(c.desc, 56)) : '资料完善中'}</p>
       ${editMode ? `<div class="tools">
-        <button data-act="edit-character" data-id="${c.id}">✎</button>
-        <button data-act="del-character" data-id="${c.id}">✕</button>
+        <button data-act="edit-character" data-id="${c.id}" title="编辑">✎</button>
+        <button data-act="up-character" data-id="${c.id}" title="上移">↑</button>
+        <button data-act="down-character" data-id="${c.id}" title="下移">↓</button>
+        <button data-act="del-character" data-id="${c.id}" title="删除">✕</button>
       </div>` : ''}
     </article>`).join('');
 }
@@ -3616,6 +3623,23 @@ function openMetaEditor(){
       <div class="field" data-field="gate_btn"><label>按钮文字</label><input type="text" value="${esc(g.btn || '')}"></div>
       <div class="field full" data-field="gate_note"><label>按钮下方小字</label><input type="text" value="${esc(g.note || '')}"></div>
     </div>`;
+  const entryBlock = isAb
+    ? (() => { const ax = state.meta.abyssExit || {}; return `
+    <p style="font-family:var(--serif);font-size:.82rem;letter-spacing:.3em;color:var(--gold);margin:24px 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line);text-indent:.3em">归 返 入 口（上古底部的卡片）</p>
+    <div class="form">
+      <div class="field" data-field="ax_icon"><label>图标</label><input type="text" value="${esc(ax.icon || '◈')}"></div>
+      <div class="field" data-field="ax_label"><label>标题</label><input type="text" value="${esc(ax.label || '')}" placeholder="归 返 表 层"></div>
+      <div class="field" data-field="ax_sub"><label>副标题</label><input type="text" value="${esc(ax.sub || '')}" placeholder="回到你熟悉的那层浮魄"></div>
+      <div class="field" data-field="ax_arrow"><label>右侧文字</label><input type="text" value="${esc(ax.arrow || '')}" placeholder="← 归 返"></div>
+    </div>`; })()
+    : (() => { const a = state.meta.abyssEntry || {}; return `
+    <p style="font-family:var(--serif);font-size:.82rem;letter-spacing:.3em;color:var(--gold);margin:24px 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line);text-indent:.3em">上 古 入 口（表层上的卡片）</p>
+    <div class="form">
+      <div class="field" data-field="ae_icon"><label>图标</label><input type="text" value="${esc(a.icon || '◈')}"></div>
+      <div class="field" data-field="ae_label"><label>标题</label><input type="text" value="${esc(a.label || '')}" placeholder="上古力量"></div>
+      <div class="field" data-field="ae_sub"><label>副标题</label><input type="text" value="${esc(a.sub || '')}" placeholder="点 此 揭 开 另 一 层"></div>
+      <div class="field" data-field="ae_arrow"><label>右侧文字</label><input type="text" value="${esc(a.arrow || '')}" placeholder="进 入 →"></div>
+    </div>`; })();
   showModal({
     title: '编 辑 首 屏（' + rl() + '）', wide: true,
     body: realmHint() + `<div class="form">
@@ -3638,7 +3662,8 @@ function openMetaEditor(){
         </div>
       </div>
     </div>
-    ${gateBlock}`,
+    ${gateBlock}
+    ${entryBlock}`,
     onOk(){
       const get = k => modalRoot.querySelector(`[data-field="${k}"] input[type=text]`)?.value.trim() || '';
       const getTa = k => modalRoot.querySelector(`[data-field="${k}"] textarea`)?.value.trim() || '';
@@ -3649,6 +3674,7 @@ function openMetaEditor(){
         state.meta.abyssIntro = getTa('intro');
         state.meta.abyssLogo = get('logo');
         state.meta.abyssCover = get('cover');
+        state.meta.abyssExit = { icon: get('ax_icon') || '◈', label: get('ax_label'), sub: get('ax_sub'), arrow: get('ax_arrow') };
       }else{
         state.meta.title = get('title');
         state.meta.subtitle = get('subtitle');
@@ -3656,6 +3682,7 @@ function openMetaEditor(){
         state.meta.intro = getTa('intro');
         state.meta.logo = get('logo');
         state.meta.cover = get('cover');
+        state.meta.abyssEntry = { icon: get('ae_icon') || '◈', label: get('ae_label'), sub: get('ae_sub'), arrow: get('ae_arrow') };
         state.meta.gate = {
           enabled: modalRoot.querySelector('#gate-enabled-cb')?.checked !== false,
           sub: get('gate_sub'), title: get('gate_title'), tip: get('gate_tip'),
@@ -4125,6 +4152,8 @@ function openHelp(){
       <div class="help-item"><span class="help-ico">🔒</span><div><strong>数据都在哪里</strong>每次点「保存」自动存进这个浏览器；「导出」下载 JSON 备份；「历史快照」每天自动留档；「同步码」可以把表层+上古的全部内容（含图片）搬到手机或其他电脑。</div></div>
       <div class="help-item"><span class="help-ico">↩</span><div><strong>撤销与恢复</strong>编辑模式下 <b>Ctrl+Z</b> 撤销、<b>Ctrl+Shift+Z</b> 重做；删除后 30 秒内右下角提示条可「撤回」。</div></div>
       <div class="help-item"><span class="help-ico">§</span><div><strong>版权与声明</strong>站内文字由作者本人撰写，插画大部分为作者本人绘制、另有部分为委托创作（约稿）作品，音乐为自选与约稿并用；原创与约稿作品的权利分别归作者本人及各原作者所有。全站内容仅供个人欣赏交流，未经许可请勿转载、复制或用于商业用途。完整声明见页面末尾「浮魄」处（编辑模式下可在 ☰ → 版权声明 中自行修改措辞）。</div></div>
+      <div class="help-item"><span class="help-ico">⌘</span><div><strong>快捷操作</strong><b>Ctrl+K</b> 搜索；<b>Ctrl+Z / Ctrl+Shift+Z</b> 撤销 / 重做；弹窗里 <b>Ctrl+Enter</b> 直接保存；<b>Esc</b> 关闭弹窗；门帘页按 <b>回车</b> 入界；图片点开后 <b>双击</b> 放大、<b>滚轮或双指</b> 缩放、点空白关闭。</div></div>
+      <div class="help-item"><span class="help-ico">◱</span><div><strong>内容工具（编辑模式）</strong>☰ → 内容工具：可把「表层」与「上古」的内容**一键互相同步**（覆盖或追加，妖众关系会自动对应），也可以**一键清空**本界选中的栏目；清空后 30 秒内可撤回。</div></div>
     </div>`
   });
 }
@@ -4445,6 +4474,7 @@ document.addEventListener('click', e => {
   if(a === 'daily'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openDailyNote(); return; }
   if(a === 'changelog'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openChangelog(); return; }
   if(a === 'copyright'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openCopyright(); return; }
+  if(a === 'realm-tools'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openRealmTools(); return; }
   if(a === 'share'){ closeDrawer(); openShare(); return; }
   if(a === 'sync-code'){ closeDrawer(); openSyncCode(); return; }
   if(a === 'patches'){ closeDrawer(); openPatchManager(); return; }
@@ -4941,6 +4971,79 @@ function applyCustomBg(){
   el.style.setProperty('--bg-dim', ((isFinite(dim) ? dim : 72) / 100).toFixed(2));
   /* 保证在最底层：叶子画布与正文都在它之上 */
   if(document.body.firstChild !== el) document.body.insertBefore(el, document.body.firstChild);
+}
+
+/* ============================================================
+   内容工具：表层 ↔ 上古 一键同步 / 一键清除
+   ============================================================ */
+function regenIds(arr, kind){
+  const out = deep(arr || []);
+  const map = {};
+  out.forEach(it => { if(it && it.id){ const n = uid(); map[it.id] = n; it.id = n; } });
+  if(kind === 'sections') out.forEach(s => (s.entries || []).forEach(e => { e.id = uid(); }));
+  if(kind === 'characters') out.forEach(c => (c.relations || []).forEach(r => { if(r && map[r.target]) r.target = map[r.target]; }));
+  return out;
+}
+function openRealmTools(){
+  const isAb = realm === 'abyss';
+  const other = isAb ? '表层' : '上古';
+  const me = isAb ? '上古' : '表层';
+  const GROUPS = [['sections','妖界分区'],['characters','妖众'],['timeline','纪年'],['stories','卷帙']];
+  const boxes = (cls) => GROUPS.map(([k, label], i) => `<label class="field-check" style="padding:4px 0"><input type="checkbox" class="${cls}" value="${k}" checked> ${label}</label>`).join('');
+  showModal({
+    title: '内 容 工 具（' + rl() + '）', wide: true, hideFooter: true,
+    body: `<div class="form">
+      <div class="field full">
+        <label>从「${other}」同步内容</label>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">${boxes('cp-part')}</div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn small" id="rt-copy" type="button">覆 盖 到${me}（替换所选）</button>
+          <button class="btn small ghost" id="rt-append" type="button">追 加 到${me}（接在后面）</button>
+        </div>
+        <span class="hint">复制过去的条目会重新分配 ID，不会与原内容冲突（妖众之间的关系会自动对应）。</span>
+      </div>
+      <div class="field full" style="margin-top:8px;padding-top:16px;border-top:1px solid var(--line-2)">
+        <label>清空「${me}」里选中的内容</label>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">${boxes('clr-part')}</div>
+        <div style="margin-top:14px"><button class="btn small" id="rt-clear" type="button" style="border-color:var(--cinnabar);color:var(--cinnabar)">清 空 所 选</button></div>
+        <span class="hint">清空只影响${me}；执行后 30 秒内可点右下角「撤回」，也可用 Ctrl+Z 撤销。</span>
+      </div>
+    </div>`,
+  });
+  const picked = cls => [...document.querySelectorAll('.' + cls)].filter(c => c.checked).map(c => c.value);
+  const src = () => isAb ? state.worlds.surface : state.worlds.abyss;
+  const dst = () => isAb ? state.worlds.abyss : state.worlds.surface;
+
+  document.getElementById('rt-copy').addEventListener('click', () => {
+    const ks = picked('cp-part');
+    if(!ks.length){ toast('请先选择要同步的内容'); return; }
+    if(!confirm('用「' + other + '」的所选内容覆盖「' + me + '」？\n\n（' + me + '里对应的部分会被替换，可用 Ctrl+Z 撤销）')) return;
+    pushHistory();
+    ks.forEach(k => { dst()[k] = regenIds(src()[k], k); });
+    _doSave(); renderAll(); closeModal(true);
+    toast('已从' + other + '同步 ' + ks.length + ' 项');
+  });
+  document.getElementById('rt-append').addEventListener('click', () => {
+    const ks = picked('cp-part');
+    if(!ks.length){ toast('请先选择要同步的内容'); return; }
+    pushHistory();
+    ks.forEach(k => { dst()[k] = (dst()[k] || []).concat(regenIds(src()[k], k)); });
+    _doSave(); renderAll(); closeModal(true);
+    toast('已追加 ' + ks.length + ' 项');
+  });
+  document.getElementById('rt-clear').addEventListener('click', () => {
+    const ks = picked('clr-part');
+    if(!ks.length){ toast('请先选择要清空的内容'); return; }
+    if(!confirm('确定清空「' + me + '」的：' + ks.map(k => (GROUPS.find(g => g[0] === k) || [])[1]).join('、') + '？\n\n（只影响' + me + '，30 秒内可撤回）')) return;
+    pushHistory();
+    const backup = {};
+    ks.forEach(k => { backup[k] = deep(dst()[k]); dst()[k] = []; });
+    _doSave(); renderAll(); closeModal(true);
+    showUndoToast('已清空' + me + ' ' + ks.length + ' 项', () => {
+      ks.forEach(k => { dst()[k] = backup[k]; });
+      _doSave(); renderAll();
+    });
+  });
 }
 
 /* ============================================================
