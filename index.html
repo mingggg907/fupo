@@ -5796,6 +5796,15 @@ function openRealmTools(){
         <span class="hint">复制过去的条目会重新分配 ID，不会与原内容冲突（妖众之间的关系会自动对应）。</span>
       </div>
       <div class="field full" style="margin-top:8px;padding-top:16px;border-top:1px solid var(--line-2)">
+        <label>访客感想墙</label>
+        <label class="field-check" style="padding:0"><input type="checkbox" id="rt-guest" ${(state.meta.guest && state.meta.guest.on) ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.12em">开启（访客可留言，需你审核后才会公开）</span></label>
+        <span class="hint">首次使用需在 Supabase 的 SQL Editor 里建一张 fupo_guest 表（见 ☰ → 使用说明）。未建表时访客看不到这个栏目。</span>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn small" id="rt-guest-save" type="button">保 存 设 置</button>
+          <button class="btn small ghost" id="rt-guest-refresh" type="button">重 新 载 入 留 言</button>
+        </div>
+      </div>
+      <div class="field full" style="margin-top:8px;padding-top:16px;border-top:1px solid var(--line-2)">
         <label>清空「${me}」里选中的内容</label>
         <div style="display:flex;gap:18px;flex-wrap:wrap">${boxes('clr-part')}</div>
         <div style="margin-top:14px"><button class="btn small" id="rt-clear" type="button" style="border-color:var(--cinnabar);color:var(--cinnabar)">清 空 所 选</button></div>
@@ -5804,6 +5813,15 @@ function openRealmTools(){
     </div>`,
   });
   const picked = cls => [...document.querySelectorAll('.' + cls)].filter(c => c.checked).map(c => c.value);
+  const gs = document.getElementById('rt-guest-save');
+  if(gs) gs.addEventListener('click', () => {
+    state.meta.guest = state.meta.guest || { on: true };
+    state.meta.guest.on = !!document.getElementById('rt-guest').checked;
+    _doSave(); renderAll();
+    toast(state.meta.guest.on ? '感想墙已开启' : '感想墙已关闭');
+  });
+  const gr = document.getElementById('rt-guest-refresh');
+  if(gr) gr.addEventListener('click', async () => { await loadGuest(true); toast('已重新载入留言'); });
   const src = () => isAb ? state.worlds.surface : state.worlds.abyss;
   const dst = () => isAb ? state.worlds.abyss : state.worlds.surface;
 
