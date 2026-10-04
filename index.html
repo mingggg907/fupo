@@ -645,7 +645,7 @@ a[href]::after{content:""}
 
 <script>
 /* 版本号：用于确认设备加载的是不是最新版本 */
-const FUPO_BUILD = '2026-10-04 22:40 (v28 · 门帘不透明+旧补丁自动停用并同步)';
+const FUPO_BUILD = '2026-10-04 23:00 (v29 · 草稿提示只给编辑者看)';
 /* ============================================================
    常量
    ============================================================ */
@@ -2444,7 +2444,10 @@ function updateDraftBanner(){
   const el = document.getElementById('draft-banner');
   if(!el) return;
   const d = loadDraft();
-  const show = !!(d && sbConfigured() && !editMode);
+  /* ★ 只给「编辑者」看：已登录云同步 / 正在编辑 / 本机有编辑会话（15 分钟内输过口令）。
+     普通访客/读者看不到这个提示条，页面保持干净。 */
+  const isEditor = !!(sbLoggedIn || editMode || (typeof editUnlocked === 'function' && editUnlocked()));
+  const show = !!(d && isEditor && sbConfigured() && !editMode);
   el.style.display = show ? 'flex' : 'none';
   if(!show) return;
   const t = document.getElementById('draft-banner-text');
