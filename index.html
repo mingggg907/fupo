@@ -1266,8 +1266,21 @@ async function cloudLoad(opts){
   return { ok:false, error: lastErr };
 }
 /* 左下角状态标签：让"到底连上没有"一眼可见，读取失败可点击重试 */
-function isEditorNow(){
-  try{ return !!(editMode || sbLoggedIn || (typeof editUnlocked === 'function' && editUnlocked())); }catch(e){ return !!editMode; }
+/* 有浮层（搜索 / 弹窗 / 抽屉 / 灯箱）时暂停背景动画：
+   模糊层叠在动画画布上，部分手机浏览器（X5 / QQ）会闪屏 */
+function syncBgAnim(){
+  try{
+    if(typeof FUPO_BG === 'undefined') return;
+    const drawer = document.getElementById('drawer');
+    const search = document.getElementById('search-panel');
+    const overlay = (drawer && drawer.classList.contains('open'))
+      || (search && search.classList.contains('open'))
+      || !!document.querySelector('#modal-root .modal')
+      || !!document.querySelector('.fupo-lightbox');
+    if(overlay) FUPO_BG.pause(); else FUPO_BG.resume();
+  }catch(e){}
+}
+function isEditorNow(){  try{ return !!(editMode || sbLoggedIn || (typeof editUnlocked === 'function' && editUnlocked())); }catch(e){ return !!editMode; }
 }
 /* 编辑类功能的统一守卫：访客（未进入编辑模式）一律拒绝，避免被直接调用绕过菜单 */
 function requireEdit(){
@@ -3767,7 +3780,7 @@ function closeModal(skipConfirm){
   modalRoot.innerHTML = '';
   document.removeEventListener('keydown', onKeydown);
   document.body.style.overflow = '';
-  try{ FUPO_BG.resume(); }catch(e){}
+  try{ syncBgAnim(); }catch(e){}
 }
 function onKeydown(e){
   if(e.key === 'Escape'){ closeModal(); return; }
@@ -3866,7 +3879,7 @@ function showModal({ title, body, onOk, okText = '保 存', hideFooter = false, 
       </div>
     </div>`;
   document.body.style.overflow = 'hidden';
-  try{ FUPO_BG.pause(); }catch(e){}
+  try{ syncBgAnim(); }catch(e){}
   modalRoot.querySelector('.overlay').addEventListener('click', e => {
     if(e.target.closest('[data-close]')){ closeModal(); return; }
     if(e.target.closest('[data-ok]')){
@@ -4921,14 +4934,14 @@ const searchResults = document.getElementById('search-results');
 const searchHint = document.getElementById('search-hint');
 function openSearch(){
   searchPanel.classList.add('open');
-  try{ FUPO_BG.pause(); }catch(e){}
+  try{ syncBgAnim(); }catch(e){}
   document.body.style.overflow = 'hidden';
   closeDrawer();
   setTimeout(() => searchInput.focus(), 220);
 }
 function closeSearch(){
   searchPanel.classList.remove('open');
-  try{ FUPO_BG.resume(); }catch(e){}
+  try{ syncBgAnim(); }catch(e){}
   document.body.style.overflow = '';
   searchInput.value = '';
   searchResults.innerHTML = '';
@@ -5374,8 +5387,8 @@ document.getElementById('draft-banner-btn').addEventListener('click', async () =
   else toast('上传失败（网络问题），内容仍保留在本机，稍后再点一次');
   updateDraftBanner();
 });
-function openDrawer(){ drawer.classList.add('open'); menuBtn.textContent = '✕'; try{ FUPO_BG.pause(); }catch(e){} }
-function closeDrawer(){ drawer.classList.remove('open'); menuBtn.textContent = '☰'; try{ FUPO_BG.resume(); }catch(e){} }
+function openDrawer(){ drawer.classList.add('open'); menuBtn.textContent = '✕'; try{ syncBgAnim(); }catch(e){} }
+function closeDrawer(){ drawer.classList.remove('open'); menuBtn.textContent = '☰'; try{ syncBgAnim(); }catch(e){} }
 menuBtn.addEventListener('click', () => { drawer.classList.contains('open') ? closeDrawer() : openDrawer(); });
 drawer.addEventListener('click', e => { if(e.target === drawer || e.target.tagName === 'A') closeDrawer(); });
 
@@ -6386,6 +6399,7 @@ function openLightbox(img){
   lb.appendChild(tip);
   lb.appendChild(close);
   document.body.appendChild(lb);
+  try{ syncBgAnim(); }catch(e){}
 
   /* —— 灯箱内缩放：图片可放大，页面不会被放大 —— */
   let scale = 1, tx = 0, ty = 0, startDist = 0, startScale = 1;
@@ -6447,7 +6461,7 @@ function openLightbox(img){
   });
 
   const esc = e => { if(e.key === 'Escape'){ remove(); } };
-  const remove = () => { lb.remove(); document.removeEventListener('keydown', esc); };
+  const remove = () => { lb.remove(); document.removeEventListener('keydown', esc); try{ syncBgAnim(); }catch(e){} };
   lb.addEventListener('click', e => {
     if(Date.now() < suppressClick) return;          /* 刚拖动/缩放过，不误关 */
     if(e.target === lb || e.target === close) remove();
