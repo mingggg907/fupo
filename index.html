@@ -6011,6 +6011,7 @@ window.addEventListener('scroll', () => {
   try{ if(typeof FUPO_BG !== 'undefined') FUPO_BG.pause(); }catch(e){}
   clearTimeout(bgScrollTimer);
   bgScrollTimer = setTimeout(() => { try{ syncBgAnim(); }catch(e){} }, 240);
+  try{ updatePillCover(); }catch(e){}
   if(scrollSaveTimer) return;
   scrollSaveTimer = setTimeout(() => {
     scrollSaveTimer = null;
@@ -6747,6 +6748,22 @@ function refreshResumePill(){
   }
   pill.textContent = '继 续 阅 读';
   pill.classList.add('on');
+  try{ updatePillCover(); }catch(e){}
+}
+/* 「继续阅读」气泡不要压住留言区（手机上会挡到留言与按钮） */
+function updatePillCover(){
+  const pill = document.getElementById('resume-pill');
+  if(!pill || !pill.classList.contains('on')) return;
+  let cover = false;
+  try{
+    const g = document.getElementById('guest');
+    if(g){
+      const r = g.getBoundingClientRect();
+      cover = r.top < window.innerHeight * 0.85 && r.bottom > 0;
+    }
+  }catch(e){}
+  pill.style.opacity = cover ? '0' : '';
+  pill.style.pointerEvents = cover ? 'none' : '';
 }
 
 /* 侧边目录 + 滚动高亮 */
