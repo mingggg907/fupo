@@ -3320,7 +3320,7 @@ function renderGuest(){
     cnt.textContent = rows.length ? ('共 ' + rows.length + ' 条感想') : '';
   }
   const note = document.getElementById('guest-note');
-  if(note) note.innerHTML = (editMode && guestState.pending.length) ? ('有 ' + guestState.pending.length + ' 条待审核留言（只有你看得到）') : '';
+  if(note) note.innerHTML = (editMode && guestState.pending.length) ? ('待审核 · ' + guestState.pending.length + ' 条') : '';
   try{ applyLabels(); }catch(e){}
 }
 /* 表单区（含"已送出"状态）单独渲染：发送成功、再写一条、登录状态变化时重建 */
@@ -3361,7 +3361,7 @@ function guestInnerHTML(){
     <div class="guest-intro">${editMode
       ? '这里是访客留言区：别人写下的内容<b>要先经你通过</b>才会公开显示。'
       : '欢迎留下你想说的话 · 留言经作者查看后公开显示'}</div>
-    <div class="guest-note" id="guest-note">${(editMode && guestState.pending.length) ? ('有 ' + guestState.pending.length + ' 条待审核留言（只有你看得到）') : ''}</div>
+    <div class="guest-note" id="guest-note">${(editMode && guestState.pending.length) ? ('待审核 · ' + guestState.pending.length + ' 条') : ''}</div>
     <div id="guest-form-wrap">${guestFormHTML()}</div>
     <div class="guest-count" id="guest-count">${rows.length ? ('共 ' + rows.length + ' 条感想') : ''}</div>
     <div class="guest-list" id="guest-list-wrap">${guestListHTML()}</div>
