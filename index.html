@@ -183,6 +183,11 @@ body.abyss .inline-img{filter:sepia(.3) contrast(1.08) brightness(.82)}
 .fupo-progress.indeterminate .bar{width:35%;animation:progSlide 1.1s ease-in-out infinite}
 @keyframes progSlide{0%{margin-left:-35%}100%{margin-left:100%}}
 .fupo-progress .p-text{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--ink);background:var(--paper,#ecece6);border:1px solid var(--line);padding:4px 13px;border-radius:99px;box-shadow:0 10px 26px -14px rgba(0,0,0,.45);white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
+/* 动态背景（落叶）：页面底层；门帘内时垫在门帘文字之下 */
+#fupo-bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+#gate > #fupo-bg-canvas{position:absolute;z-index:0}
+@media (prefers-reduced-motion: reduce){#fupo-bg-canvas{display:none}}
+@media print{#fupo-bg-canvas{display:none!important}}
 .abyss-entry{margin-top:44px;display:flex;align-items:center;gap:22px;padding:28px 10px;cursor:pointer;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(158,51,40,.06),transparent 65%);transition:.45s var(--ease);position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
 body.abyss .abyss-entry{background:linear-gradient(90deg,rgba(201,74,58,.14),transparent 65%)}
 .abyss-entry::before{content:"";position:absolute;left:-100%;top:0;bottom:0;width:60%;background:linear-gradient(90deg,transparent,rgba(158,51,40,.1),transparent);transition:left .9s var(--ease-out)}
@@ -556,6 +561,7 @@ a[href]::after{content:""}
     <button class="btn" data-action="music">音乐设置</button>
     <button class="btn" data-action="edit">编辑</button>
     <button class="btn" data-action="cloud">云同步设置</button>
+    <button class="btn" data-action="appearance">外观设置</button>
     <button class="btn" data-action="help">使用说明</button>
     <button class="btn" data-action="share">分享 / 手机访问</button>
     <button class="btn" data-action="sync-code">生成同步码</button>
@@ -639,7 +645,7 @@ a[href]::after{content:""}
 
 <script>
 /* 版本号：用于确认设备加载的是不是最新版本 */
-const FUPO_BUILD = '2026-10-04 21:25 (v24 · 补丁可云端同步)';
+const FUPO_BUILD = '2026-10-04 21:45 (v25 · 内置动态背景+外观设置)';
 /* ============================================================
    常量
    ============================================================ */
@@ -1336,6 +1342,10 @@ function normalize(d){
   if(!d.meta.abyssEntry || typeof d.meta.abyssEntry !== 'object') d.meta.abyssEntry = { label:"上古力量", sub:"点 此 揭 开 另 一 层" };
   if(typeof d.meta.abyssCover !== 'string') d.meta.abyssCover = d.meta.cover || '';
   if(typeof d.meta.abyssLogo !== 'string') d.meta.abyssLogo = d.meta.logo || '';
+  /* 动态背景（落叶）设置 */
+  if(!d.meta.bgEffect || typeof d.meta.bgEffect !== 'object') d.meta.bgEffect = { enabled: true, density: 'normal' };
+  if(typeof d.meta.bgEffect.enabled !== 'boolean') d.meta.bgEffect.enabled = true;
+  if(!['off','light','normal','rich'].includes(d.meta.bgEffect.density)) d.meta.bgEffect.density = 'normal';
 
   d.meta.music = normMusic(d.meta.music);
   if(!d.meta.abyssMusic || typeof d.meta.abyssMusic !== 'object' || (!Array.isArray(d.meta.abyssMusic.tracks) && !d.meta.abyssMusic.url && !d.meta.abyssMusic.localId)){
@@ -2487,6 +2497,8 @@ function renderAll(){
   bindRichImgReveal();
   renderRelationGraph();
   updateMusicUI();
+  /* 动态背景：按设置与设备情况自动开/关（幂等，开销极小） */
+  try{ if(typeof FUPO_BG !== 'undefined') FUPO_BG.apply(); }catch(e){}
 }
 
 let richIO = null;
@@ -3930,6 +3942,7 @@ document.addEventListener('click', e => {
   if(a === 'music'){ closeDrawer(); if(editMode) openMusicEditor(null); else toast('点右上角「编辑」后即可设置音乐'); return; }
   if(a === 'help'){ closeDrawer(); openHelp(); return; }
   if(a === 'cloud'){ closeDrawer(); openCloudSettings(); return; }
+  if(a === 'appearance'){ closeDrawer(); openAppearance(); return; }
   if(a === 'share'){ closeDrawer(); openShare(); return; }
   if(a === 'sync-code'){ closeDrawer(); openSyncCode(); return; }
   if(a === 'patches'){ closeDrawer(); openPatchManager(); return; }
@@ -4153,6 +4166,249 @@ async function restoreAuthSession(){
   updateEditBar();
   /* 已登录 + 本机有未上传的草稿 → 不自动覆盖云端，改由用户明确选择（页面底部提示条 / 云同步设置里有按钮） */
   updateDraftBanner();
+}
+
+/* ============================================================
+   动态背景：模糊落叶（内置 · 可开关 · 已做手机适配）
+   ============================================================ */
+const FUPO_BG = (function(){
+  const ID = 'fupo-bg-canvas';
+  const LIGHT = [
+    ['rgba(160,134,80,1)', 'rgba(176,152,96,1)'],
+    ['rgba(61,90,82,1)',   'rgba(86,116,104,1)'],
+    ['rgba(158,51,40,1)',  'rgba(184,86,68,1)'],
+    ['rgba(120,112,84,1)', 'rgba(150,140,104,1)']
+  ];
+  const DARK = [
+    ['rgba(201,163,92,1)', 'rgba(226,192,120,1)'],
+    ['rgba(201,74,58,1)',  'rgba(226,110,92,1)'],
+    ['rgba(123,169,154,1)','rgba(150,196,180,1)'],
+    ['rgba(150,140,120,1)','rgba(178,168,148,1)']
+  ];
+  const DENSITY = { off:[0,0,0], light:[5,10,0.7], normal:[9,18,1], rich:[14,26,1.15] };
+  const FPS = 30;
+
+  let cv = null, ctx = null, sprites = [], parts = [];
+  let W = 0, H = 0, DPR = 1, running = false, last = 0, spritesAbyss = null;
+  let cfgKey = '', resizeTimer = null;
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  function makeSprite(size, c1, c2){
+    const pad = size * 0.9, s3 = 3;
+    const c = document.createElement('canvas');
+    c.width = (size + pad * 2) * s3; c.height = (size + pad * 2) * s3;
+    const g = c.getContext('2d');
+    g.scale(s3, s3); g.translate(pad, pad);
+    const s = size;
+    const leaf = () => {
+      g.beginPath();
+      g.moveTo(s * 0.5, 0);
+      g.bezierCurveTo(s * 0.97, s * 0.26, s * 0.92, s * 0.74, s * 0.5, s);
+      g.bezierCurveTo(s * 0.08, s * 0.74, s * 0.03, s * 0.26, s * 0.5, 0);
+      g.closePath();
+    };
+    const grd = g.createLinearGradient(0, 0, s, s);
+    grd.addColorStop(0, c1); grd.addColorStop(1, c2);
+    const N = 14, R = size * 0.10;
+    for(let i = 0; i < N; i++){
+      const a = (i / N) * Math.PI * 2, rr = R * (0.35 + 0.65 * ((i % 3) / 2));
+      g.save(); g.translate(Math.cos(a) * rr, Math.sin(a) * rr);
+      leaf(); g.globalAlpha = 0.11; g.fillStyle = grd; g.fill(); g.restore();
+    }
+    leaf(); g.globalAlpha = 0.55; g.fillStyle = grd; g.fill();
+    g.globalAlpha = 0.18; g.strokeStyle = 'rgba(255,255,255,.9)';
+    g.lineWidth = Math.max(0.6, s * 0.025);
+    g.beginPath(); g.moveTo(s * 0.5, s * 0.10); g.lineTo(s * 0.5, s * 0.90); g.stroke();
+    return c;
+  }
+  function buildSprites(isAbyss){
+    const pal = isAbyss ? DARK : LIGHT;
+    const sizes = isAbyss ? [12, 17, 23] : [13, 18, 25];
+    sprites = [];
+    for(let i = 0; i < pal.length; i++){
+      for(let j = 0; j < sizes.length; j++){
+        sprites.push({ img: makeSprite(sizes[j], pal[i][0], pal[i][1]), size: sizes[j], alpha: isAbyss ? 0.16 : 0.22 });
+      }
+    }
+  }
+  function resizeCanvas(){
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.max(1, Math.floor(W * DPR));
+    cv.height = Math.max(1, Math.floor(H * DPR));
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    if(ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
+  }
+  function densityCfg(){
+    const m = (state.meta && state.meta.bgEffect) || {};
+    const d = DENSITY[m.density] || DENSITY.normal;
+    return { count: W < 820 ? d[0] : d[1], mul: d[2] };
+  }
+  function buildParts(){
+    const dc = densityCfg();
+    const isMobile = W < 820;
+    let count = dc.count;
+    if(!isMobile) count = Math.min(26, Math.round(count * Math.min(1.4, W / 1400 + 0.6)));
+    parts = [];
+    for(let i = 0; i < count; i++){
+      const depth = Math.random();
+      parts.push({
+        x: rnd(-40, W + 40), y: rnd(-H, H),
+        vy: rnd(9, 20) * (0.55 + depth * 0.9),
+        amp: rnd(8, 26) * (0.5 + depth),
+        sp: rnd(0.25, 0.6),
+        rot: rnd(0, Math.PI * 2), vr: rnd(-0.25, 0.25),
+        scale: 0.55 + depth * 0.75,
+        alpha: (0.5 + depth * 0.5) * (0.75 + Math.random() * 0.5) * dc.mul,
+        si: Math.floor(Math.random() * 9),
+        t: rnd(0, 100)
+      });
+    }
+  }
+  /* 门帘在时把画布放进门帘里（垫在文字下），避免门帘透出正文造成"重影" */
+  function ensurePlacement(){
+    const gate = document.getElementById('gate');
+    const inGate = !!(gate && gate.parentNode && !gate.classList.contains('hide'));
+    const want = inGate ? gate : document.body;
+    if(cv.parentNode !== want){
+      want.insertBefore(cv, want.firstChild);
+      resizeCanvas();
+    }
+  }
+  function frame(now){
+    if(!running) return;
+    requestAnimationFrame(frame);
+    if(document.hidden) return;                 /* 后台不画 */
+    if(last && now - last < 1000 / FPS) return; /* 限帧 */
+    const dt = last ? Math.min((now - last) / 1000, 0.05) : 0.016;
+    last = now;
+    ensurePlacement();
+    if(!parts.length) return;
+    const isAbyss = document.body.classList.contains('abyss');
+    if(isAbyss !== spritesAbyss){ buildSprites(isAbyss); spritesAbyss = isAbyss; }
+    ctx.clearRect(0, 0, W, H);
+    for(let i = 0; i < parts.length; i++){
+      const p = parts[i];
+      p.t += dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      let x = p.x + Math.sin(p.t * p.sp) * p.amp + Math.sin(p.t * 0.17) * 12;
+      if(p.y > H + 60){ p.y = -60; p.x = rnd(-40, W + 40); }
+      if(x < -80) x = W + 60; else if(x > W + 80) x = -60;
+      const sp = sprites[p.si % sprites.length];
+      if(!sp) continue;
+      const s = sp.size * p.scale * 2.1;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, sp.alpha * p.alpha));
+      ctx.translate(x, p.y); ctx.rotate(p.rot);
+      ctx.drawImage(sp.img, -s / 2, -s / 2, s, s);
+      ctx.restore();
+    }
+  }
+  function start(){
+    if(running) return;
+    if(!cv){
+      cv = document.createElement('canvas');
+      cv.id = ID;
+      document.body.insertBefore(cv, document.body.firstChild);
+      ctx = cv.getContext('2d', { alpha: true });
+    }
+    DPR = Math.min(window.devicePixelRatio || 1, W < 820 ? 2 : 2);
+    resizeCanvas();
+    buildSprites(document.body.classList.contains('abyss'));
+    spritesAbyss = document.body.classList.contains('abyss');
+    buildParts();
+    running = true; last = 0;
+    requestAnimationFrame(frame);
+  }
+  function stop(){
+    running = false;
+    if(cv && cv.parentNode) cv.parentNode.removeChild(cv);
+    cv = null; ctx = null; parts = []; sprites = [];
+  }
+  /* 根据设置与系统偏好，决定开/关/重建 */
+  function apply(){
+    const want = !!(state.meta && state.meta.bgEffect && state.meta.bgEffect.enabled);
+    let reduced = false;
+    try{ reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+    const key = want + '|' + reduced + '|' + ((state.meta.bgEffect || {}).density || '') + '|' + (W < 820);
+    if(key === cfgKey) return;
+    cfgKey = key;
+    if(!want || reduced){ stop(); return; }
+    start();
+  }
+  /* 尺寸变化（含手机地址栏伸缩）→ 防抖重建 */
+  function onResize(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if(!running) return;
+      const ow = W, oh = H;
+      resizeCanvas();
+      if(Math.abs(ow - W) > 120 || Math.abs(oh - H) > 140) buildParts();
+      cfgKey = '';  /* 允许重新评估（横竖屏切换） */
+      apply();
+    }, 260);
+  }
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) last = 0; });
+
+  return {
+    apply, stop, start,
+    get running(){ return running; },
+    get count(){ return parts.length; },
+    setDensity(d){ if(state.meta && state.meta.bgEffect){ state.meta.bgEffect.density = d; } cfgKey = ''; apply(); }
+  };
+})();
+
+/* ============================================================
+   外观设置
+   ============================================================ */
+function openAppearance(){
+  const b = (state.meta && state.meta.bgEffect) || { enabled: true, density: 'normal' };
+  showModal({
+    title: '外 观 设 置', hideFooter: true,
+    body: `<div class="form">
+      <div class="field full">
+        <label>动态背景（模糊落叶）</label>
+        <label class="field-check" style="padding:0"><input type="checkbox" id="bg-enable" ${b.enabled ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.12em">开启（淡淡的叶子缓缓飘落，不干扰阅读）</span></label>
+        <span class="hint">已做性能优化：固定在 30 帧/秒、切到别的标签页自动暂停、手机上自动减少数量；手机/电脑可分别生效。</span>
+      </div>
+      <div class="field full">
+        <label>叶子数量</label>
+        <select id="bg-density">
+          <option value="light" ${b.density === 'light' ? 'selected' : ''}>少一点（更含蓄）</option>
+          <option value="normal" ${b.density === 'normal' ? 'selected' : ''}>正常</option>
+          <option value="rich" ${b.density === 'rich' ? 'selected' : ''}>多一点（更热闹）</option>
+        </select>
+        <span class="hint">当前叶子数：<b id="bg-count">—</b>（手机与电脑分别计算）</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn small primary" id="bg-save">保 存</button>
+      <button class="btn small ghost" id="bg-preview">立 即 预 览</button>
+    </div>`,
+  });
+  const refresh = () => {
+    const el = document.getElementById('bg-count');
+    if(el) el.textContent = FUPO_BG.running ? (FUPO_BG.count + ' 片') : '未开启';
+  };
+  refresh();
+  document.getElementById('bg-preview').addEventListener('click', () => {
+    const en = document.getElementById('bg-enable').checked;
+    state.meta.bgEffect.enabled = en;
+    state.meta.bgEffect.density = document.getElementById('bg-density').value;
+    FUPO_BG.setDensity(state.meta.bgEffect.density);
+    setTimeout(refresh, 300);
+  });
+  document.getElementById('bg-save').addEventListener('click', () => {
+    state.meta.bgEffect.enabled = document.getElementById('bg-enable').checked;
+    state.meta.bgEffect.density = document.getElementById('bg-density').value;
+    FUPO_BG.setDensity(state.meta.bgEffect.density);
+    _doSave();
+    closeModal(true);
+    toast('外观设置已保存' + (sbLoggedIn ? '并同步到云端' : '（登录后同步给其他设备）'));
+  });
 }
 
 /* ★ 控制台小工具 */
