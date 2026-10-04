@@ -4144,6 +4144,15 @@ function setRealm(r, origin){
   if(sbConfigured()) restoreAuthSession();
   updateDraftBanner();
   window.__fupoBooted = true;   /* 标记启动完成：之后补丁改动才会同步云端 */
+  /* 若本次启动停用了旧的「动态背景」补丁，顺便把结果同步到云端（避免每台设备都弹一次提示） */
+  if(window.__bgPatchesRetired){
+    window.__bgPatchesRetired = false;
+    const trySync = (n) => {
+      if(sbLoggedIn){ try{ cloudSave({ skipPrecheck: true, baseStamp: lastCloudStamp }); }catch(e){} }
+      else if(n > 0) setTimeout(() => trySync(n - 1), 3000);   /* 等自动登录完成后再试 */
+    };
+    setTimeout(() => trySync(3), 1500);
+  }
   console.log('浮魄 版本：' + (typeof FUPO_BUILD !== 'undefined' ? FUPO_BUILD : '未知') + ' ｜ 数据来源：' + (cache ? '本机缓存' : '默认模板'));
 })();
 
@@ -4428,6 +4437,7 @@ function retireLegacyBgPatches(){
   });
   if(changed){
     savePatches();
+    window.__bgPatchesRetired = true;   /* 启动末尾会尝试同步云端 */
     setTimeout(() => { try{ toast('旧的「动态背景」补丁已自动停用（该功能已内置到「外观设置」，门帘已恢复不透明）'); }catch(e){} }, 2400);
   }
   return changed;
