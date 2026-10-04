@@ -3294,6 +3294,11 @@ function renderGuest(){
   /* ★ 只更新「留言列表」与计数，绝不动表单 —— 否则正在输入的字会被清掉 */
   const listBox = document.getElementById('guest-list-wrap');
   if(listBox) listBox.innerHTML = guestListHTML();
+  /* 登录状态变化（站主登录/登出）才重建表单，让「免审核」提示与昵称跟上 */
+  if(guestState.formOwner !== !!sbLoggedIn){
+    guestState.formOwner = !!sbLoggedIn;
+    renderGuestForm();
+  }
   const cnt = document.getElementById('guest-count');
   if(cnt){
     const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
@@ -3303,6 +3308,33 @@ function renderGuest(){
   if(note) note.innerHTML = (editMode && guestState.pending.length) ? ('有 ' + guestState.pending.length + ' 条待审核留言（只有你看得到）') : '';
   try{ applyLabels(); }catch(e){}
 }
+/* 表单区（含"已送出"状态）单独渲染：发送成功、再写一条、登录状态变化时重建 */
+function guestFormHTML(){
+  const sent = !!guestState.sent;
+  if(sent){
+    return `<div class="guest-done">
+      <span class="guest-done-mark">✓</span>
+      <div>已送出 · 作者查看后就会显示在这里</div>
+      <button class="btn small ghost" id="guest-again" type="button">再 写 一 条</button>
+    </div>`;
+  }
+  return `<div class="guest-form">
+    ${sbLoggedIn ? `<div class="guest-owner-hint">你已登录 · 以「${esc(ownerLabel())}」身份发言（免审核，立刻显示）</div>` : ''}
+    <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20" value="${sbLoggedIn ? esc(ownerLabel()) : ''}">
+    <textarea id="guest-text" class="guest-textarea" rows="3" placeholder="想对作者说的话…（最多 500 字）" maxlength="500"></textarea>
+    <div class="guest-emojis">
+      ${['🌙','✨','🍃','🌸','🔥','💧','🐾','📖'].map(e => `<button class="gemj" type="button" data-guest-emoji="${e}">${e}</button>`).join('')}
+    </div>
+    <div class="guest-send-row">
+      <span class="guest-hint">${sbLoggedIn ? '站主发言免审核' : '送出后需作者审核通过才公开'} · 今天还可以写 <b id="guest-left">${guestDailyLeft()}</b> 条</span>
+      <button class="btn small primary" id="guest-send" type="button">送 出</button>
+    </div>
+  </div>`;
+}
+function renderGuestForm(){
+  const box = document.getElementById('guest-form-wrap');
+  if(box) box.innerHTML = guestFormHTML();
+}
 function guestInnerHTML(){
   if(guestState.ok === false){
     if(!editMode) return '';
@@ -3310,30 +3342,12 @@ function guestInnerHTML(){
   }
   if(guestState.ok === null) return `<div class="guest-empty">留言区正在载入…</div>`;
   const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
-  const sent = !!guestState.sent;
   return `<div class="guest-box">
     <div class="guest-intro">${editMode
       ? '这里是访客留言区：别人写下的内容<b>要先经你通过</b>才会公开显示。'
       : '欢迎留下你想说的话 · 留言经作者查看后公开显示'}</div>
     <div class="guest-note" id="guest-note">${(editMode && guestState.pending.length) ? ('有 ' + guestState.pending.length + ' 条待审核留言（只有你看得到）') : ''}</div>
-    ${sent
-      ? `<div class="guest-done">
-          <span class="guest-done-mark">✓</span>
-          <div>已送出 · 作者查看后就会显示在这里</div>
-          <button class="btn small ghost" id="guest-again" type="button">再 写 一 条</button>
-        </div>`
-      : `<div class="guest-form">
-          ${sbLoggedIn ? `<div class="guest-owner-hint">你已登录 · 以「${esc(ownerLabel())}」身份发言（免审核，立刻显示）</div>` : ''}
-          <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20" value="${sbLoggedIn ? esc(ownerLabel()) : ''}">
-          <textarea id="guest-text" class="guest-textarea" rows="3" placeholder="想对作者说的话…（最多 500 字）" maxlength="500"></textarea>
-          <div class="guest-emojis">
-            ${['🌙','✨','🍃','🌸','🔥','💧','🐾','📖'].map(e => `<button class="gemj" type="button" data-guest-emoji="${e}">${e}</button>`).join('')}
-          </div>
-          <div class="guest-send-row">
-            <span class="guest-hint">${sbLoggedIn ? '站主发言免审核' : '送出后需作者审核通过才公开'} · 今天还可以写 <b id="guest-left">${guestDailyLeft()}</b> 条</span>
-            <button class="btn small primary" id="guest-send" type="button">送 出</button>
-          </div>
-        </div>`}
+    <div id="guest-form-wrap">${guestFormHTML()}</div>
     <div class="guest-count" id="guest-count">${rows.length ? ('共 ' + rows.length + ' 条感想') : ''}</div>
     <div class="guest-list" id="guest-list-wrap">${guestListHTML()}</div>
   </div>`;
@@ -3444,6 +3458,7 @@ async function postGuest(){
     const newId = res.data && res.data[0] && res.data[0].id;
     if(newId) markMine(newId);
     guestState.sent = true;
+    renderGuestForm();
     renderGuest();
     toast(asOwner ? '已发布（站主身份，立即可见）' : '留言已送达 · 作者看过后会显示出来');
     loadGuest(true);
@@ -4436,7 +4451,7 @@ app.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   /* 感想墙：提交 / 审核 / 删除 */
   if(e.target.closest && e.target.closest('#guest-send')){ postGuest(); return; }
-  if(e.target.closest && e.target.closest('#guest-again')){ guestState.sent = false; renderGuest(); return; }
+  if(e.target.closest && e.target.closest('#guest-again')){ guestState.sent = false; renderGuestForm(); return; }
   const gl = e.target.closest && e.target.closest('[data-guest-like]');
   if(gl){ likeGuest(gl.dataset.guestLike); return; }
   const gs2 = e.target.closest && e.target.closest('[data-guest-sort]');
