@@ -3232,8 +3232,16 @@ function renderGuest(){
     }
     return;
   }
-  const box = document.getElementById('guest-body');
-  if(box) box.innerHTML = guestInnerHTML();
+  /* ★ 只更新「留言列表」与计数，绝不动表单 —— 否则正在输入的字会被清掉 */
+  const listBox = document.getElementById('guest-list-wrap');
+  if(listBox) listBox.innerHTML = guestListHTML();
+  const cnt = document.getElementById('guest-count');
+  if(cnt){
+    const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
+    cnt.textContent = rows.length ? ('共 ' + rows.length + ' 条感想') : '';
+  }
+  const note = document.getElementById('guest-note');
+  if(note) note.innerHTML = (editMode && guestState.pending.length) ? ('有 ' + guestState.pending.length + ' 条待审核留言（只有你看得到）') : '';
   try{ applyLabels(); }catch(e){}
 }
 function guestInnerHTML(){
@@ -3248,7 +3256,7 @@ function guestInnerHTML(){
     <div class="guest-intro">${editMode
       ? '这里是访客留言区：别人写下的内容<b>要先经你通过</b>才会公开显示。'
       : '欢迎留下你想说的话 · 留言经作者查看后公开显示'}</div>
-    ${editMode && guestState.pending.length ? `<div class="guest-note">有 ${guestState.pending.length} 条待审核留言（只有你看得到）</div>` : ''}
+    <div class="guest-note" id="guest-note">${(editMode && guestState.pending.length) ? ('有 ' + guestState.pending.length + ' 条待审核留言（只有你看得到）') : ''}</div>
     ${sent
       ? `<div class="guest-done">
           <span class="guest-done-mark">✓</span>
@@ -3263,24 +3271,27 @@ function guestInnerHTML(){
             <button class="btn small primary" id="guest-send" type="button">送 出</button>
           </div>
         </div>`}
-    <div class="guest-count">${rows.length ? '共 ' + rows.length + ' 条感想' : ''}</div>
-    <div class="guest-list">
-      ${rows.length ? rows.map(r => `
-        <div class="guest-item${r.approved ? '' : ' pending'}">
-          <div class="guest-head">
-            <span class="guest-name">${esc(String(r.name || '').trim() || '匿名')}</span>
-            <span class="guest-time">${esc(String(r.created_at || '').slice(0, 10))}</span>
-            ${r.approved ? '' : '<span class="guest-badge">待审核</span>'}
-            ${editMode ? `<span class="guest-acts">
-              ${r.approved ? '' : '<button class="btn small" data-guest-approve="' + esc(String(r.id)) + '" type="button">通 过</button>'}
-              <button class="btn small ghost" data-guest-del="${esc(String(r.id))}" type="button">删 除</button>
-            </span>` : ''}
-          </div>
-          <div class="guest-text">${esc(String(r.text || ''))}</div>
-        </div>`).join('')
-        : `<div class="guest-empty">还没有留言 · 欢迎写下第一句</div>`}
-    </div>
+    <div class="guest-count" id="guest-count">${rows.length ? ('共 ' + rows.length + ' 条感想') : ''}</div>
+    <div class="guest-list" id="guest-list-wrap">${guestListHTML()}</div>
   </div>`;
+}
+/* 只渲染留言列表（供自动刷新用，不触碰表单） */
+function guestListHTML(){
+  const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
+  return rows.length ? rows.map(r => `
+    <div class="guest-item${r.approved ? '' : ' pending'}">
+      <div class="guest-head">
+        <span class="guest-name">${esc(String(r.name || '').trim() || '匿名')}</span>
+        <span class="guest-time">${esc(String(r.created_at || '').slice(0, 10))}</span>
+        ${r.approved ? '' : '<span class="guest-badge">待审核</span>'}
+        ${editMode ? `<span class="guest-acts">
+          ${r.approved ? '' : '<button class="btn small" data-guest-approve="' + esc(String(r.id)) + '" type="button">通 过</button>'}
+          <button class="btn small ghost" data-guest-del="${esc(String(r.id))}" type="button">删 除</button>
+        </span>` : ''}
+      </div>
+      <div class="guest-text">${esc(String(r.text || ''))}</div>
+    </div>`).join('')
+    : `<div class="guest-empty">还没有留言 · 欢迎写下第一句</div>`;
 }
 function guestHTML(){
   if(!guestOn()) return '';
@@ -3652,6 +3663,41 @@ function updateEditBar(){
   }
   updateDraftBanner();
 }
+/* 重渲染时保住输入框内容与焦点（避免正在打字时被云端刷新清掉） */
+function captureInputs(){
+  const snap = { fields: {}, focusId: '' };
+  try{
+    document.querySelectorAll('#app input, #app textarea').forEach(el => {
+      if(!el.id) return;
+      snap.fields[el.id] = { v: el.value, sel: el.selectionStart, dirty: el.value.length > 0 };
+    });
+    const a = document.activeElement;
+    if(a && a.id && a.closest && a.closest('#app')) snap.focusId = a.id;
+  }catch(e){}
+  return snap;
+}
+function restoreInputs(snap){
+  if(!snap) return;
+  try{
+    Object.keys(snap.fields || {}).forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const rec = snap.fields[id];
+      if(rec.v && el.value !== rec.v){
+        el.value = rec.v;
+        try{ if(rec.sel != null) el.setSelectionRange(rec.sel, rec.sel); }catch(e){}
+      }
+    });
+    if(snap.focusId){
+      const el = document.getElementById(snap.focusId);
+      if(el && document.activeElement !== el){
+        const atEnd = el.tagName === 'TEXTAREA';
+        el.focus({ preventScroll: true });
+        try{ if(atEnd){ const n = el.value.length; el.setSelectionRange(n, n); } }catch(e){}
+      }
+    }
+  }catch(e){}
+}
 function renderAll(){
   const m = state.meta;
   const title = m.title || '浮魄';
@@ -3667,7 +3713,9 @@ function renderAll(){
     seal.innerHTML = esc(isAbyss ? '◈' : (title || '浮').slice(0, 1));
     seal.style.background = '';
   }
+  const inpSnap = captureInputs();
   app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + guestHTML() + storiesHTML() + lexiconHTML() + changelogHTML() + noticeHTML();
+  restoreInputs(inpSnap);
   document.body.classList.toggle('editing', editMode);
   document.querySelectorAll('[data-action="edit"]').forEach(b => {
     b.textContent = editMode ? '完成编辑' : '编辑';
