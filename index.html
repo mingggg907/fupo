@@ -3123,19 +3123,22 @@ function renderGuest(){
   if(guestState.ok === false && !editMode){ if(sec) sec.remove(); return; }
   if(!guestOn()){ if(sec) sec.remove(); return; }
   if(!sec){
-    /* 首次确认可用后再插入（避免访客先看到一个空壳） */
-    const anchor = document.getElementById('changelog') || document.getElementById('site-notice');
+    /* 首次确认可用后再插入（位置与页面顺序一致：纪年之后、卷帙之前） */
+    const anchor = document.getElementById('stories') || document.getElementById('lexicon')
+      || document.getElementById('changelog') || document.getElementById('site-notice');
     const tmp = document.createElement('div');
     tmp.innerHTML = guestHTML();
     const node = tmp.firstElementChild;
     if(node){
       if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(node, anchor);
       else { const app = document.getElementById('app'); if(app) app.appendChild(node); }
+      try{ applyLabels(); }catch(e){}   /* 让导航/目录里的「感想」立刻可用 */
     }
     return;
   }
   const box = document.getElementById('guest-body');
   if(box) box.innerHTML = guestInnerHTML();
+  try{ applyLabels(); }catch(e){}
 }
 function guestInnerHTML(){
   if(guestState.ok === false){
