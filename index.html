@@ -645,7 +645,7 @@ a[href]::after{content:""}
 
 <script>
 /* 版本号：用于确认设备加载的是不是最新版本 */
-const FUPO_BUILD = '2026-10-04 22:05 (v26 · 背景内置+旧补丁自动停用)';
+const FUPO_BUILD = '2026-10-04 22:20 (v27 · 门帘恢复不透明)';
 /* ============================================================
    常量
    ============================================================ */
@@ -4415,18 +4415,20 @@ function openAppearance(){
   });
 }
 
-/* ★ 旧的「动态背景」补丁已内置到「外观设置」：自动停用，避免出现两层叶子打架 */
+/* ★ 旧的「动态背景」补丁已内置到「外观设置」：自动停用（样式/功能都算），避免两层叶子打架、
+   也避免旧样式补丁把门帘改成半透明 */
 function retireLegacyBgPatches(){
   let changed = false;
   (patches || []).forEach(p => {
-    if(p && p.enabled && p.type === 'script' && typeof p.code === 'string' && p.code.indexOf('fupo-bg-canvas') >= 0){
-      p.enabled = false;
-      changed = true;
-    }
+    if(!p || !p.enabled || typeof p.code !== 'string') return;
+    const isOldBg =
+      p.code.indexOf('fupo-bg-canvas') >= 0 ||
+      (p.type === 'style' && p.code.indexOf('.gate{background:rgba(236,236,230') >= 0);
+    if(isOldBg){ p.enabled = false; changed = true; }
   });
   if(changed){
     savePatches();
-    setTimeout(() => { try{ toast('旧的「动态背景」补丁已自动停用（该功能已内置到「外观设置」）'); }catch(e){} }, 2400);
+    setTimeout(() => { try{ toast('旧的「动态背景」补丁已自动停用（该功能已内置到「外观设置」，门帘已恢复不透明）'); }catch(e){} }, 2400);
   }
   return changed;
 }
