@@ -1179,6 +1179,12 @@ async function cloudLoad(opts){
 function isEditorNow(){
   try{ return !!(editMode || sbLoggedIn || (typeof editUnlocked === 'function' && editUnlocked())); }catch(e){ return !!editMode; }
 }
+/* 编辑类功能的统一守卫：访客（未进入编辑模式）一律拒绝，避免被直接调用绕过菜单 */
+function requireEdit(){
+  if(editMode) return true;
+  try{ toast('请先点右上角「编辑」并输入口令'); }catch(e){}
+  return false;
+}
 /* 只给编辑者看的提示（访客界面保持干净，不出现同步/保存类提示） */
 function editorToast(msg){
   if(isEditorNow()) toast(msg);
@@ -1805,6 +1811,7 @@ async function loadMusic(){
   const cfg = musicCfg();
   const list = tracks();
   if(!list.length){ musicReady = false; curTrack = 0; updateMusicUI(); return; }
+  applyMusicPref();   /* 先用本机偏好（上次听到第几首 / 音量），再回落到云端设置 */
   curTrack = Math.min(Math.max(Number(cfg.cur) || 0, 0), list.length - 1);
   const t = list[curTrack];
   musicReady = false;
@@ -1843,11 +1850,31 @@ function updateMusicUI(){
   playBtn.classList.toggle('playing', !audioEl.paused && musicReady);
   renderTrackList();
 }
+const MUSIC_PREF_KEY = 'fupo-music-prefs';
+/* 播放偏好（当前第几首 / 音量）只存本机：访客切歌、拖音量都不会写云端或产生草稿 */
+function musicPrefsAll(){ try{ return JSON.parse(localStorage.getItem(MUSIC_PREF_KEY)) || {}; }catch(e){ return {}; } }
+function saveMusicPref(){
+  try{
+    const p = musicPrefsAll();
+    p[realm] = { cur: curTrack, volume: musicCfg().volume };
+    localStorage.setItem(MUSIC_PREF_KEY, JSON.stringify(p));
+  }catch(e){}
+}
+function applyMusicPref(){
+  const p = musicPrefsAll()[realm];
+  if(!p) return;
+  try{
+    if(typeof p.volume === 'number') musicCfg().volume = p.volume;
+    const len = tracks().length;
+    if(typeof p.cur === 'number' && p.cur >= 0 && p.cur < len) curTrack = p.cur;
+  }catch(e){}
+}
 function selectTrack(i, autoplay){
   const cfg = musicCfg();
   const list = tracks();
   if(i < 0 || i >= list.length) return;
-  cfg.cur = i; curTrack = i; _doSave();
+  cfg.cur = i; curTrack = i;
+  saveMusicPref();          /* 播放位置只存本机：访客切歌不会产生草稿、也不会写云端 */
   if(autoplay) musicIntent = true;
   loadMusic().then(() => { if(autoplay) audioEl.play().catch(()=>{}); });
 }
@@ -1904,7 +1931,8 @@ progressEl.addEventListener('click', e => {
 volEl.addEventListener('input', () => {
   const v = Number(volEl.value);
   audioEl.volume = v / 100;
-  musicCfg().volume = v; _doSave();
+  musicCfg().volume = v;
+  saveMusicPref();          /* 音量只存本机（每个设备各自合适），不写云端、不产生草稿 */
 });
 trackListEl.addEventListener('click', e => {
   const play = e.target.closest('.track-play');
@@ -1962,6 +1990,7 @@ function removeTrack(i){
 }
 let tempMusic = null;
 function openMusicEditor(idx){
+  if(!requireEdit()) return;
   const cfg = musicCfg();
   const t = (idx != null && tracks()[idx]) ? tracks()[idx] : null;
   tempMusic = { title: t ? t.title : '', url: (t && t.type === 'url') ? t.url : '', localId: t ? (t.localId || '') : '', tempBlob: null };
@@ -2245,6 +2274,7 @@ function applyPatches(){
   }
 }
 function openPatchManager(){
+  if(!requireEdit()) return;
   const list = patches.length ? `<div class="patch-list">
     ${patches.map((p, i) => `
       <div class="patch-item${p.error ? ' error' : ''}" data-pid="${p.id}">
@@ -2316,6 +2346,7 @@ function openPatchManager(){
   document.getElementById('patch-add-script').addEventListener('click', () => { closeModal(true); setTimeout(() => openPatchEditor(null, 'script'), 100); });
 }
 function openPatchEditor(patch, defaultType){
+  if(!requireEdit()) return;
   const p = patch || { id: uid(), name: '', type: defaultType || 'style', code: '', enabled: true };
   const typeNames = { content:'内容 JSON', style:'样式 CSS', script:'功能 JS' };
   showModal({
@@ -2354,6 +2385,7 @@ function openPatchEditor(patch, defaultType){
   });
 }
 function openSnapshots(){
+  if(!requireEdit()) return;
   (async () => {
     const keys = await dbKeys(SNAP_STORE);
     if(!keys.length){ toast('还没有快照'); return; }
@@ -2442,6 +2474,7 @@ function openShare(){
   document.getElementById('gen-sync').addEventListener('click', () => { closeModal(true); setTimeout(openSyncCode, 100); });
 }
 function openSyncCode(){
+  if(!requireEdit()) return;
   let code = '';
   try{
     const { clean, bag } = extractImages(state);
@@ -2753,6 +2786,7 @@ function openLex(id){
   });
 }
 function openLexEditor(id, isNew){
+  if(!requireEdit()) return;
   const list = W().lexicon;
   const x = isNew ? {} : list.find(y => y.id === id);
   if(!isNew && !x) return;
@@ -2777,6 +2811,7 @@ function openLexEditor(id, isNew){
   });
 }
 async function doDeleteLex(id){
+  if(!requireEdit()) return;
   const list = W().lexicon;
   const x = list.find(y => y.id === id);
   if(!x) return;
@@ -2848,6 +2883,7 @@ function changelogHTML(){
 
 /* 每日寄语编辑（编辑模式） */
 function openDailyNote(){
+  if(!requireEdit()) return;
   const n = (state.meta && state.meta.notice) || { text: '', at: 0 };
   showModal({
     title: '每 日 寄 语', wide: true, hideFooter: true,
@@ -2876,6 +2912,7 @@ function openDailyNote(){
 
 /* 更新日志编辑（编辑模式） */
 function openChangelog(){
+  if(!requireEdit()) return;
   const list = (state.meta && Array.isArray(state.meta.changelog)) ? state.meta.changelog : [];
   const text = list.map(r => ((r && r.date) ? r.date + ' ' : '') + ((r && r.text) || '')).join('\n');
   showModal({
@@ -2933,6 +2970,7 @@ function noticeHTML(){
 
 /* 版权声明编辑（编辑模式） */
 function openCopyright(){
+  if(!requireEdit()) return;
   const cur = (state.meta.copyright && state.meta.copyright.text) || '';
   showModal({
     title: '版 权 声 明', wide: true, hideFooter: true,
@@ -3367,6 +3405,8 @@ function bindModalTextareas(){
   });
 }
 function showModal({ title, body, onOk, okText = '保 存', hideFooter = false, wide = false }){
+  /* 打开弹窗前先收掉图片灯箱（它的层级比弹窗高，会盖住弹窗） */
+  try{ document.querySelectorAll('.fupo-lightbox').forEach(el => el.remove()); }catch(e){}
   modalRoot.innerHTML = `
     <div class="overlay">
       <div class="modal${wide ? ' wide' : ''}" role="dialog" aria-modal="true">
@@ -3715,6 +3755,7 @@ function updateSectionBtns(){
   });
 }
 function openSectionEditor(id, isNew){
+  if(!requireEdit()) return;
   const list = W().sections;
   const s = isNew ? null : list.find(x => x.id === id);
   if(!isNew && !s) return;
@@ -3742,6 +3783,7 @@ function openSectionEditor(id, isNew){
   bindSectionFormEvents(updateSectionBtns);
 }
 function openEntryEditor(sid, eid){
+  if(!requireEdit()) return;
   const s = W().sections.find(x => x.id === sid);
   if(!s) return;
   const e = s.entries.find(x => x.id === eid);
@@ -3766,6 +3808,7 @@ function openEntryEditor(sid, eid){
   });
 }
 async function doDeleteSection(id){
+  if(!requireEdit()) return;
   const list = W().sections;
   const s = list.find(x => x.id === id);
   if(!s) return;
@@ -3782,6 +3825,7 @@ async function doDeleteSection(id){
   });
 }
 async function doDeleteEntry(sid, eid){
+  if(!requireEdit()) return;
   const s = W().sections.find(x => x.id === sid);
   if(!s) return;
   const e = s.entries.find(x => x.id === eid);
@@ -3799,6 +3843,7 @@ async function doDeleteEntry(sid, eid){
   });
 }
 async function doDeleteArr(key, id){
+  if(!requireEdit()) return;
   const arr = W()[key];
   const item = arr.find(x => x.id === id);
   if(!item) return;
@@ -3818,6 +3863,7 @@ async function doDeleteArr(key, id){
   });
 }
 function moveEntry(sid, eid, dir){
+  if(!requireEdit()) return;
   const s = W().sections.find(x => x.id === sid);
   if(!s) return;
   const arr = s.entries;
@@ -3829,6 +3875,7 @@ function moveEntry(sid, eid, dir){
   _doSave(); renderAll();
 }
 function moveArr(key, id, dir){
+  if(!requireEdit()) return;
   const arr = W()[key];
   const i = arr.findIndex(x => x.id === id);
   const j = i + dir;
@@ -3842,6 +3889,7 @@ function moveArr(key, id, dir){
    首屏编辑器（当前界面的首屏；门帘两界共用，只在表层编辑）
    ============================================================ */
 function openMetaEditor(){
+  if(!requireEdit()) return;
   const g = state.meta.gate || {};
   const isAb = realm === 'abyss';
   const t = isAb ? state.meta.abyssTitle : state.meta.title;
@@ -3963,6 +4011,7 @@ function openMetaEditor(){
   });
 }
 function openCharacterEditor(id, isNew){
+  if(!requireEdit()) return;
   const list = W().characters;
   const c = isNew ? { tags:[], relations:[], gallery:[], quotes:[], profile:{} } : list.find(x => x.id === id);
   if(!isNew && !c) return;
@@ -4078,6 +4127,7 @@ function galRowHTML(g, i){
   </div>`;
 }
 function openTimelineEditor(id, isNew){
+  if(!requireEdit()) return;
   const list = W().timeline;
   const t = isNew ? {} : list.find(x => x.id === id);
   if(!isNew && !t) return;
@@ -4100,6 +4150,7 @@ function openTimelineEditor(id, isNew){
   });
 }
 function openStoryEditor(id, isNew){
+  if(!requireEdit()) return;
   const list = W().stories;
   const s = isNew ? {} : list.find(x => x.id === id);
   if(!isNew && !s) return;
@@ -4436,6 +4487,7 @@ function openHelp(){
    云同步设置
    ============================================================ */
 function openCloudSettings(){
+  if(!requireEdit()) return;
   const url = sbUrl();
   const table = sbTable();
   const email = localStorage.getItem('fupo-sb-email') || '';
@@ -5260,6 +5312,7 @@ function regenIds(arr, kind){
   return out;
 }
 function openRealmTools(){
+  if(!requireEdit()) return;
   const isAb = realm === 'abyss';
   const other = isAb ? '表层' : '上古';
   const me = isAb ? '上古' : '表层';
