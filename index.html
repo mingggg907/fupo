@@ -304,8 +304,10 @@ body.abyss .quote-item{background:rgba(255,255,255,.03)}
 body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-input:focus{outline:none;border-color:var(--gold)}
 /* 词典（紧凑版：字典式索引 + 单行释义） */
-.lex-index{display:flex;flex-direction:column;gap:10px;margin:0 0 18px}
-.lex-initials{display:flex;gap:6px;flex-wrap:wrap}
+.lex-index{display:flex;flex-direction:column;gap:10px;margin:0 0 16px}
+.lex-initials{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.lex-initials::-webkit-scrollbar{display:none}
+.lex-ini{flex:none}
 .lex-ini{min-width:30px;height:28px;padding:0 8px;font-family:var(--serif);font-size:.76rem;letter-spacing:.08em;color:var(--ink-3);background:transparent;border:1px solid var(--line-2);border-radius:2px;cursor:pointer;transition:.18s}
 .lex-ini:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
 .lex-ini.on{color:var(--paper);background:var(--ink);border-color:var(--ink)}
@@ -2895,7 +2897,7 @@ function lexiconHTML(){
   const initials = lexInitials(all);
   const filtered = lexFilter(all, { q: lexQuery, cat: lexCat, initial: lexInitial });
   /* 首页只放少量词条，完整内容进「完整词典」一屏 —— 手机上不用划半天 */
-  const inPageCap = (window.innerWidth < 820) ? 6 : 12;
+  const inPageCap = (window.innerWidth < 820) ? 5 : 12;
   const cap = (lexCat || lexInitial || lexQuery) ? Math.min(30, lexLimit) : Math.min(inPageCap, lexLimit);
   const shown = filtered.slice(0, cap);
   const rest = Math.max(0, all.length - shown.length);
