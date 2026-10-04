@@ -948,6 +948,7 @@ const DEFAULT_DATA = {
     gate:{ enabled:true, sub:"FU PO · YAO ZHI JIE", title:"浮魄", tip:"月夜 · 水涯 · 银雾", btn:"入 界", note:"点击进入，音乐随之响起" },
     abyssEntry:{ label:"上古力量", sub:"点 此 揭 开 另 一 层" },
     abyssExit:{ label:"归 返 表 层", sub:"回到你熟悉的那层浮魄" },
+    labels:{ abyssMark:"上 古 之 力", abyssExitBtn:"退 出 上 古", worldSurface:"妖界", worldAbyss:"上古秘录", chars:"妖众", timeline:"纪年", stories:"卷帙" },
   },
   worlds:{
     surface:{
@@ -1495,6 +1496,21 @@ function normalize(d){
   if(!d.meta.watermark || typeof d.meta.watermark !== 'object') d.meta.watermark = { on: false, text: '' };
   if(typeof d.meta.watermark.on !== 'boolean') d.meta.watermark.on = false;
   if(typeof d.meta.watermark.text !== 'string') d.meta.watermark.text = '';
+  /* 界面文字（可自行修改；留空用默认） */
+  if(!d.meta.labels || typeof d.meta.labels !== 'object') d.meta.labels = {};
+  {
+    const L = d.meta.labels;
+    const defs = {
+      abyssMark: '上 古 之 力',
+      abyssExitBtn: '退 出 上 古',
+      worldSurface: '妖界',
+      worldAbyss: '上古秘录',
+      chars: '妖众',
+      timeline: '纪年',
+      stories: '卷帙'
+    };
+    Object.keys(defs).forEach(k => { if(typeof L[k] !== 'string') L[k] = defs[k]; });
+  }
   /* 版权声明（可自行编辑；留空用默认措辞） */
   if(!d.meta.copyright || typeof d.meta.copyright !== 'object') d.meta.copyright = { text: '' };
   if(typeof d.meta.copyright.text !== 'string') d.meta.copyright.text = '';
@@ -2488,7 +2504,7 @@ function sectionsHTML(){
   const isAbyss = realm === 'abyss';
   return `<section class="sec" id="world">
     <div class="sec-head">
-      <h2>${isAbyss ? '上古秘录' : '妖界'}</h2>
+      <h2>${esc(isAbyss ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '妖界'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-section">+ 新增大分区</button>` : ''}
     </div>
     ${isAbyss
@@ -2574,7 +2590,7 @@ function charactersHTML(){
   const list = charFilter ? all.filter(c => c.status === charFilter || (c.tags || []).includes(charFilter)) : all;
   return `<section class="sec" id="chars">
     <div class="sec-head">
-      <h2>妖众</h2>
+      <h2>${esc(LBL('chars', '妖众'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-character">+ 新增角色</button>` : ''}
     </div>
     ${(facets.length && all.length > 1) ? `<div class="char-filter">
@@ -2586,6 +2602,22 @@ function charactersHTML(){
       <div style="text-align:center;margin-top:14px"><button class="btn small ghost" type="button" id="graph-export">导 出 关 系 图</button></div>
     </div>` : ''}
   </section>`;
+}
+
+/* 界面文字：把写死的标题/导航/顶部小字改成可编辑 */
+function LBL(k, fallback){
+  const v = (state.meta && state.meta.labels && state.meta.labels[k]);
+  return (typeof v === 'string' && v.trim()) ? v : (fallback || '');
+}
+function applyLabels(){
+  const mark = document.querySelector('.abyss-mark');
+  if(mark) mark.textContent = LBL('abyssMark', '上 古 之 力');
+  const exit = document.getElementById('abyss-exit');
+  if(exit) exit.textContent = LBL('abyssExitBtn', '退 出 上 古');
+  const nav = document.querySelectorAll('.topbar .nav a');
+  const worldLabel = (realm === 'abyss') ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '妖界');
+  const navTexts = [worldLabel, LBL('chars', '妖众'), LBL('timeline', '纪年'), LBL('stories', '卷帙')];
+  nav.forEach((a, i) => { if(navTexts[i]) a.textContent = navTexts[i]; });
 }
 
 /* 每日寄语（只有编辑过才显示） */
@@ -2739,7 +2771,7 @@ function timelineHTML(){
   const list = W().timeline;
   return `<section class="sec" id="timeline">
     <div class="sec-head">
-      <h2>纪年</h2>
+      <h2>${esc(LBL('timeline', '纪年'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-timeline">+ 新增事件</button>` : ''}
     </div>
     <div class="tl">
@@ -2764,7 +2796,7 @@ function storiesHTML(){
   const list = W().stories;
   return `<section class="sec" id="stories">
     <div class="sec-head">
-      <h2>卷帙</h2>
+      <h2>${esc(LBL('stories', '卷帙'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-story">+ 新增故事</button>` : ''}
     </div>
     <div class="story-list">
@@ -2852,6 +2884,8 @@ function renderAll(){
   try{ if(typeof FUPO_BG !== 'undefined') FUPO_BG.apply(); }catch(e){}
   /* 自定义背景图（表层 / 上古 各一张） */
   try{ if(typeof applyCustomBg === 'function') applyCustomBg(); }catch(e){}
+  /* 界面文字（顶部小字 / 导航 / 栏目名） */
+  try{ if(typeof applyLabels === 'function') applyLabels(); }catch(e){}
   /* 「外观设置 / 每日寄语 / 更新日志」只在编辑模式出现（访客看不到入口） */
   try{
     document.querySelectorAll('.edit-only').forEach(b => { b.style.display = editMode ? '' : 'none'; });
@@ -3640,6 +3674,20 @@ function openMetaEditor(){
       <div class="field" data-field="ae_sub"><label>副标题</label><input type="text" value="${esc(a.sub || '')}" placeholder="点 此 揭 开 另 一 层"></div>
       <div class="field" data-field="ae_arrow"><label>右侧文字</label><input type="text" value="${esc(a.arrow || '')}" placeholder="进 入 →"></div>
     </div>`; })();
+  const labelsBlock = (() => {
+    const L = state.meta.labels || {};
+    const worldLabel = isAb ? (L.worldAbyss || '上古秘录') : (L.worldSurface || '妖界');
+    return `
+    <p style="font-family:var(--serif);font-size:.82rem;letter-spacing:.3em;color:var(--gold);margin:24px 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line);text-indent:.3em">界 面 文 字（两界共用；栏目名同时用于顶部导航）</p>
+    <div class="form">
+      <div class="field" data-field="lb_mark"><label>上古顶部小字</label><input type="text" value="${esc(L.abyssMark || '')}" placeholder="上 古 之 力"></div>
+      <div class="field" data-field="lb_exit"><label>顶栏退出按钮</label><input type="text" value="${esc(L.abyssExitBtn || '')}" placeholder="退 出 上 古"></div>
+      <div class="field" data-field="lb_world"><label>本界栏目名（${isAb ? '上古' : '表层'}）</label><input type="text" value="${esc(worldLabel)}" placeholder="${isAb ? '上古秘录' : '妖界'}"></div>
+      <div class="field" data-field="lb_chars"><label>妖众栏目名</label><input type="text" value="${esc(L.chars || '')}" placeholder="妖众"></div>
+      <div class="field" data-field="lb_timeline"><label>纪年栏目名</label><input type="text" value="${esc(L.timeline || '')}" placeholder="纪年"></div>
+      <div class="field" data-field="lb_stories"><label>卷帙栏目名</label><input type="text" value="${esc(L.stories || '')}" placeholder="卷帙"></div>
+    </div>`;
+  })();
   showModal({
     title: '编 辑 首 屏（' + rl() + '）', wide: true,
     body: realmHint() + `<div class="form">
@@ -3663,10 +3711,21 @@ function openMetaEditor(){
       </div>
     </div>
     ${gateBlock}
-    ${entryBlock}`,
+    ${entryBlock}
+    ${labelsBlock}`,
     onOk(){
       const get = k => modalRoot.querySelector(`[data-field="${k}"] input[type=text]`)?.value.trim() || '';
       const getTa = k => modalRoot.querySelector(`[data-field="${k}"] textarea`)?.value.trim() || '';
+      if(isAb){
+        state.meta.labels.worldAbyss = get('lb_world') || '上古秘录';
+      }else{
+        state.meta.labels.worldSurface = get('lb_world') || '妖界';
+      }
+      state.meta.labels.abyssMark = get('lb_mark') || '上 古 之 力';
+      state.meta.labels.abyssExitBtn = get('lb_exit') || '退 出 上 古';
+      state.meta.labels.chars = get('lb_chars') || '妖众';
+      state.meta.labels.timeline = get('lb_timeline') || '纪年';
+      state.meta.labels.stories = get('lb_stories') || '卷帙';
       if(isAb){
         state.meta.abyssTitle = get('title');
         state.meta.abyssSubtitle = get('subtitle');
