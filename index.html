@@ -856,7 +856,7 @@ function realmHint(){
    若你的表字段不同，改下方 SB_ID / SB_COL_* 常量即可
    ============================================================ */
 const SB_KEY = 'sb_publishable_e7ud448JQiqeozGbrhkTbw_jVmE1Mz7';
-const SB_DEFAULT_URL = 'https://rntjwfkwozngerceluul.supabase.co';
+const SB_DEFAULT_URL = 'https://api.minggg.top';   /* 自有域名中转：Cloudflare Worker → Supabase（绕过国内对 supabase.co 的干扰） */
 const SB_URL_KEY = 'fupo-sb-url';
 const SB_TABLE_KEY = 'fupo-sb-table';
 const SB_ID = 'main';
@@ -961,7 +961,7 @@ let pendingCloudPatches = null;
 let musicIntent = false;    /* 用户是否希望背景音乐在播放（用于切界面/同步后自动续播） */
 let lastCloudStamp = null;  /* 当前内存中数据对应的云端时间戳，用来判断是否有新版本 */
 let sbPollTimer = null;     /* WebSocket 不可用时的轮询兜底 */
-function sbConfigured(){ return !!sb && /^https:\/\/.+\.supabase\.co\/?$/.test(sbUrl()); }
+function sbConfigured(){ return !!sb && /^https:\/\/[^\s]+$/i.test(sbUrl()); }
 function sbReady(){ return sbConfigured() && cloudOk; }
 /* 给任何 promise 加超时：国内网络对大响应会"挂住"不返回，没有超时就会永久卡死 */
 function withTimeout(p, ms){
@@ -973,7 +973,7 @@ function withTimeout(p, ms){
 function initSupabase(){
   sb = null;
   const url = sbUrl();
-  if(!/^https:\/\/.+\.supabase\.co\/?$/.test(url)) return false;
+  if(!/^https:\/\/[^\s]+$/i.test(url)) return false;
   if(!window.supabase) return false;
   try{
     sb = window.supabase.createClient(url, SB_KEY, {
@@ -3666,7 +3666,7 @@ function openCloudSettings(){
     reinitCloud();
     closeModal(true);
     /* 「保存配置」只保存这些设置并测试连接，绝不改动页面内容、也不上传 */
-    if(!sbConfigured()){ toast('地址格式不对：请填写 https://xxxx.supabase.co 形式'); return; }
+    if(!sbConfigured()){ toast('地址格式不对：请填写 https:// 开头的完整地址'); return; }
     const cloud = await cloudLoad();
     if(cloud.ok){
       if(cloud.updatedAt) lastCloudStamp = cloud.updatedAt;
@@ -3780,7 +3780,7 @@ function openCloudSettings(){
     if(up.url){
       say('✅ 音频上传功能正常！\n\n测试文件已上传成功：\n' + up.url + '\n\n你可以到 Supabase → Storage → fupo-audio 把这个 selftest 文件删掉。');
     }else{
-      say('❌ 上传失败：' + up.error + '\n\n已登录账号：' + (u.email || '未知') + '\n请依次检查：\n1) Supabase → Storage 里是否有公开桶 fupo-audio\n2) 桶的权限策略是否允许登录用户上传\n3) 网络能否访问 supabase.co');
+      say('❌ 上传失败：' + up.error + '\n\n已登录账号：' + (u.email || '未知') + '\n请依次检查：\n1) 存储桶里是否有公开桶 fupo-audio\n2) 桶的权限策略是否允许登录用户上传\n3) 网络能否访问数据接口地址');
     }
   });
   cloudUser().then(u => {
