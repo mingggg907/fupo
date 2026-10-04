@@ -195,8 +195,12 @@ html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjus
 @keyframes progSlide{0%{margin-left:-35%}100%{margin-left:100%}}
 .fupo-progress .p-text{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--ink);background:var(--paper,#ecece6);border:1px solid var(--line);padding:4px 13px;border-radius:99px;box-shadow:0 10px 26px -14px rgba(0,0,0,.45);white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
 /* 动态背景（落叶）：页面底层；门帘内时垫在门帘文字之下 */
-#fupo-bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+#fupo-bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:block}
 #gate > #fupo-bg-canvas{position:absolute;z-index:0}
+/* 自定义背景图（表层 / 上古 各一张）+ 蒙层，保证正文清晰可读 */
+#fupo-bg-photo{position:fixed;inset:0;z-index:0;pointer-events:none;background-position:center;background-size:cover;background-repeat:no-repeat;background-attachment:fixed}
+#fupo-bg-photo::after{content:"";position:absolute;inset:0;background:rgba(236,236,230,var(--bg-dim,.72))}
+body.abyss #fupo-bg-photo::after{background:rgba(8,9,11,var(--bg-dim,.72))}
 @media (prefers-reduced-motion: reduce){#fupo-bg-canvas{display:none}}
 @media print{#fupo-bg-canvas{display:none!important}}
 .abyss-entry{margin-top:44px;display:flex;align-items:center;gap:22px;padding:28px 10px;cursor:pointer;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(158,51,40,.06),transparent 65%);transition:.45s var(--ease);position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
@@ -656,7 +660,7 @@ a[href]::after{content:""}
 
 <script>
 /* 版本号：用于确认设备加载的是不是最新版本 */
-const FUPO_BUILD = '2026-10-05 00:15 (站内声明与图片保护)';
+const FUPO_BUILD = '2026-10-05 00:45 (自定义背景图)';
 /* ============================================================
    常量
    ============================================================ */
@@ -1357,6 +1361,12 @@ function normalize(d){
   if(!d.meta.bgEffect || typeof d.meta.bgEffect !== 'object') d.meta.bgEffect = { enabled: true, density: 'normal' };
   if(typeof d.meta.bgEffect.enabled !== 'boolean') d.meta.bgEffect.enabled = true;
   if(!['off','light','normal','rich'].includes(d.meta.bgEffect.density)) d.meta.bgEffect.density = 'normal';
+  /* 自定义背景图（表层 / 上古 各一张）+ 蒙层浓度 */
+  if(!d.meta.bgImage || typeof d.meta.bgImage !== 'object') d.meta.bgImage = { surface: '', abyss: '', dim: 72 };
+  if(typeof d.meta.bgImage.surface !== 'string') d.meta.bgImage.surface = '';
+  if(typeof d.meta.bgImage.abyss !== 'string') d.meta.bgImage.abyss = '';
+  if(typeof d.meta.bgImage.dim !== 'number' || !isFinite(d.meta.bgImage.dim)) d.meta.bgImage.dim = 72;
+  d.meta.bgImage.dim = Math.max(0, Math.min(92, Math.round(d.meta.bgImage.dim)));
 
   d.meta.music = normMusic(d.meta.music);
   if(!d.meta.abyssMusic || typeof d.meta.abyssMusic !== 'object' || (!Array.isArray(d.meta.abyssMusic.tracks) && !d.meta.abyssMusic.url && !d.meta.abyssMusic.localId)){
@@ -2528,6 +2538,13 @@ function renderAll(){
   updateMusicUI();
   /* 动态背景：按设置与设备情况自动开/关（幂等，开销极小） */
   try{ if(typeof FUPO_BG !== 'undefined') FUPO_BG.apply(); }catch(e){}
+  /* 自定义背景图（表层 / 上古 各一张） */
+  try{ if(typeof applyCustomBg === 'function') applyCustomBg(); }catch(e){}
+  /* 「外观设置」只在编辑模式出现（访客看不到入口） */
+  try{
+    const ap = document.querySelector('[data-action="appearance"]');
+    if(ap) ap.style.display = editMode ? '' : 'none';
+  }catch(e){}
 }
 
 let richIO = null;
@@ -3972,7 +3989,7 @@ document.addEventListener('click', e => {
   if(a === 'music'){ closeDrawer(); if(editMode) openMusicEditor(null); else toast('点右上角「编辑」后即可设置音乐'); return; }
   if(a === 'help'){ closeDrawer(); openHelp(); return; }
   if(a === 'cloud'){ closeDrawer(); openCloudSettings(); return; }
-  if(a === 'appearance'){ closeDrawer(); openAppearance(); return; }
+  if(a === 'appearance'){ if(!editMode){ toast('请先进入编辑，再修改外观'); return; } closeDrawer(); openAppearance(); return; }
   if(a === 'share'){ closeDrawer(); openShare(); return; }
   if(a === 'sync-code'){ closeDrawer(); openSyncCode(); return; }
   if(a === 'patches'){ closeDrawer(); openPatchManager(); return; }
@@ -4435,13 +4452,37 @@ const FUPO_BG = (function(){
   };
 })();
 
+/* 自定义背景图：按当前界面显示（表层一张、上古一张），并套一层蒙层保证正文可读 */
+function applyCustomBg(){
+  const cfg = (state.meta && state.meta.bgImage) || {};
+  const url = (realm === 'abyss' ? cfg.abyss : cfg.surface) || '';
+  let el = document.getElementById('fupo-bg-photo');
+  if(!url){
+    if(el) el.remove();
+    return;
+  }
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'fupo-bg-photo';
+    document.body.insertBefore(el, document.body.firstChild);
+  }
+  el.style.backgroundImage = 'url("' + String(url).replace(/["\\]/g, '') + '")';
+  const dim = Math.max(0, Math.min(92, Number(cfg.dim)));
+  el.style.setProperty('--bg-dim', ((isFinite(dim) ? dim : 72) / 100).toFixed(2));
+  /* 保证在最底层：叶子画布与正文都在它之上 */
+  if(document.body.firstChild !== el) document.body.insertBefore(el, document.body.firstChild);
+}
+
 /* ============================================================
    外观设置
    ============================================================ */
 function openAppearance(){
+  if(!editMode){ toast('请先进入编辑，再修改外观'); return; }
   const b = (state.meta && state.meta.bgEffect) || { enabled: true, density: 'normal' };
+  const bi = (state.meta && state.meta.bgImage) || { surface: '', abyss: '', dim: 72 };
+  const thumb = (u) => u ? `background-image:url("${String(u).replace(/["\\]/g,'')}")` : '';
   showModal({
-    title: '外 观 设 置', hideFooter: true,
+    title: '外 观 设 置', wide: true, hideFooter: true,
     body: `<div class="form">
       <div class="field full">
         <label>动态背景</label>
@@ -4455,28 +4496,85 @@ function openAppearance(){
           <option value="rich" ${b.density === 'rich' ? 'selected' : ''}>密</option>
         </select>
       </div>
+      <div class="field full">
+        <label>背景图</label>
+        <div class="img-row" style="align-items:center;gap:18px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="img-preview" id="bgpv-surface" style="${thumb(bi.surface)}"></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:var(--serif);font-size:.8rem;letter-spacing:.12em">表层</span>
+              <button class="btn small" id="bg-pick-surface" type="button">选择图片</button>
+              <button class="btn small ghost" id="bg-clear-surface" type="button">清除</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="img-preview" id="bgpv-abyss" style="${thumb(bi.abyss)}"></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:var(--serif);font-size:.8rem;letter-spacing:.12em">上古</span>
+              <button class="btn small" id="bg-pick-abyss" type="button">选择图片</button>
+              <button class="btn small ghost" id="bg-clear-abyss" type="button">清除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="field full">
+        <label>蒙层浓度</label>
+        <input type="range" id="bg-dim" min="0" max="92" step="2" value="${bi.dim}" style="width:100%">
+      </div>
     </div>
     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn small primary" id="bg-save">保 存</button>
       <button class="btn small ghost" id="bg-preview">预 览</button>
     </div>`,
   });
-  const refresh = () => {
-    const el = document.getElementById('bg-count');
-    if(el) el.textContent = FUPO_BG.running ? (FUPO_BG.count + ' 片') : '未开启';
-  };
-  refresh();
-  document.getElementById('bg-preview').addEventListener('click', () => {
-    const en = document.getElementById('bg-enable').checked;
-    state.meta.bgEffect.enabled = en;
-    state.meta.bgEffect.density = document.getElementById('bg-density').value;
-    FUPO_BG.setDensity(state.meta.bgEffect.density);
-    setTimeout(refresh, 300);
-  });
-  document.getElementById('bg-save').addEventListener('click', () => {
+  const dimEl = () => document.getElementById('bg-dim');
+  const writeForm = () => {
     state.meta.bgEffect.enabled = document.getElementById('bg-enable').checked;
     state.meta.bgEffect.density = document.getElementById('bg-density').value;
+    state.meta.bgImage.dim = Number(dimEl().value) || 0;
+  };
+  const paintThumbs = () => {
+    const s = document.getElementById('bgpv-surface'), a = document.getElementById('bgpv-abyss');
+    if(s) s.style.backgroundImage = state.meta.bgImage.surface ? 'url("' + String(state.meta.bgImage.surface).replace(/["\\]/g,'') + '")' : '';
+    if(a) a.style.backgroundImage = state.meta.bgImage.abyss ? 'url("' + String(state.meta.bgImage.abyss).replace(/["\\]/g,'') + '")' : '';
+  };
+  const pickBg = (which) => {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0];
+      if(!f) return;
+      try{
+        showProgress(null, '正在处理背景图…');
+        const url = await imageUrlFor(f);
+        state.meta.bgImage[which] = url;
+        hideProgress();
+        paintThumbs();
+        applyCustomBg();
+        toast('背景图已就绪');
+      }catch(e){
+        hideProgress();
+        toast('背景图处理失败，请换一张试试');
+      }
+    });
+    inp.click();
+  };
+  document.getElementById('bg-pick-surface').addEventListener('click', () => pickBg('surface'));
+  document.getElementById('bg-pick-abyss').addEventListener('click', () => pickBg('abyss'));
+  document.getElementById('bg-clear-surface').addEventListener('click', () => { state.meta.bgImage.surface = ''; paintThumbs(); applyCustomBg(); });
+  document.getElementById('bg-clear-abyss').addEventListener('click', () => { state.meta.bgImage.abyss = ''; paintThumbs(); applyCustomBg(); });
+  dimEl().addEventListener('input', () => { state.meta.bgImage.dim = Number(dimEl().value) || 0; applyCustomBg(); });
+  document.getElementById('bg-preview').addEventListener('click', () => {
+    writeForm();
     FUPO_BG.setDensity(state.meta.bgEffect.density);
+    applyCustomBg();
+    paintThumbs();
+  });
+  document.getElementById('bg-save').addEventListener('click', () => {
+    writeForm();
+    FUPO_BG.setDensity(state.meta.bgEffect.density);
+    applyCustomBg();
     _doSave();
     closeModal(true);
     toast('已 保 存');
