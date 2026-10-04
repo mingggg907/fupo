@@ -2839,7 +2839,7 @@ function lexEntryHTML(x){
         <button data-act="del-lex" data-id="${x.id}" title="删除">✕</button>
       </span>` : ''}
     </div>
-    <div class="lex-def">${esc(plain(x.def || '', 70)) || '<span class="pf-empty">释义完善中</span>'}</div>
+    <div class="lex-def">${x.def ? esc(String(x.def).replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\*\*/g, '')) : '<span class="pf-empty">释义完善中</span>'}</div>
     ${x.aliases ? `<div class="lex-alias">别名：${esc(x.aliases)}</div>` : ''}
   </div>`;
 }
