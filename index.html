@@ -316,6 +316,47 @@ body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-empty{font-family:var(--serif);font-size:.84rem;letter-spacing:.2em;color:var(--ink-3);text-align:center;padding:34px 0;grid-column:1/-1}
 .lex-more{text-align:center;margin-top:22px;grid-column:1/-1}
 @media (max-width:640px){.lex-list{grid-template-columns:1fr}}
+/* 卷帙：分类（设定 / 二创）与章节 */
+.story-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 22px}
+.story-kind{font-family:var(--serif);font-size:.68rem;letter-spacing:.14em;color:var(--gold);border:1px solid var(--line-2);border-radius:99px;padding:2px 9px;margin-left:10px;vertical-align:middle}
+.story-tag{display:inline-block;margin-top:8px;font-family:var(--serif);font-size:.66rem;letter-spacing:.16em;border-radius:99px;padding:2px 10px;border:1px solid var(--line-2);color:var(--ink-3)}
+.story-tag.kind-setting,.sr-kind.kind-setting{color:var(--gold);border-color:var(--gold)}
+.story-tag.kind-fic,.sr-kind.kind-fic{color:var(--cinnabar);border-color:var(--cinnabar)}
+.story-tag.kind-other,.sr-kind.kind-other{color:var(--ink-3)}
+.sr-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line-2)}
+.sr-date{font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--gold)}
+.sr-kind{font-family:var(--serif);font-size:.68rem;letter-spacing:.14em;border:1px solid var(--line-2);border-radius:99px;padding:2px 9px}
+.sr-count{font-family:var(--serif);font-size:.72rem;letter-spacing:.12em;color:var(--ink-3);margin-left:auto}
+.sr-title{font-family:var(--serif);font-weight:400;font-size:1.24rem;letter-spacing:.16em;color:var(--ink);margin:6px 0 20px;text-indent:.16em}
+.sr-nav{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:34px;padding-top:18px;border-top:1px solid var(--line-2);flex-wrap:wrap}
+.sr-toc-list{display:flex;flex-direction:column;gap:0}
+.sr-toc-item{display:flex;gap:16px;align-items:baseline;width:100%;text-align:left;padding:12px 10px;border:0;border-bottom:1px solid var(--line-2);background:transparent;cursor:pointer;transition:.2s}
+.sr-toc-item:hover{background:rgba(160,134,80,.06)}
+.sr-toc-idx{font-family:var(--serif);font-size:.76rem;color:var(--gold);letter-spacing:.1em;flex:none}
+.sr-toc-title{font-family:var(--serif);font-size:.92rem;color:var(--ink);letter-spacing:.06em;min-width:0}
+/* 章节编辑列表 */
+.ch-list{display:flex;flex-direction:column;border:1px solid var(--line-2);border-radius:2px;overflow:hidden}
+.ch-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border-bottom:1px solid var(--line-2);background:rgba(255,255,255,.3)}
+.ch-row:last-child{border-bottom:0}
+body.abyss .ch-row{background:rgba(255,255,255,.03)}
+.ch-idx{font-family:var(--serif);font-size:.74rem;color:var(--gold);flex:none}
+.ch-title{font-family:var(--serif);font-size:.88rem;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-len{font-size:.7rem;color:var(--ink-3);flex:none}
+.ch-empty{padding:16px;font-family:var(--serif);font-size:.8rem;color:var(--ink-3);text-align:center;letter-spacing:.1em}
+/* 访客感想墙 */
+.guest-form{display:flex;flex-direction:column;gap:12px;align-items:center;max-width:620px;margin:0 auto 30px}
+.guest-textarea{width:100%;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:12px 14px;font-family:var(--serif);font-size:.9rem;line-height:1.95;resize:vertical}
+body.abyss .guest-textarea{background:rgba(255,255,255,.05)}
+.guest-textarea:focus{outline:none;border-color:var(--gold)}
+.guest-list{display:flex;flex-direction:column;gap:0;max-width:760px;margin:0 auto}
+.guest-item{padding:16px 6px;border-bottom:1px dashed var(--line-2)}
+.guest-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.guest-name{font-family:var(--serif);font-size:.86rem;letter-spacing:.1em;color:var(--ink)}
+.guest-time{font-size:.7rem;color:var(--ink-3);letter-spacing:.08em}
+.guest-acts{margin-left:auto;display:flex;gap:8px}
+.guest-text{font-family:var(--serif);font-size:.88rem;line-height:2;color:var(--ink-2);white-space:pre-wrap;word-break:break-word}
+.guest-empty,.guest-note{font-family:var(--serif);font-size:.82rem;letter-spacing:.14em;color:var(--ink-3);text-align:center;padding:18px 0}
+.guest-note{color:var(--cinnabar)}
 .fupo-lightbox .lb-cap{position:absolute;left:0;right:0;bottom:20px;text-align:center;color:rgba(255,255,255,.85);font-family:var(--serif);font-size:.82rem;letter-spacing:.18em;text-indent:.18em;pointer-events:none}
 .fupo-lightbox .lb-close{position:absolute;top:14px;right:20px;width:40px;height:40px;display:grid;place-items:center;color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;opacity:.85;background:rgba(255,255,255,.08);border-radius:50%;border:none}
 .fupo-lightbox .lb-close:hover{opacity:1;background:rgba(255,255,255,.16)}
@@ -1551,6 +1592,9 @@ function normalize(d){
   /* 版权声明（可自行编辑；留空用默认措辞） */
   if(!d.meta.copyright || typeof d.meta.copyright !== 'object') d.meta.copyright = { text: '' };
   if(typeof d.meta.copyright.text !== 'string') d.meta.copyright.text = '';
+  /* 访客感想墙 */
+  if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true };
+  if(typeof d.meta.guest.on !== 'boolean') d.meta.guest.on = true;
   /* 角色扩展字段：主题色 / 生日 / 资料表 / 立绘画廊 / 语录 */
   const normChar = (c) => {
     if(!c || typeof c !== 'object') return c;
@@ -1610,7 +1654,16 @@ function normalize(d){
     });
     w.characters = w.characters.map(c => { if(!Array.isArray(c.relations)) c.relations = []; if(!Array.isArray(c.tags)) c.tags = []; return normChar(c); });
     w.timeline = w.timeline.filter(t => t && typeof t === 'object');
-    w.stories = w.stories.filter(s => s && typeof s === 'object');
+    w.stories = w.stories.filter(s => s && typeof s === 'object').map(s => {
+      if(typeof s.kind !== 'string' || !s.kind) s.kind = 'setting';
+      if(!Array.isArray(s.chapters)) s.chapters = [];
+      else s.chapters = s.chapters.filter(c => c && typeof c === 'object').map(c => ({
+        id: c.id || uid(),
+        title: typeof c.title === 'string' ? c.title : '',
+        content: typeof c.content === 'string' ? c.content : ''
+      }));
+      return s;
+    });
     /* 词典（词条）：独立栏目，像字典一样按词条收录设定名词 */
     if(!Array.isArray(w.lexicon)) w.lexicon = [];
     w.lexicon = w.lexicon.filter(x => x && typeof x === 'object').map(x => ({
@@ -2702,6 +2755,22 @@ function applyLabels(){
   const worldLabel = (realm === 'abyss') ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '妖界');
   const navTexts = [worldLabel, LBL('chars', '妖众'), LBL('timeline', '纪年'), LBL('stories', '卷帙'), LBL('lexicon', '词典')];
   nav.forEach((a, i) => { if(navTexts[i]) a.textContent = navTexts[i]; });
+  /* 空栏目不留死链：对应区块不存在时隐藏导航项（编辑模式下保留，方便去填内容） */
+  try{
+    if(!editMode){
+      const alive = id => !!document.getElementById(id);
+      nav.forEach(a => {
+        const href = (a.getAttribute('href') || '').replace('#', '');
+        if(!href) return;
+        a.style.display = alive(href) ? '' : 'none';
+      });
+      const lexLinks = document.querySelectorAll('.drawer a[href="#lexicon"]');
+      lexLinks.forEach(a => { a.style.display = alive('lexicon') ? '' : 'none'; });
+    }else{
+      nav.forEach(a => { a.style.display = ''; });
+      document.querySelectorAll('.drawer a[href="#lexicon"]').forEach(a => { a.style.display = ''; });
+    }
+  }catch(e){}
 }
 
 /* ============================================================
@@ -2751,7 +2820,8 @@ function lexiconHTML(){
         <button class="cf-btn${lexCat ? '' : ' on'}" data-lex-cat="">全部</button>
         ${cats.map(c => `<button class="cf-btn${lexCat === c ? ' on' : ''}" data-lex-cat="${esc(c)}">${esc(c)}</button>`).join('')}
       </div>` : ''}
-    </div>` : ''}
+    </div>` : (editMode ? `<div class="lex-tools"><button class="btn small" data-act="lex-seed">从现有设定一键生成词条草稿</button>
+      <span class="hint" style="font-family:var(--serif);font-size:.76rem;color:var(--ink-3);letter-spacing:.08em">会把「妖界分区」里每条设定的标题变成词条、分区名变成分类，你再补释义即可</span></div>` : '')}
     <div class="lex-list" id="lex-list">
       ${filtered.length ? shown.map(lexEntryHTML).join('')
         : (all.length ? '<div class="lex-empty">没有匹配的词条</div>' : wipHTML('词典完善中', true))}
@@ -2825,7 +2895,140 @@ async function doDeleteLex(id){
   showUndoToast('已删除词条「' + (x.term || '') + '」', () => { list.splice(idx, 0, backup); _doSave(); renderAll(); });
 }
 
-/* 正文里的名词/角色名 → 可点链接（词典与妖众联动） */
+/* 一键从现有设定生成词条草稿：标题→词条、分区名→分类、正文前段→释义 */
+function seedLexicon(){
+  if(!requireEdit()) return;
+  const L = W().lexicon;
+  const exists = new Set(L.map(x => String(x.term || '').trim()));
+  const add = [];
+  (W().sections || []).forEach(sec => {
+    (sec.entries || []).forEach(e => {
+      const term = String(e.title || '').trim();
+      if(!term || term.length < 2 || exists.has(term)) return;
+      exists.add(term);
+      add.push({
+        id: uid(),
+        term,
+        reading: '',
+        cat: String(sec.title || '').trim(),
+        aliases: '',
+        def: String(e.content || '').replace(/\*\*/g, '').replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\s+/g, ' ').trim().slice(0, 160),
+        note: ''
+      });
+    });
+  });
+  (W().characters || []).forEach(c => {
+    const term = String(c.name || '').trim();
+    if(!term || term.length < 2 || exists.has(term)) return;
+    exists.add(term);
+    add.push({ id: uid(), term, reading: '', cat: '妖众', aliases: (c.tags || []).join('，'), def: String(c.desc || '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim().slice(0, 160), note: '' });
+  });
+  if(!add.length){ toast('没有可生成的新词条（可能都已存在）'); return; }
+  if(!confirm('将新增 ' + add.length + ' 条词条草稿（标题已填好，释义取自正文前段，之后可逐条修改）。\n\n继续吗？')) return;
+  pushHistory();
+  add.forEach(x => L.push(x));
+  _doSave(); renderAll();
+  toast('已生成 ' + add.length + ' 条词条草稿，点词条即可补写释义');
+}
+/* ============================================================
+   访客感想墙（Supabase 表 fupo_guest；未建表则自动隐藏）
+   ============================================================ */
+const GUEST_TABLE = 'fupo_guest';
+const guestState = { ok: null, rows: [], pending: [], err: '', loaded: false };
+
+async function loadGuest(force){
+  if(!sbConfigured() || !sbReady()){ guestState.ok = null; return; }
+  if(guestState.loaded && !force) return;
+  try{
+    const res = await withTimeout(sb.from(GUEST_TABLE).select('*').order('created_at', { ascending: false }).limit(200), 14000);
+    if(res.error) throw res.error;
+    const rows = Array.isArray(res.data) ? res.data : [];
+    guestState.rows = rows.filter(r => r.approved);
+    guestState.pending = rows.filter(r => !r.approved);
+    guestState.ok = true; guestState.err = ''; guestState.loaded = true;
+  }catch(e){
+    guestState.ok = false;
+    guestState.err = (e && e.message) || String(e);
+  }
+  try{ renderGuest(); }catch(e){}
+}
+function guestOn(){ return !!((state.meta && state.meta.guest) || {}).on; }
+function renderGuest(){
+  const box = document.getElementById('guest-body');
+  if(box) box.innerHTML = guestInnerHTML();
+}
+function guestInnerHTML(){
+  if(guestState.ok === false){
+    if(!editMode) return '';
+    return `<div class="tip-box">留言区还没建好：请到 Supabase 的 SQL Editor 里跑一次建表语句（见 ☰ → 使用说明 的「感想墙」一条），跑完刷新本页即可。<br><span style="opacity:.75">表名：${GUEST_TABLE}</span></div>`;
+  }
+  if(guestState.ok === null) return `<div class="guest-empty">留言区正在载入…</div>`;
+  const rows = editMode ? guestState.rows.concat(guestState.pending) : guestState.rows;
+  return `
+    ${editMode && guestState.pending.length ? `<div class="guest-note">有 ${guestState.pending.length} 条待审核留言（只有你看得到）</div>` : ''}
+    <div class="guest-form">
+      <input type="text" id="guest-name" class="lex-input" placeholder="昵称（可留空）" maxlength="20">
+      <textarea id="guest-text" class="guest-textarea" rows="3" placeholder="写下你想说的话…" maxlength="500"></textarea>
+      <button class="btn small primary" id="guest-send" type="button">送 出 留 言</button>
+    </div>
+    <div class="guest-list">
+      ${rows.length ? rows.map(r => `
+        <div class="guest-item">
+          <div class="guest-head">
+            <span class="guest-name">${esc(String(r.name || '').trim() || '匿名')}</span>
+            <span class="guest-time">${esc(String(r.created_at || '').slice(0, 10))}</span>
+            ${editMode ? `<span class="guest-acts">
+              ${r.approved ? '' : '<button class="btn small" data-guest-approve="' + esc(String(r.id)) + '" type="button">通 过</button>'}
+              <button class="btn small ghost" data-guest-del="${esc(String(r.id))}" type="button">删 除</button>
+            </span>` : ''}
+          </div>
+          <div class="guest-text">${esc(String(r.text || ''))}</div>
+        </div>`).join('')
+        : `<div class="guest-empty">还没有留言 · 欢迎写下第一句</div>`}
+    </div>`;
+}
+function guestHTML(){
+  if(!guestOn()) return '';
+  if(guestState.ok === false && !editMode) return '';
+  return `<section class="sec" id="guest">
+    <div class="sec-head"><h2>${esc(LBL('guest', '感想'))}</h2></div>
+    <div id="guest-body">${guestInnerHTML()}</div>
+  </section>`;
+}
+async function postGuest(){
+  const nameEl = document.getElementById('guest-name');
+  const textEl = document.getElementById('guest-text');
+  const name = ((nameEl && nameEl.value) || '').trim().slice(0, 20);
+  const text = ((textEl && textEl.value) || '').trim().slice(0, 500);
+  if(!text){ toast('请先写点内容'); return; }
+  if(!sbReady()){ toast('留言区暂时不可用'); return; }
+  const last = Number(localStorage.getItem('fupo-guest-last') || 0);
+  if(Date.now() - last < 30000){ toast('刚刚已经送出了一条，稍后再写吧'); return; }
+  showProgress(null, '正在送出…');
+  try{
+    const res = await withTimeout(sb.from(GUEST_TABLE).insert([{ name, text, approved: false }]), 16000);
+    hideProgress();
+    if(res.error) throw res.error;
+    try{ localStorage.setItem('fupo-guest-last', String(Date.now())); }catch(e){}
+    if(textEl) textEl.value = '';
+    toast('留言已送达 · 作者看过后会显示出来');
+  }catch(e){
+    hideProgress();
+    toast('送出失败，请稍后再试');
+  }
+}
+async function modGuest(id, approve){
+  if(!requireEdit()) return;
+  try{
+    const res = approve
+      ? await withTimeout(sb.from(GUEST_TABLE).update({ approved: true }).eq('id', id), 14000)
+      : await withTimeout(sb.from(GUEST_TABLE).delete().eq('id', id), 14000);
+    if(res.error) throw res.error;
+    toast(approve ? '已通过，访客可见' : '已删除');
+    await loadGuest(true);
+  }catch(e){ toast('操作失败（可能未登录或表权限不足）'); }
+}
+
 function linkTerms(html){
   const chars = (W().characters || []).filter(c => c && c.name && String(c.name).length >= 2);
   const terms = (W().lexicon || []).filter(x => x && x.term && String(x.term).length >= 2);
@@ -3022,21 +3225,37 @@ function timelineHTML(){
   </section>`;
 }
 
+const STORY_KINDS = [
+  { key: 'setting', label: '设定' },
+  { key: 'fic', label: '二创' },
+  { key: 'other', label: '其他' }
+];
+function storyKindLabel(k){ const f = STORY_KINDS.find(x => x.key === k); return f ? f.label : '设定'; }
+function storyChapterCount(s){ return (s && Array.isArray(s.chapters)) ? s.chapters.length : 0; }
+let storyKindFilter = '';
+
 function storiesHTML(){
-  const list = W().stories;
-  if(!editMode && !list.length) return '';
+  const all = W().stories;
+  if(!editMode && !all.length) return '';
+  const kinds = STORY_KINDS.filter(k => all.some(s => (s.kind || 'setting') === k.key));
+  const list = storyKindFilter ? all.filter(s => (s.kind || 'setting') === storyKindFilter) : all;
   return `<section class="sec" id="stories">
     <div class="sec-head">
       <h2>${esc(LBL('stories', '卷帙'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-story">+ 新增故事</button>` : ''}
     </div>
-    <div class="story-list">
+    ${(kinds.length > 1) ? `<div class="story-tabs">
+      <button class="cf-btn${storyKindFilter ? '' : ' on'}" data-story-kind="">全部</button>
+      ${kinds.map(k => `<button class="cf-btn${storyKindFilter === k.key ? ' on' : ''}" data-story-kind="${k.key}">${k.label}${k.key === 'fic' ? '（同人向）' : ''}</button>`).join('')}
+    </div>` : ''}
+    <div class="story-list" id="story-list">
       ${list.length ? list.map((s, i) => `
         <div class="story-item" data-act="open-story" data-id="${s.id}">
           <span class="story-num">${esc(s.date || '——')}</span>
           <div class="story-main">
-            <h3 class="story-title">${esc(s.title)}</h3>
+            <h3 class="story-title">${esc(s.title)}${storyChapterCount(s) ? `<span class="story-kind">${storyChapterCount(s)} 章</span>` : ''}</h3>
             ${s.summary ? `<p class="story-sum">${esc(s.summary)}</p>` : ''}
+            ${(all.length && kinds.length > 1) ? `<span class="story-tag kind-${esc(s.kind || 'setting')}">${esc(storyKindLabel(s.kind))}</span>` : ''}
           </div>
           <span class="story-arrow">→</span>
           ${editMode ? `<div class="tools" style="position:static;opacity:1;flex:none">
@@ -3049,6 +3268,29 @@ function storiesHTML(){
         : wipHTML('卷帙完善中', true)}
     </div>
   </section>`;
+}
+function renderStoryList(){
+  const box = document.getElementById('story-list');
+  if(!box) return;
+  const all = W().stories;
+  const list = storyKindFilter ? all.filter(s => (s.kind || 'setting') === storyKindFilter) : all;
+  if(!list.length){ box.innerHTML = wipHTML(storyKindFilter ? '此分类完善中' : '卷帙完善中', true); return; }
+  box.innerHTML = list.map((s, i) => `
+    <div class="story-item" data-act="open-story" data-id="${s.id}">
+      <span class="story-num">${esc(s.date || '——')}</span>
+      <div class="story-main">
+        <h3 class="story-title">${esc(s.title)}${storyChapterCount(s) ? `<span class="story-kind">${storyChapterCount(s)} 章</span>` : ''}</h3>
+        ${s.summary ? `<p class="story-sum">${esc(s.summary)}</p>` : ''}
+        <span class="story-tag kind-${esc(s.kind || 'setting')}">${esc(storyKindLabel(s.kind))}</span>
+      </div>
+      <span class="story-arrow">→</span>
+      ${editMode ? `<div class="tools" style="position:static;opacity:1;flex:none">
+        <button data-act="edit-story" data-id="${s.id}">✎</button>
+        <button data-act="up-story" data-id="${s.id}" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button data-act="down-story" data-id="${s.id}" ${i === list.length - 1 ? 'disabled' : ''}>↓</button>
+        <button data-act="del-story" data-id="${s.id}">✕</button>
+      </div>` : ''}
+    </div>`).join('');
 }
 
 function updateDraftBanner(){
@@ -3101,7 +3343,7 @@ function renderAll(){
     seal.innerHTML = esc(isAbyss ? '◈' : (title || '浮').slice(0, 1));
     seal.style.background = '';
   }
-  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + storiesHTML() + lexiconHTML() + changelogHTML() + noticeHTML();
+  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + storiesHTML() + lexiconHTML() + guestHTML() + changelogHTML() + noticeHTML();
   document.body.classList.toggle('editing', editMode);
   document.querySelectorAll('[data-action="edit"]').forEach(b => {
     b.textContent = editMode ? '完成编辑' : '编辑';
@@ -3117,6 +3359,8 @@ function renderAll(){
   try{ if(typeof applyCustomBg === 'function') applyCustomBg(); }catch(e){}
   /* 界面文字（顶部小字 / 导航 / 栏目名） */
   try{ if(typeof applyLabels === 'function') applyLabels(); }catch(e){}
+  /* 感想墙：首次渲染后按需拉取（未建表则自动隐藏） */
+  try{ if(guestOn()) loadGuest(false); }catch(e){}
   /* 「外观设置 / 每日寄语 / 更新日志」只在编辑模式出现（访客看不到入口） */
   try{
     document.querySelectorAll('.edit-only').forEach(b => { b.style.display = editMode ? '' : 'none'; });
@@ -3584,15 +3828,65 @@ function openTimeline(id){
     </div>`
   });
 }
-function openStory(id){
+/* 卷帙阅读页：有章节时按章阅读（上一章/下一章），只渲染当前章（内容再大也不拖慢） */
+let storyReading = { id: '', idx: 0 };
+function openStory(id, chapterIdx){
   const s = W().stories.find(x => x.id === id);
   if(!s) return;
+  const chapters = Array.isArray(s.chapters) ? s.chapters : [];
+  if(!chapters.length){
+    showModal({
+      title: s.title, hideFooter: true, wide: true,
+      body: `<div class="reader">
+        ${s.date ? `<p class="reader-meta">${esc(s.date)}</p>` : ''}
+        <div class="entry-content">${linkTerms(fmt(s.content))}</div>
+      </div>`
+    });
+    return;
+  }
+  const idx = Math.min(Math.max(Number(chapterIdx) || 0, 0), chapters.length - 1);
+  storyReading = { id, idx };
+  const ch = chapters[idx];
   showModal({
     title: s.title, hideFooter: true, wide: true,
-    body: `<div class="reader">
-      ${s.date ? `<p class="reader-meta">${esc(s.date)}</p>` : ''}
-      <div class="entry-content">${fmt(s.content)}</div>
+    body: `<div class="reader story-reader">
+      <div class="sr-head">
+        ${s.date ? `<span class="sr-date">${esc(s.date)}</span>` : ''}
+        <span class="sr-kind kind-${esc(s.kind || 'setting')}">${esc(storyKindLabel(s.kind))}</span>
+        <span class="sr-count">第 ${idx + 1} / ${chapters.length} 章</span>
+      </div>
+      <h3 class="sr-title">${esc(ch.title || ('第 ' + (idx + 1) + ' 章'))}</h3>
+      <div class="entry-content">${linkTerms(fmt(ch.content))}</div>
+      <div class="sr-nav">
+        <button class="btn small ghost" id="sr-prev" ${idx === 0 ? 'disabled' : ''}>← 上一章</button>
+        <button class="btn small" id="sr-toc">目 录</button>
+        <button class="btn small ghost" id="sr-next" ${idx >= chapters.length - 1 ? 'disabled' : ''}>下一章 →</button>
+      </div>
     </div>`
+  });
+  const prev = document.getElementById('sr-prev'), next = document.getElementById('sr-next'), toc = document.getElementById('sr-toc');
+  if(prev) prev.addEventListener('click', () => openStory(id, idx - 1));
+  if(next) next.addEventListener('click', () => openStory(id, idx + 1));
+  if(toc) toc.addEventListener('click', () => openStoryToc(id));
+}
+function openStoryToc(id){
+  const s = W().stories.find(x => x.id === id);
+  if(!s) return;
+  const chapters = s.chapters || [];
+  showModal({
+    title: s.title + ' · 目 录', hideFooter: true, wide: true,
+    body: `<div class="reader">
+      ${s.summary ? `<p class="story-sum" style="margin-bottom:18px">${esc(s.summary)}</p>` : ''}
+      <div class="sr-toc-list">
+        ${chapters.map((c, i) => `<button class="sr-toc-item" data-chapter="${i}">
+          <span class="sr-toc-idx">${String(i + 1).padStart(2, '0')}</span>
+          <span class="sr-toc-title">${esc(c.title || ('第 ' + (i + 1) + ' 章'))}</span>
+        </button>`).join('')}
+      </div>
+    </div>`
+  });
+  document.querySelectorAll('.sr-toc-item').forEach(b => {
+    b.addEventListener('click', () => openStory(id, Number(b.dataset.chapter)));
   });
 }
 
@@ -3628,6 +3922,20 @@ app.addEventListener('click', e => {
     return;
   }
   const el = e.target.closest('[data-act]');
+  /* 感想墙：提交 / 审核 / 删除 */
+  if(e.target.closest && e.target.closest('#guest-send')){ postGuest(); return; }
+  const ga = e.target.closest && e.target.closest('[data-guest-approve]');
+  if(ga){ modGuest(ga.dataset.guestApprove, true); return; }
+  const gd = e.target.closest && e.target.closest('[data-guest-del]');
+  if(gd){ if(confirm('删除这条留言？')) modGuest(gd.dataset.guestDel, false); return; }
+  /* 卷帙分类筛选 */
+  const sk = e.target.closest('[data-story-kind]');
+  if(sk){
+    storyKindFilter = sk.dataset.storyKind || '';
+    document.querySelectorAll('[data-story-kind]').forEach(b => b.classList.toggle('on', (b.dataset.storyKind || '') === storyKindFilter));
+    renderStoryList();
+    return;
+  }
   /* 词典：分类筛选 / 载入更多 */
   const lc = e.target.closest('[data-lex-cat]');
   if(lc){
@@ -3668,6 +3976,7 @@ app.addEventListener('click', e => {
   if(act === 'up-lex'){ moveArr('lexicon', id, -1); return; }
   if(act === 'down-lex'){ moveArr('lexicon', id, 1); return; }
   if(act === 'del-lex'){ doDeleteLex(id); return; }
+  if(act === 'lex-seed'){ seedLexicon(); return; }
   if(act === 'open-timeline'){ openTimeline(id); return; }
   if(act === 'open-story'){ openStory(id); return; }
   if(act === 'edit-meta'){ openMetaEditor(); return; }
@@ -4152,25 +4461,104 @@ function openTimelineEditor(id, isNew){
 function openStoryEditor(id, isNew){
   if(!requireEdit()) return;
   const list = W().stories;
-  const s = isNew ? {} : list.find(x => x.id === id);
+  const s = isNew ? { kind: 'setting', chapters: [] } : list.find(x => x.id === id);
   if(!isNew && !s) return;
+  const chapters = Array.isArray(s.chapters) ? s.chapters : [];
+  const chapterRows = () => chapters.map((c, i) => `
+    <div class="ch-row" data-ci="${i}">
+      <span class="ch-idx">${String(i + 1).padStart(2, '0')}</span>
+      <span class="ch-title">${esc(c.title || ('第 ' + (i + 1) + ' 章'))}</span>
+      <span class="ch-len">${(c.content || '').length} 字</span>
+      <div class="tools" style="position:static;opacity:1;flex:none">
+        <button type="button" class="ch-edit">✎</button>
+        <button type="button" class="ch-up" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button type="button" class="ch-down" ${i === chapters.length - 1 ? 'disabled' : ''}>↓</button>
+        <button type="button" class="ch-del">✕</button>
+      </div>
+    </div>`).join('');
   showModal({
     title: (isNew ? '新 增 故 事' : '编 辑 故 事') + '（' + rl() + '）', wide: true,
     body: realmHint() + `<div class="form">
       <div class="field full" data-field="title"><label>标题</label><input type="text" value="${esc(s.title || '')}"></div>
-      <div class="field" data-field="date"><label>卷次 / 标签</label><input type="text" value="${esc(s.date || '')}"></div>
+      <div class="field" data-field="date"><label>卷次 / 日期</label><input type="text" value="${esc(s.date || '')}"></div>
+      <div class="field" data-field="kind"><label>分类</label>
+        <select id="st-kind">
+          ${STORY_KINDS.map(k => `<option value="${k.key}" ${(s.kind || 'setting') === k.key ? 'selected' : ''}>${k.label}${k.key === 'fic' ? '（同人向 / 二创）' : ''}</option>`).join('')}
+        </select>
+      </div>
       <div class="field" data-field="summary"><label>一句话摘要</label><input type="text" value="${esc(s.summary || '')}"></div>
       <div class="field full" data-field="keywords"><label>检索关键词（逗号分隔）</label><input type="text" value="${esc(s.keywords || '')}"></div>
-      <div class="field full" data-field="content"><label>正文</label><textarea rows="16">${esc(s.content || '')}</textarea><span class="hint">空行分段，**双星号**加粗，点「🖼 插入图片」或直接拖图进来</span></div>
+      <div class="field full"><label>章节目录（有章节时按章阅读）</label>
+        <div class="ch-list" id="ch-list">${chapterRows() || '<div class="ch-empty">还没有章节 · 也可以只写下面的单篇正文</div>'}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn small" type="button" id="ch-add">+ 添加章节</button>
+          ${chapters.length ? `<button class="btn small ghost" type="button" id="ch-clear">清空章节</button>` : ''}
+        </div>
+      </div>
+      <div class="field full" data-field="content"><label>单篇正文（没有章节时显示这一篇）</label><textarea rows="10">${esc(s.content || '')}</textarea><span class="hint">空行分段，**双星号**加粗，点「🖼 插入图片」或直接拖图进来</span></div>
     </div>`,
     onOk(){
       const get = k => modalRoot.querySelector(`[data-field="${k}"] input[type=text]`)?.value.trim() || '';
-      const data = { title: get('title') || '未命名', date: get('date'), summary: get('summary'),
+      const data = {
+        title: get('title') || '未命名', date: get('date'), summary: get('summary'),
         keywords: get('keywords'),
-        content: modalRoot.querySelector('[data-field="content"] textarea').value };
+        kind: document.getElementById('st-kind').value || 'setting',
+        chapters: chapters.map(c => ({ id: c.id || uid(), title: c.title || '', content: c.content || '' })),
+        content: modalRoot.querySelector('[data-field="content"] textarea').value
+      };
       if(isNew) list.push({ id: uid(), ...data });
       else Object.assign(s, data);
       save(); renderAll(); toast('已 保 存（' + rl() + '）');
+    }
+  });
+  /* 章节管理：添加 / 编辑 / 排序 / 删除（章节正文用独立弹窗写，支持插图） */
+  const redraw = () => {
+    const box = document.getElementById('ch-list');
+    if(!box) return;
+    box.innerHTML = chapterRows() || '<div class="ch-empty">还没有章节 · 也可以只写下面的单篇正文</div>';
+  };
+  document.getElementById('ch-add').addEventListener('click', () => {
+    openChapterEditor(chapters, -1, redraw);
+  });
+  const clearBtn = document.getElementById('ch-clear');
+  if(clearBtn) clearBtn.addEventListener('click', () => {
+    if(!confirm('清空这个故事的全部章节？（正文内容会一起删除，可用 Ctrl+Z 撤销）')) return;
+    pushHistory();
+    chapters.length = 0;
+    redraw();
+    toast('章节已清空 · 记得点「保存」生效');
+  });
+  document.getElementById('ch-list').addEventListener('click', e => {
+    const row = e.target.closest('.ch-row');
+    if(!row) return;
+    const i = Number(row.dataset.ci);
+    if(e.target.closest('.ch-edit')) openChapterEditor(chapters, i, redraw);
+    else if(e.target.closest('.ch-del')){
+      if(!confirm('删除「' + (chapters[i].title || ('第 ' + (i + 1) + ' 章')) + '」？')) return;
+      chapters.splice(i, 1); redraw(); toast('已删除该章 · 记得点「保存」生效');
+    }
+    else if(e.target.closest('.ch-up') && i > 0){ [chapters[i - 1], chapters[i]] = [chapters[i], chapters[i - 1]]; redraw(); }
+    else if(e.target.closest('.ch-down') && i < chapters.length - 1){ [chapters[i + 1], chapters[i]] = [chapters[i], chapters[i + 1]]; redraw(); }
+  });
+}
+/* 单章编辑（独立弹窗：正文框支持插入图片） */
+function openChapterEditor(chapters, idx, onDone){
+  const isNew = idx < 0;
+  const c = isNew ? { title: '', content: '' } : chapters[idx];
+  showModal({
+    title: (isNew ? '新 增 章 节' : '编 辑 章 节') + '（第 ' + (isNew ? chapters.length + 1 : idx + 1) + ' 章）',
+    wide: true,
+    body: `<div class="form">
+      <div class="field full" data-field="ctitle"><label>章节标题</label><input type="text" value="${esc(c.title || '')}" placeholder="第一章 · 月夜入界"></div>
+      <div class="field full" data-field="ccontent"><label>正文</label><textarea rows="16">${esc(c.content || '')}</textarea><span class="hint">空行分段，**双星号**加粗；可点「🖼 插入图片」或直接拖图进来</span></div>
+    </div>`,
+    onOk(){
+      const title = modalRoot.querySelector('[data-field="ctitle"] input').value.trim();
+      const content = modalRoot.querySelector('[data-field="ccontent"] textarea').value;
+      if(isNew) chapters.push({ id: uid(), title, content });
+      else { chapters[idx].title = title; chapters[idx].content = content; }
+      if(typeof onDone === 'function') onDone();
+      toast('章节已写入 · 记得点「保存」生效');
     }
   });
 }
