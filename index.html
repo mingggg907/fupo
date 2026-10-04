@@ -1688,7 +1688,7 @@ async function saveSnapshot(){
    ============================================================ */
 const audioEl = new Audio();
 audioEl.loop = false;
-audioEl.preload = 'metadata';
+audioEl.preload = 'none';   /* 减压：不预载音频，点了才加载（省流量、省内存） */
 let currentBlobUrl = null;
 let musicReady = false;
 let curTrack = 0;
@@ -3989,7 +3989,13 @@ function jumpToSection(sid, eid){
 document.getElementById('search-open').addEventListener('click', openSearch);
 document.getElementById('search-close').addEventListener('click', closeSearch);
 searchPanel.addEventListener('click', e => { if(e.target === searchPanel) closeSearch(); });
-searchInput.addEventListener('input', e => performSearch(e.target.value));
+let searchTimer = null;
+searchInput.addEventListener('input', e => {
+  /* 减压：输入防抖，避免每敲一个字就全量扫描一遍内容 */
+  const v = e.target.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => performSearch(v), 140);
+});
 searchInput.addEventListener('keydown', e => {
   if(e.key === 'Enter'){ e.preventDefault(); searchResults.querySelector('.result-item')?.click(); }
 });
@@ -4550,12 +4556,23 @@ function maxScrollY(){
   return Math.max(0, (document.documentElement.scrollHeight || 0) - window.innerHeight);
 }
 /* 渲染但保持阅读位置：你在改内容时，正在阅读的人不会被弹回顶部 */
+let pendingRenderWhileHidden = false;
 function renderAllKeepScroll(){
+  /* 减压：标签页在后台时先不重画（省电省 CPU），回到前台再渲染 */
+  if(document.hidden){ pendingRenderWhileHidden = true; return; }
   const y = (typeof window.scrollY === 'number') ? window.scrollY : 0;
   renderAll();
   const put = () => window.scrollTo(0, Math.min(y, maxScrollY()));
   requestAnimationFrame(() => requestAnimationFrame(put));
 }
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && pendingRenderWhileHidden){
+    pendingRenderWhileHidden = false;
+    const y = (typeof window.scrollY === 'number') ? window.scrollY : 0;
+    renderAll();
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, Math.min(y, maxScrollY()))));
+  }
+});
 /* 切回某个界面时，回到上次读到的位置（第一次进入即顶部） */
 function restoreRealmScroll(r){
   const y = Math.min(realmScroll[r] || 0, maxScrollY());
