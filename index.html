@@ -3324,7 +3324,12 @@ function renderGuest(){
     cnt.textContent = rows.length ? ('共 ' + rows.length + ' 条感想') : '';
   }
   const note = document.getElementById('guest-note');
-  if(note) note.innerHTML = (editMode && guestState.pending.length) ? ('待审核 · ' + guestState.pending.length + ' 条') : '';
+  if(note){
+    const bits = [];
+    if(editMode && guestState.pending.length) bits.push('待审核 · ' + guestState.pending.length + ' 条');
+    if(editMode && guestState.pinOk === false) bits.push('置顶功能需在 Supabase 加 pinned 字段');
+    note.innerHTML = bits.join(' ｜ ');
+  }
   try{ applyLabels(); }catch(e){}
 }
 /* 表单区（含"已送出"状态）单独渲染：发送成功、再写一条、登录状态变化时重建 */
