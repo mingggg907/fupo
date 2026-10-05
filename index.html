@@ -7263,6 +7263,29 @@ function askCorpus(){
   }catch(e){}
   return out;
 }
+/* ===== 速查：结果清理与去重 ===== */
+function askClean(t){
+  return String(t || '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')      /* 图片语法 */
+    .replace(/\*\*/g, '')                          /* 粗体星号 */
+    .replace(/^\s*[#>\-\*]+\s*/gm, '')            /* 行首标记 */
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+function askDedupe(hits){
+  var out = [], seen = [];
+  hits.forEach(function(h){
+    var key = askClean(h.text).replace(/\s+/g, '');
+    var head = key.slice(0, 44);
+    var dup = seen.some(function(k){
+      return k.indexOf(head) >= 0 || head.indexOf(k.slice(0, 44)) >= 0 || (key && k.slice(0, 44) === head);
+    });
+    if(dup) return;
+    seen.push(key);
+    out.push(h);
+  });
+  return out;
+}
 function askTokens(q){
   var t = String(q || '').replace(/[？?。，,、！!；;：:\s"'（）()【】\[\]《》·「」]+/g, ' ').trim();
   var toks = [];
@@ -7305,15 +7328,15 @@ async function askSubmit(q){
     }
   }catch(e){}
   if(answer && answer.length > 1){
-    out.innerHTML = '<div class="ask-a">' + esc(answer) + '</div>';
+    out.innerHTML = '<div class="ask-a">' + esc(askClean(answer)) + '</div>';
     return;
   }
   /* 兜底：关键词检索 */
-  var hits = askSearch(q);
+  var hits = askDedupe(askSearch(q));
   var html = '<p class="ask-q">AI 暂不可用，已为你检索站内档案：</p>';
   if(!hits.length) html += '<div class="ask-a">没有找到相关内容。可以换个说法，或到「题跋」里留言问作者。</div>';
   hits.forEach(function(h){
-    html += '<div class="ask-a"><b>' + esc(h.title || '(无题)') + '</b>\n' + esc(String(h.text).replace(/!\[[^\]]*\]\([^)]*\)/g, '').slice(0, 220));
+    html += '<div class="ask-a"><b>' + esc(h.title || '(无题)') + '</b>\n' + esc(askClean(h.text).slice(0, 220));
     html += '<span class="ask-cite">引自：' + esc(h.src) + '</span></div>';
   });
   out.innerHTML = html;
