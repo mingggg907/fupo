@@ -1340,6 +1340,8 @@ body.abyss .ix-arrow{color:var(--gold)}
 }
 /* 门帘自带的那层墨点：所有设备都关掉（避免与过场墨迹重叠） */
 .gate::after{display:none!important}
+/* ===== 墨迹晕染：全部移除（用户要求） ===== */
+#ink-veil,.realm-veil,.gate::after{display:none!important;animation:none!important}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -6967,24 +6969,9 @@ document.addEventListener('click', function(e){
 
 var inkBusy = false;
 function inkTransition(x, y, onCover, onReveal){
-  if(inkBusy) return;                                  /* 忙锁：绝对不重入 */
-  var reduce = false;
-  try{ reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
-  if(reduce){ try{ onCover && onCover(); }catch(e){} try{ onReveal && onReveal(); }catch(e){} return; }
-  inkBusy = true;
-  var v = document.getElementById('ink-veil');
-  if(!v){ v = document.createElement('div'); v.id = 'ink-veil'; v.innerHTML = '<i></i><i></i><i></i>'; document.body.appendChild(v); }
-  v.style.setProperty('--ix', (x || window.innerWidth / 2) + 'px');
-  v.style.setProperty('--iy', (y || window.innerHeight / 2) + 'px');
-  v.classList.remove('out', 'go');
-  void v.offsetWidth;
-  v.classList.add('go');
-  setTimeout(function(){ try{ onCover && onCover(); }catch(e){} }, 560);
-  setTimeout(function(){
-    v.classList.add('out');
-    try{ onReveal && onReveal(); }catch(e){}
-    setTimeout(function(){ v.classList.remove('go', 'out'); inkBusy = false; }, 600);
-  }, 940);
+  /* 晕染过场已按需求移除：直接执行回调，不做任何遮罩动画 */
+  try{ onCover && onCover(); }catch(e){}
+  try{ onReveal && onReveal(); }catch(e){}
 }
 /* ===== 播放方式三键：捕获阶段独立监听（不受其它委托守卫影响） ===== */
 document.addEventListener('click', function(e){
