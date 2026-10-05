@@ -1586,6 +1586,7 @@ a[href="#lexicon"],
     <button class="btn edit-only" data-action="daily">每日寄语</button>
     <button class="btn edit-only" data-action="changelog">更新日志</button>
     <button class="btn edit-only" data-action="copyright">牌记 · 版权与说明</button>
+    <button class="btn edit-only" data-action="ai-notes">AI 私记</button>
     <button class="btn edit-only" data-action="realm-tools">内容工具</button>
     <button class="btn edit-only" data-action="help">使用说明</button>
     <button class="btn edit-only" data-action="sync-code">生成同步码</button>
@@ -4779,11 +4780,6 @@ function openCopyright(){
     body: `<div class="form">
       <div class="field full"><label>声明内容（每行一段）</label>
         <textarea id="cr-text" rows="10" placeholder="${esc(defaultNoticeLines().join('\n'))}">${esc(cur || defaultNoticeLines().join('\n'))}</textarea>
-      <div class="field full" style="margin-top:18px">
-        <label>AI 私记（只喂给速查 · 页面不显示）</label>
-        <textarea id="cr-ai" rows="4" placeholder="写给 AI 的补充设定 / 纠正 / 隐藏信息，例：戮爻是浊日与噬月的主人，二人皆为从属。">${esc((state.meta && state.meta.aiNotes) || '')}</textarea>
-        <span class="hint">这一段访客在任何页面都看不到，但速查回答时会优先参考 ✅</span>
-      </div>
         <span class="hint">显示在页面最末尾；清空并保存则恢复默认措辞</span>
       </div>
     </div>
@@ -4793,12 +4789,7 @@ function openCopyright(){
     </div>`,
   });
   document.getElementById('cr-save').addEventListener('click', () => {
-      /* 全局 AI 私记保存 */
-  (function(){
-    var ta = document.getElementById('cr-ai');
-    if(ta){ state.meta.aiNotes = ta.value || ''; }
-  })();
-const v = document.getElementById('cr-text').value.trim();
+    const v = document.getElementById('cr-text').value.trim();
     state.meta.copyright.text = (v === defaultNoticeLines().join('\n').trim()) ? '' : v;
     _doSave(); closeModal(true); renderAll(); toast('版权声明已保存');
   });
@@ -6976,6 +6967,7 @@ document.addEventListener('click', e => {
   if(a === 'daily'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openDailyNote(); return; }
   if(a === 'changelog'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openChangelog(); return; }
   if(a === 'copyright'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openCopyright(); return; }
+  if(a === 'ai-notes'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openAiNotes(); return; }
   if(a === 'realm-tools'){ if(!editMode){ toast('请先进入编辑'); return; } closeDrawer(); openRealmTools(); return; }
   if(a === 'share'){ closeDrawer(); openShare(); return; }
   if(a === 'sync-code'){ closeDrawer(); openSyncCode(); return; }
@@ -7222,6 +7214,36 @@ function ixEnter(id, fromEl){
   inkTransition(r ? r.left + r.width / 2 : null, r ? r.top + r.height / 2 : null,
     function(){ document.getElementById('index').classList.remove('on'); },
     function(){ focusSection(id); });
+}
+/* ===== AI 私记（独立面板）：只喂给速查，页面不显示 ===== */
+function openAiNotes(){
+  var cur = (state.meta && state.meta.aiNotes) || '';
+  showModal({
+    title: 'AI 私 记',
+    hideFooter: true,
+    wide: true,
+    body: '<div class="reader" style="max-width:680px">'
+      + '<p style="font-size:.8rem;line-height:1.95;color:var(--ink-3);margin:0 0 14px">'
+      + '这里写的内容<strong>访客在任何页面都看不到</strong>，但「速查」回答时会<strong>优先参考</strong>。适合写：人物真实关系、隐藏设定、伏笔、别名，或纠正 AI 的说法。</p>'
+      + '<textarea id="ai-notes-text" rows="10" style="width:100%;font-family:var(--serif);font-size:.86rem;line-height:1.95;'
+      + 'background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:3px;padding:12px 14px;color:var(--ink)">' + esc(cur) + '</textarea>'
+      + '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">'
+      + '<button class="btn" id="ai-notes-save" type="button">保 存</button>'
+      + '<button class="btn ghost" id="ai-notes-cancel" type="button">关 闭</button>'
+      + '</div></div>'
+  });
+  setTimeout(function(){
+    var ta = document.getElementById('ai-notes-text');
+    var sv = document.getElementById('ai-notes-save');
+    var cc = document.getElementById('ai-notes-cancel');
+    if(cc) cc.addEventListener('click', function(){ closeModal(true); });
+    if(sv) sv.addEventListener('click', function(){
+      state.meta.aiNotes = (ta && ta.value) ? ta.value : '';
+      try{ _doSave(); }catch(e){}
+      closeModal(true);
+      toast('AI 私记已保存');
+    });
+  }, 60);
 }
 function openCopyrightPanel(){
   var m = state.meta || {};
