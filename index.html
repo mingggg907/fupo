@@ -7336,7 +7336,11 @@ function askGoto(src){
   var type = parts[0], name = parts[1] || '', entry = parts[2] || '';
   var panel = document.getElementById('ask-panel');
   if(panel){ panel.classList.remove('on'); }
+  var idx0 = document.getElementById('index');            /* 保险：开卷页若还盖着，先收起 */
+  if(idx0) idx0.classList.remove('on');
+  var fb0 = document.getElementById('focus-back'); if(fb0) fb0.classList.remove('show');
   document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
   var target = null;
   try{
     if(type === '名籍'){
