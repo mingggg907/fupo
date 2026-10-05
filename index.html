@@ -2585,6 +2585,7 @@ async function saveSnapshot(){
    ============================================================ */
 const audioEl = new Audio();
 audioEl.loop = false;
+  try{ applyMusicMode(); }catch(e){}
 audioEl.preload = 'none';   /* 减压：不预载音频，点了才加载（省流量、省内存） */
 let currentBlobUrl = null;
 let musicReady = false;
@@ -2686,17 +2687,27 @@ function selectTrack(i, autoplay){
   cfg.cur = i; curTrack = i;
   saveMusicPref();          /* 播放位置只存本机：访客切歌不会产生草稿、也不会写云端 */
   if(autoplay) musicIntent = true;
+  try{ applyMusicMode(); }catch(e){}
   loadMusic().then(() => { if(autoplay) audioEl.play().catch(()=>{}); });
+}
+function applyMusicMode(){
+  try{
+    const mode = (musicCfg() || {}).mode || 'order';
+    if(audioEl) audioEl.loop = (mode === 'loop');
+  }catch(e){}
 }
 function playNext(){
   const list = tracks();
   if(!list.length) return;
-  const mode = (musicCfg() || {}).mode || 'order';   /* 循环单曲 / 顺序 / 随机 */
-  if(mode === 'loop'){ try{ audioEl.currentTime = 0; audioEl.play().catch(()=>{}); }catch(e){} return; }
-  if(mode === 'shuffle' && list.length > 1 && audioEl){
-    let n = curTrack;
-    for(let i = 0; i < 8 && n === curTrack; i++) n = Math.floor(Math.random() * list.length);
-    selectTrack(n, true);
+  const mode = (musicCfg() || {}).mode || 'order';
+  if(mode === 'loop'){                       /* 单曲循环：由 audio.loop 负责，这里兜底重播 */
+    try{ audioEl.currentTime = 0; audioEl.play().catch(function(){}); }catch(e){}
+    return;
+  }
+  if(mode === 'shuffle' && list.length > 1){
+    var n2 = curTrack;
+    for(var i = 0; i < 8 && n2 === curTrack; i++) n2 = Math.floor(Math.random() * list.length);
+    selectTrack(n2, true);
     return;
   }
   selectTrack((curTrack + 1) % list.length, true);
@@ -5346,6 +5357,7 @@ app.addEventListener('click', e => {
     const mode = e.target.closest('[data-music-mode]').dataset.musicMode;
     const cfg = realm === 'abyss' ? (state.meta.abyssMusic = state.meta.abyssMusic || normMusic(null)) : (state.meta.music = state.meta.music || normMusic(null));
     cfg.mode = mode;
+    try{ applyMusicMode(); }catch(e){}
     document.querySelectorAll('[data-music-mode]').forEach(b => b.classList.toggle('on', b.dataset.musicMode === mode));
     try{ _doSave(); }catch(e2){}
     toast(mode === 'loop' ? '已设为单曲循环' : (mode === 'shuffle' ? '已设为随机播放' : '已设为顺序播放'));
