@@ -534,7 +534,8 @@ body.abyss .guest-textarea{background:rgba(255,255,255,.05)}
   .rich-img img{opacity:1!important;filter:sepia(.14)!important;transform:none!important;transition:none!important}
   body.abyss .rich-img img{filter:sepia(.3) contrast(1.08) brightness(.82)!important}
   .rich-img{content-visibility:auto;contain-intrinsic-size:auto 300px}
-  .entry{content-visibility:auto;contain-intrinsic-size:auto 200px}
+  /* 注意：不要给 .entry 加 content-visibility —— 会让刚展开的条目出现"空白一下"，
+     并影响 innerText/查找；只有图片区域值得按需渲染 */
   .world-body{transition-duration:.26s}
   .char-card,.story-item,.lex-item,.tl-item{transition-duration:.16s}
 }
