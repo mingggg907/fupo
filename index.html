@@ -1009,6 +1009,8 @@ a[href]::after{content:""}
 /* 版本号：用于确认设备加载的是不是最新版本 */
 const FUPO_BUILD = '2026-10-05 05:20 (v41 · 防闪屏+审核修复+版本历程)';
 /* 版本历程（点左下角版本号可看） */
+window.FUPO_DEBUG = window.FUPO_DEBUG || false;
+const dlog = (...a) => { try{ if(window.FUPO_DEBUG) console.log(...a); }catch(e){} };
 const FUPO_HISTORY = [
   ['v41','2026-10-05','手机防闪屏（滑动/浮层时暂停背景动画）、感想审核修复、展开卡顿优化、版本历程上线'],
   ['v40','2026-10-05','词典首字索引 + 完整词典独立一屏；感想墙上移并加导航入口'],
@@ -1497,7 +1499,7 @@ async function retryCloudNow(){
 function startCloudPoll(){
   if(sbPollTimer || !sbConfigured()) return;
   sbPollTimer = setInterval(pollCloudOnce, 10000);
-  console.log('cloud sync: 轮询兜底已启用（每 10 秒检查一次）');
+  dlog('cloud sync: 轮询兜底已启用（每 10 秒检查一次）');
 }
 function stopCloudPoll(){ if(sbPollTimer){ clearInterval(sbPollTimer); sbPollTimer = null; } }
 /* 切回这个标签页时立刻检查一次云端，避免「很久没刷新的页面」用旧内容覆盖新内容 */
@@ -1601,7 +1603,7 @@ function subscribeCloud(){
       })
       .subscribe((status, err) => {
         sbStatus = status;
-        console.log('realtime:', status, err || '');
+        dlog('realtime:', status, err || '');
         updateRtState();
         if(status === 'SUBSCRIBED'){ stopCloudPoll(); }
         else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){ startCloudPoll(); }
@@ -3141,7 +3143,7 @@ function lexiconHTML(){
     </div>
     ${(filtered.length > shown.length) ? `<div class="lex-more">
       <button class="btn small" data-act="open-lexicon">查 看 全 部 ${all.length} 条 词 条</button>
-      ${(!lexCat && !lexInitial && !lexQuery && all.length > shown.length) ? `<button class="btn small ghost" id="lex-more-btn" style="margin-left:8px">继续看下面 ${Math.min(LEX_STEP, filtered.length - shown.length)} 条</button>` : (filtered.length > shown.length ? `<button class="btn small ghost" id="lex-more-btn" style="margin-left:8px">载入更多（还有 ${filtered.length - shown.length} 条）</button>` : '')}
+      ${(!lexCat && !lexInitial && !lexQuery && all.length > shown.length) ? `<button class="btn small ghost" data-lex-more="1" style="margin-left:8px">继续看下面 ${Math.min(LEX_STEP, filtered.length - shown.length)} 条</button>` : (filtered.length > shown.length ? `<button class="btn small ghost" id="lex-more-btn" style="margin-left:8px">载入更多（还有 ${filtered.length - shown.length} 条）</button>` : '')}
     </div>` : `<div class="lex-more"><button class="btn small ghost" data-act="open-lexicon">打 开 完 整 词 典</button></div>`}
   </section>`;
 }
@@ -4801,7 +4803,7 @@ app.addEventListener('click', e => {
     renderLexList();
     return;
   }
-  if(e.target.closest && e.target.closest('#lex-more-btn')){ lexLimit += LEX_STEP; renderLexList(); return; }
+  if(e.target.closest && (e.target.closest('#lex-more-btn') || e.target.closest('[data-lex-more]'))){ lexLimit += LEX_STEP; renderLexList(); return; }
   /* 关系图导出 */
   if(e.target.closest && e.target.closest('#graph-export')){ exportRelationGraph(); return; }
   if(e.target.closest && e.target.closest('[data-music-mode]')){
@@ -6353,7 +6355,7 @@ function setRealm(r, origin, keepPos){
     };
     setTimeout(() => trySync(3), 1500);
   }
-  console.log('浮魄 版本：' + (typeof FUPO_BUILD !== 'undefined' ? FUPO_BUILD : '未知') + ' ｜ 数据来源：' + (cache ? '本机缓存' : '默认模板'));
+  dlog('浮魄 版本：' + (typeof FUPO_BUILD !== 'undefined' ? FUPO_BUILD : '未知') + ' ｜ 数据来源：' + (cache ? '本机缓存' : '默认模板'));
 })();
 
 /* 恢复/自动建立登录状态：会话存在即视为已登录（写权限由服务端 RLS 决定） */
