@@ -344,6 +344,32 @@ button, a, [data-act], [data-action], .cf-btn, .lex-ini, .toc-item, input, texta
   .lex-initials,.nav,.modal-body{-webkit-overflow-scrolling:auto!important}
   #fupo-bg-canvas{will-change:auto!important}
 }
+/* ===== OC 珍藏柜（低调小卡） ===== */
+.fav-sec{padding-top:8px;padding-bottom:8px}
+.fav-card{position:relative;border:1px solid var(--line-2);border-radius:3px;padding:18px 20px;background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.05));display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;transition:border-color .3s;margin-top:10px}
+.fav-card:hover{border-color:var(--line)}
+body.abyss .fav-card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
+.fav-label{position:absolute;top:-9px;left:16px;font-family:var(--serif);font-size:.66rem;letter-spacing:.34em;color:var(--gold);background:var(--paper);padding:0 8px;text-indent:.34em}
+body.abyss .fav-label{background:#0a0b0d}
+.fav-imgs{display:flex;gap:10px;flex-wrap:wrap;flex:0 0 auto}
+.fav-img{width:104px;height:104px;border-radius:2px;overflow:hidden;border:1px solid var(--line-2);cursor:zoom-in;background:rgba(0,0,0,.04)}
+.fav-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease-out)}
+.fav-img:hover img{transform:scale(1.06)}
+.fav-body{flex:1;min-width:200px}
+.fav-name{font-family:var(--serif);font-size:1.04rem;letter-spacing:.14em;color:var(--ink);margin:0 0 6px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.fav-link{font-family:var(--serif);font-size:.7rem;letter-spacing:.1em;color:var(--ink-3);background:transparent;border:1px solid var(--line-2);border-radius:99px;padding:2px 10px;cursor:pointer}
+.fav-link:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
+.fav-title{font-family:var(--serif);font-size:.78rem;letter-spacing:.16em;color:var(--gold);margin:0 0 10px}
+.fav-desc{font-family:var(--serif);font-size:.84rem;line-height:2;color:var(--ink-2);word-break:break-word}
+.fav-note{font-family:var(--serif);font-size:.76rem;letter-spacing:.06em;color:var(--ink-3);margin:12px 0 0}
+.fav-say{margin-top:14px;font-family:var(--serif);font-size:.76rem;letter-spacing:.16em;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:2px;padding:6px 16px;cursor:pointer;transition:.25s;touch-action:manipulation}
+.fav-say:hover{color:var(--paper);background:var(--ink);border-color:var(--ink)}
+body.abyss .fav-say:hover{color:var(--ink);background:var(--gold-2,#c9a35c);border-color:transparent}
+@media (max-width:640px){.fav-card{padding:16px 14px;gap:14px}.fav-img{width:76px;height:76px}}
+/* 关系网：手机上不再"吃掉"页面滚动；并支持放大查看 */
+.relation-svg{touch-action:pan-y}
+.relation-full-wrap{overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;border:1px solid var(--line-2);border-radius:3px;padding:8px}
+.relation-full-wrap svg{width:190%;max-width:none;height:auto;touch-action:none}
 .lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:9px 13px;font-family:var(--serif);font-size:.9rem;letter-spacing:.04em;text-align:center}
 body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-input:focus{outline:none;border-color:var(--gold)}
@@ -438,6 +464,11 @@ body.abyss .guest-box{background:linear-gradient(180deg,rgba(255,255,255,.04),rg
 .guest-like.on{color:var(--cinnabar);border-color:var(--cinnabar);opacity:.85}
 .guest-like .gl-heart{font-size:.9rem}
 .guest-more{text-align:center;padding:14px 0 4px}
+.guest-pager{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 0 4px;flex-wrap:wrap}
+.gpage{font-family:var(--serif);font-size:.76rem;letter-spacing:.14em;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:99px;padding:5px 16px;cursor:pointer;transition:.22s;touch-action:manipulation}
+.gpage:hover:not(:disabled){color:var(--cinnabar);border-color:var(--cinnabar)}
+.gpage:disabled{opacity:.35;cursor:default}
+.gp-info{font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;color:var(--ink-3)}
 /* 留言墙：排序 / 表情 / 回复 / 我 */
 .guest-bar{display:flex;gap:8px;justify-content:center;margin:0 0 14px}
 .gbar{font-family:var(--serif);font-size:.74rem;letter-spacing:.14em;padding:4px 14px;border:1px solid var(--line-2);border-radius:99px;background:transparent;color:var(--ink-3);cursor:pointer;transition:.2s;touch-action:manipulation}
@@ -1793,6 +1824,11 @@ function normalize(d){
   /* 版权声明（可自行编辑；留空用默认措辞） */
   if(!d.meta.copyright || typeof d.meta.copyright !== 'object') d.meta.copyright = { text: '' };
   if(typeof d.meta.copyright.text !== 'string') d.meta.copyright.text = '';
+  /* OC 珍藏柜（本命展示：可放图、可留言） */
+  if(!d.meta.fav || typeof d.meta.fav !== 'object') d.meta.fav = { on: false, name: '', title: '', desc: '', note: '', images: [], charId: '' };
+  if(!Array.isArray(d.meta.fav.images)) d.meta.fav.images = [];
+  ['name','title','desc','note','charId'].forEach(k => { if(typeof d.meta.fav[k] !== 'string') d.meta.fav[k] = ''; });
+  if(typeof d.meta.fav.on !== 'boolean') d.meta.fav.on = false;
   /* 访客感想墙 */
   if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true, ownerLabel: '站主', dailyLimit: 3, ownerNames: ['站主', 'minggg'] };
   if(typeof d.meta.guest.on !== 'boolean') d.meta.guest.on = true;
@@ -2939,7 +2975,9 @@ function charactersHTML(){
       ${facets.map(t => `<button class="cf-btn${charFilter === t ? ' on' : ''}" data-char-filter="${esc(t)}">${esc(t)}</button>`).join('')}
     </div>` : ''}
     <div class="char-grid" id="char-grid">${charCardsHTML(list)}</div>
-    ${all.length ? `<div class="relation-wrap"><span class="relation-title">关 系 网</span><div id="relation-graph"></div>
+    ${all.length ? `<div class="relation-wrap"><span class="relation-title">关 系 网</span>
+      <button class="btn small" data-act="graph-full" type="button" style="position:absolute;top:10px;right:12px;z-index:3">放 大 查 看</button>
+      <div id="relation-graph"></div>
       <div style="text-align:center;margin-top:14px"><button class="btn small ghost" type="button" id="graph-export">导 出 关 系 图</button></div>
     </div>` : ''}
   </section>`;
@@ -3258,6 +3296,36 @@ function seedLexicon(){
   toast('已生成 ' + add.length + ' 条词条草稿，点词条即可补写释义');
 }
 /* ============================================================
+   OC 珍藏柜：只放最偏爱的那一位（刻意低调，融在页面里）
+   ============================================================ */
+function favData(){ return (state.meta && state.meta.fav) || {}; }
+function favOn(){
+  const f = favData();
+  return !!f.on && !!(String(f.name || '').trim() || (f.images || []).length);
+}
+function favHTML(){
+  if(!favOn()) return '';
+  const f = favData();
+  const imgs = (f.images || []).filter(Boolean).slice(0, 6);
+  const c = f.charId ? (W().characters || []).find(x => x.id === f.charId) : null;
+  return `<section class="sec fav-sec" id="fav">
+    <div class="fav-card">
+      <div class="fav-label">珍 藏</div>
+      ${editMode ? `<button class="fav-link" id="fav-edit" type="button" style="position:absolute;top:10px;right:12px">编 辑</button>` : ''}
+      ${imgs.length ? `<div class="fav-imgs">
+        ${imgs.map((u, i) => `<div class="fav-img" data-act="fav-img" data-src="${esc(u)}"><img src="${esc(u)}" alt="${esc(f.name || '珍藏')}" loading="lazy" decoding="async"></div>`).join('')}
+      </div>` : ''}
+      <div class="fav-body">
+        ${f.name ? `<h3 class="fav-name">${esc(f.name)}${c ? `<button class="fav-link" data-act="fav-char" data-id="${esc(c.id)}" type="button">查看角色页</button>` : ''}</h3>` : ''}
+        ${f.title ? `<p class="fav-title">${esc(f.title)}</p>` : ''}
+        ${f.desc ? `<div class="fav-desc">${linkTerms(fmt(f.desc))}</div>` : ''}
+        ${f.note ? `<p class="fav-note">${esc(f.note)}</p>` : ''}
+        <button class="fav-say" id="fav-say" type="button">为 TA 留 一 句</button>
+      </div>
+    </div>
+  </section>`;
+}
+/* ============================================================
    访客感想墙（Supabase 表 fupo_guest；未建表则自动隐藏）
    ============================================================ */
 const GUEST_TABLE = 'fupo_guest';
@@ -3429,8 +3497,9 @@ function guestListHTML(){
   }
   const liked = likedSet();
   const mine = myGuestIds();
-  const shown = rows.slice(0, guestState.limit);
-  const rest = rows.length - shown.length;
+  const totalPages = Math.max(1, Math.ceil(rows.length / GUEST_PAGE));
+  const page = Math.min(totalPages, Math.max(1, Math.ceil(guestState.limit / GUEST_PAGE)));
+  const shown = rows.slice((page - 1) * GUEST_PAGE, page * GUEST_PAGE);
   let pinnedHeaderDrawn = false;
   const body = shown.map(r => {
     const id = String(r.id);
@@ -3466,7 +3535,11 @@ function guestListHTML(){
       <button class="gbar${guestSort === 'new' ? ' on' : ''}" data-guest-sort="new" type="button">最 新</button>
       <button class="gbar${guestSort === 'hot' ? ' on' : ''}" data-guest-sort="hot" type="button">最 热</button>
     </div>` + body
-    + (rest > 0 ? `<div class="guest-more"><button class="btn small ghost" id="guest-more-btn" type="button">看更早的留言 · 还有 ${rest} 条</button></div>` : '');
+    + (totalPages > 1 ? `<div class="guest-pager">
+        <button class="gpage" data-guest-page="${page - 1}" type="button" ${page <= 1 ? 'disabled' : ''}>上 一 页</button>
+        <span class="gp-info">共 ${totalPages} 页 · 第 ${page} 页</span>
+        <button class="gpage" data-guest-page="${page + 1}" type="button" ${page >= totalPages ? 'disabled' : ''}>下 一 页</button>
+      </div>` : '');
 }
 function guestHTML(){
   if(!guestOn()) return '';
@@ -4065,7 +4138,7 @@ function renderAll(){
     seal.style.background = '';
   }
   const inpSnap = captureInputs();
-  app.innerHTML = heroHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + guestHTML() + storiesHTML() + lexiconHTML() + changelogHTML() + noticeHTML();
+  app.innerHTML = heroHTML() + favHTML() + dailyNoteHTML() + sectionsHTML() + charactersHTML() + timelineHTML() + guestHTML() + storiesHTML() + lexiconHTML() + changelogHTML() + noticeHTML();
   restoreInputs(inpSnap);
   document.body.classList.toggle('editing', editMode);
   document.querySelectorAll('[data-action="edit"]').forEach(b => {
@@ -4666,6 +4739,14 @@ app.addEventListener('click', e => {
     return;
   }
   if(e.target.closest && e.target.closest('#guest-more-btn')){ guestState.limit += GUEST_PAGE; renderGuest(); return; }
+  const gp = e.target.closest && e.target.closest('[data-guest-page]');
+  if(gp){
+    const target = Number(gp.dataset.guestPage) || 1;
+    guestState.limit = Math.max(GUEST_PAGE, target * GUEST_PAGE);
+    renderGuest();
+    try{ const box = document.getElementById('guest-list-wrap'); if(box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }catch(e2){}
+    return;
+  }
   const ga = e.target.closest && e.target.closest('[data-guest-approve]');
   if(ga){ modGuest(ga.dataset.guestApprove, true); return; }
   const ld = e.target.closest && e.target.closest('[data-guest-del]');
@@ -4703,6 +4784,30 @@ app.addEventListener('click', e => {
   if(e.target.closest && e.target.closest('#lex-more-btn')){ lexLimit += LEX_STEP; renderLexList(); return; }
   /* 关系图导出 */
   if(e.target.closest && e.target.closest('#graph-export')){ exportRelationGraph(); return; }
+  const gfb = e.target.closest && e.target.closest('[data-act="graph-full"]');
+  if(gfb){ openGraphFull(); return; }
+  const fch = e.target.closest && e.target.closest('[data-act="fav-char"]');
+  if(fch){ const cid = fch.dataset.id; setTimeout(() => { openCharacter(cid); }, 60); return; }
+  const fim = e.target.closest && e.target.closest('[data-act="fav-img"]');
+  if(fim){ try{ openLightbox(fim.dataset.src); }catch(e2){} return; }
+  if(e.target.closest && e.target.closest('#fav-edit')){ try{ openRealmTools(); }catch(e2){} toast('在「内容工具」里编辑珍藏柜'); return; }
+  if(e.target.closest && e.target.closest('#fav-say')){
+    const f = favData();
+    const g = document.getElementById('guest');
+    if(g){
+      g.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        const t = document.getElementById('guest-text');
+        if(t){
+          if(!t.value.trim()) t.value = '给' + (f.name || 'TA') + '：';
+          t.focus({ preventScroll: true });
+        }
+      }, 600);
+    }else{
+      toast('留言区还没开启');
+    }
+    return;
+  }
   /* 妖众筛选：只重画角色列表，不整页刷新（更省、更不打断阅读） */
   const cf = e.target.closest('[data-char-filter]');
   if(cf){
@@ -4743,7 +4848,8 @@ app.addEventListener('click', e => {
 });
 
 document.getElementById('abyss-exit').addEventListener('click', () => {
-  setRealm('surface', { x: window.innerWidth / 2, y: 40 });
+  /* 退出上古：保持当前阅读位置不动，方便与表层同一处做对比 */
+  setRealm('surface', { x: window.innerWidth / 2, y: 40 }, true);
 });
 
 /* ============================================================
@@ -6123,9 +6229,10 @@ function restoreRealmScroll(r){
   requestAnimationFrame(() => requestAnimationFrame(put));
 }
 
-function setRealm(r, origin){
+function setRealm(r, origin, keepPos){
   if(realm === r) return;
-  try{ realmScroll[realm] = window.scrollY || 0; }catch(e){}   /* 记住离开时的位置 */
+  const fromY = window.scrollY || 0;
+  try{ realmScroll[realm] = fromY; }catch(e){}   /* 记住离开时的位置 */
   const veil = document.getElementById('realm-veil');
   if(veil && origin){
     veil.style.setProperty('--rx', origin.x + 'px');
@@ -6139,7 +6246,13 @@ function setRealm(r, origin){
   realm = r;
   document.body.classList.toggle('abyss', r === 'abyss');
   renderAll();
-  restoreRealmScroll(r);   /* 回到该界面上次读到的位置（首次进入 = 顶部） */
+  if(keepPos){
+    /* 保持位置：不做平滑滚动，直接落到离开前的高度 */
+    try{ window.scrollTo(0, fromY); }catch(e){}
+    try{ realmScroll[r] = fromY; }catch(e){}
+  }else{
+    restoreRealmScroll(r);   /* 回到该界面上次读到的位置（首次进入 = 顶部） */
+  }
   loadMusic();
   toast(r === 'abyss' ? '已 入 上 古 · 内容与音乐均为独立栏目' : '已 归 表 层');
 }
@@ -6524,6 +6637,20 @@ function openRealmTools(){
         <span class="hint">复制过去的条目会重新分配 ID，不会与原内容冲突（妖众之间的关系会自动对应）。</span>
       </div>
       <div class="field full" style="margin-top:8px;padding-top:16px;border-top:1px solid var(--line-2)">
+        <label>OC 珍藏柜</label>
+        <label class="field-check" style="padding:0"><input type="checkbox" id="rt-fav" ${(state.meta.fav && state.meta.fav.on) ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.12em">显示珍藏柜（放在首页开头，低调小卡）</span></label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <input type="text" id="rt-fav-name" placeholder="名字" value="${esc(((state.meta.fav||{}).name)||'')}" style="flex:1;min-width:140px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:6px 9px;font-family:var(--serif)">
+          <input type="text" id="rt-fav-title" placeholder="一句话（如：本命 · 白狐）" value="${esc(((state.meta.fav||{}).title)||'')}" style="flex:2;min-width:180px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:6px 9px;font-family:var(--serif)">
+        </div>
+        <textarea id="rt-fav-desc" rows="3" placeholder="想说的话 / 介绍（支持 **加粗**，会自动关联词典词条与角色名）" style="width:100%;margin-top:10px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:9px;font-family:var(--serif);font-size:.88rem;line-height:1.9;resize:vertical">${esc(((state.meta.fav||{}).desc)||'')}</textarea>
+        <textarea id="rt-fav-imgs" rows="3" placeholder="图片链接，每行一个（先在别处上传好再粘链接，或直接粘贴图片会自动上云）" style="width:100%;margin-top:8px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:9px;font-family:var(--sans);font-size:.78rem;line-height:1.8;resize:vertical">${esc((((state.meta.fav||{}).images)||[]).join('\n'))}</textarea>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+          <input type="text" id="rt-fav-note" placeholder="小注（可留空）" value="${esc(((state.meta.fav||{}).note)||'')}" style="flex:1;min-width:160px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:6px 9px;font-family:var(--serif)">
+          <button class="btn small" id="rt-fav-save" type="button">保 存 珍 藏 柜</button>
+        </div>
+      </div>
+      <div class="field full" style="margin-top:8px;padding-top:16px;border-top:1px solid var(--line-2)">
         <label>访客感想墙</label>
         <label class="field-check" style="padding:0"><input type="checkbox" id="rt-guest" ${(state.meta.guest && state.meta.guest.on) ? 'checked' : ''}> <span style="font-family:var(--serif);font-size:.85rem;letter-spacing:.12em">开启（访客可留言，需你审核后才会公开）</span></label>
         <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap">
@@ -6569,6 +6696,21 @@ function openRealmTools(){
   if(gr) gr.addEventListener('click', async () => { await loadGuest(true); toast('已重新载入留言'); });
   const gm = document.getElementById('rt-guest-mark');
   if(gm) gm.addEventListener('click', () => { markOldOwnerMessages(); });
+  const fs2 = document.getElementById('rt-fav-save');
+  if(fs2) fs2.addEventListener('click', () => {
+    const g = id => (document.getElementById(id) || {}).value || '';
+    state.meta.fav = {
+      on: !!(document.getElementById('rt-fav') || {}).checked,
+      name: g('rt-fav-name').trim(),
+      title: g('rt-fav-title').trim(),
+      desc: g('rt-fav-desc').trim(),
+      note: g('rt-fav-note').trim(),
+      images: g('rt-fav-imgs').split(/\s*\n\s*/).map(s => s.trim()).filter(Boolean),
+      charId: (state.meta.fav || {}).charId || ''
+    };
+    _doSave(); renderAll();
+    toast(state.meta.fav.on ? '珍藏柜已保存' : '珍藏柜已隐藏');
+  });
   const src = () => isAb ? state.worlds.surface : state.worlds.abyss;
   const dst = () => isAb ? state.worlds.abyss : state.worlds.surface;
 
@@ -6892,8 +7034,17 @@ function updateTocActive(){
 }
 
 /* 关系图导出为图片 */
-async function exportRelationGraph(){
-  const svg = document.querySelector('#relation-graph svg');
+/* 关系网放大查看（手机上小字看不清；这里可平移查看） */
+function openGraphFull(){
+  const src = document.querySelector('#relation-graph svg');
+  if(!src){ toast('还没有关系数据'); return; }
+  showModal({
+    title: '关 系 网', hideFooter: true, wide: true,
+    body: `<div class="relation-full-wrap">${src.outerHTML}</div>
+      <p class="hint" style="font-family:var(--serif);font-size:.76rem;letter-spacing:.1em;color:var(--ink-3);text-align:center;margin-top:10px">可用手指拖动查看</p>`
+  });
+}
+async function exportRelationGraph(){  const svg = document.querySelector('#relation-graph svg');
   if(!svg){ toast('暂无可导出的关系图'); return; }
   try{
     showProgress(null, '正在生成关系图…');
