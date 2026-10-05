@@ -1123,6 +1123,50 @@ body.abyss .gate-brand{color:var(--ink)}
   .gate-logo{width:400px}
   .gate-mount{height:38vh}
 }
+/* ===== 墨水晕染过场 ===== */
+#ink-veil{position:fixed;inset:0;z-index:900;pointer-events:none;opacity:0;overflow:hidden}
+#ink-veil.go{opacity:1}
+#ink-veil i{position:absolute;left:var(--ix,50%);top:var(--iy,50%);width:120vmax;height:120vmax;
+  margin:-60vmax 0 0 -60vmax;border-radius:48% 52% 46% 54%/52% 48% 52% 48%;transform:translate(0,0) scale(.02);
+  background:radial-gradient(closest-side,rgba(24,26,24,.96),rgba(24,26,24,.9) 62%,rgba(24,26,24,0) 86%);
+  filter:blur(14px)}
+#ink-veil i:nth-child(2){background:radial-gradient(closest-side,rgba(52,58,52,.8),rgba(52,58,52,0) 78%);
+  border-radius:56% 44% 58% 42%/44% 56% 44% 56%;filter:blur(26px)}
+#ink-veil i:nth-child(3){background:radial-gradient(closest-side,rgba(120,104,74,.42),rgba(120,104,74,0) 72%);
+  border-radius:62% 38% 54% 46%/48% 52% 46% 54%;filter:blur(40px)}
+#ink-veil.go i{animation:inkBleed 1s cubic-bezier(.22,.61,.36,1) forwards}
+#ink-veil.go i:nth-child(2){animation-duration:1.15s;animation-delay:.06s}
+#ink-veil.go i:nth-child(3){animation-duration:1.3s;animation-delay:.12s}
+@keyframes inkBleed{0%{transform:translate(0,0) scale(.02);opacity:.95}60%{opacity:1}100%{transform:translate(0,0) scale(1);opacity:1}}
+#ink-veil.out i{animation:inkClear .55s ease-in forwards}
+@keyframes inkClear{to{opacity:0;transform:translate(0,0) scale(1.08)}}
+@media (prefers-reduced-motion: reduce){#ink-veil{display:none}}
+/* ===== 开卷索引 ===== */
+#index{position:fixed;inset:0;z-index:850;display:none;background:var(--paper);overflow-y:auto}
+#index.on{display:block}
+.ix-wrap{max-width:1080px;margin:0 auto;padding:7vh 20px 10vh;min-height:100%}
+.ix-head{text-align:center;margin-bottom:5vh}
+.ix-kicker{font-family:var(--serif);font-size:.74rem;letter-spacing:.5em;text-indent:.5em;color:var(--gold);margin:0 0 10px}
+.ix-title{font-family:var(--serif);font-size:clamp(1.5rem,5vw,2.1rem);letter-spacing:.4em;text-indent:.4em;color:var(--ink);margin:0}
+.ix-rule{width:72px;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.ix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.ix-card{position:relative;text-align:left;padding:22px 20px;border:1px solid var(--line-2);border-radius:5px;
+  background:rgba(255,255,255,.5);cursor:pointer;transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .35s;
+  font-family:var(--serif);touch-action:manipulation}
+body.abyss .ix-card{background:rgba(255,255,255,.035)}
+.ix-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(31,36,32,.09);border-color:var(--line)}
+.ix-card .ix-glyph{position:absolute;right:16px;top:14px;font-size:2.3rem;color:var(--gold);opacity:.16;line-height:1}
+.ix-card .ix-label{font-size:1.12rem;letter-spacing:.3em;color:var(--ink);display:block}
+.ix-card .ix-sub{display:block;margin-top:8px;font-size:.76rem;letter-spacing:.14em;color:var(--ink-3);line-height:1.9}
+.ix-foot{text-align:center;margin-top:6vh;font-family:var(--serif);font-size:.74rem;letter-spacing:.3em;color:var(--ink-3)}
+@media (max-width:820px){
+  .ix-wrap{padding:5vh 16px 8vh}
+  .ix-grid{grid-template-columns:1fr 1fr;gap:11px}
+  .ix-card{padding:17px 14px}
+  .ix-card .ix-glyph{font-size:1.8rem;right:10px;top:10px}
+  .ix-card .ix-label{font-size:1rem;letter-spacing:.22em}
+  .ix-card .ix-sub{font-size:.7rem;letter-spacing:.1em}
+}
 </style>
 </head>
 <body>
@@ -6506,6 +6550,7 @@ function renderGate(){
   if(g.enabled === false){
     gate.classList.add('hide');
     document.body.style.overflow = '';
+    setTimeout(function(){ try{ openIndex(); }catch(e){} }, 420);
     setTimeout(() => { if(gate.parentNode) gate.remove(); }, 400);
     const tryPlayOnce = () => {
       musicIntent = true;
@@ -6633,6 +6678,94 @@ function setRealm(r, origin, keepPos){
   loadMusic();
   toast(r === 'abyss' ? '已 入 上 古 · 内容与音乐均为独立栏目' : '已 归 表 层');
 }
+
+/* ============ 墨水晕染过场 + 开卷索引 ============ */
+function inkTransition(x, y, onCover, onReveal){
+  let reduce = false;
+  try{ reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  if(reduce){ try{ onCover && onCover(); }catch(e){} try{ onReveal && onReveal(); }catch(e){} return; }
+  let v = document.getElementById('ink-veil');
+  if(!v){
+    v = document.createElement('div');
+    v.id = 'ink-veil';
+    v.innerHTML = '<i></i><i></i><i></i>';
+    document.body.appendChild(v);
+  }
+  v.style.setProperty('--ix', (x || window.innerWidth / 2) + 'px');
+  v.style.setProperty('--iy', (y || window.innerHeight / 2) + 'px');
+  v.classList.remove('out', 'go');
+  void v.offsetWidth;
+  v.classList.add('go');
+  setTimeout(function(){ try{ onCover && onCover(); }catch(e){} }, 540);
+  setTimeout(function(){
+    v.classList.add('out');
+    try{ onReveal && onReveal(); }catch(e){}
+    setTimeout(function(){ v.classList.remove('go', 'out'); }, 560);
+  }, 900);
+}
+var INDEX_ITEMS = [
+  { id:'world',    glyph:'卷', label:'卷',   sub:'世界观 · 地理 · 规则' },
+  { id:'chars',    glyph:'籍', label:'名籍', sub:'人物角色与关系' },
+  { id:'timeline', glyph:'年', label:'年表', sub:'事件与时间线' },
+  { id:'stories',  glyph:'志', label:'志异', sub:'已成篇的故事' },
+  { id:'lexicon',  glyph:'释', label:'释名', sub:'专有名词速查' },
+  { id:'guest',    glyph:'跋', label:'题跋', sub:'留言与批注' }
+];
+function indexAlive(){
+  return INDEX_ITEMS.filter(function(it){
+    if(it.id === 'world') return !!document.querySelector('.world-item');
+    return !!document.getElementById(it.id);
+  });
+}
+function openIndex(fromEl){
+  let box = document.getElementById('index');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'index';
+    document.body.appendChild(box);
+  }
+  const items = indexAlive();
+  let html = '<div class="ix-wrap"><div class="ix-head">' +
+    '<p class="ix-kicker">开 卷</p>' +
+    '<h1 class="ix-title">' + esc((state.meta && (realm === 'abyss' ? (state.meta.abyssTitle || state.meta.title) : state.meta.title)) || '浮魄') + '</h1>' +
+    '<div class="ix-rule"></div></div><div class="ix-grid">';
+  items.forEach(function(it){
+    html += '<button class="ix-card" data-ix="' + it.id + '" type="button">' +
+      '<span class="ix-glyph">' + it.glyph + '</span>' +
+      '<span class="ix-label">' + it.label + '</span>' +
+      '<span class="ix-sub">' + it.sub + '</span></button>';
+  });
+  html += '</div><div class="ix-foot">' + esc((state.meta && state.meta.subtitle) || '') + '</div></div>';
+  box.innerHTML = html;
+  const reveal = function(){ box.classList.add('on'); document.body.style.overflow = 'hidden'; };
+  if(fromEl){
+    const r = fromEl.getBoundingClientRect();
+    inkTransition(r.left + r.width / 2, r.top + r.height / 2, null, reveal);
+  }else{
+    reveal();
+  }
+}
+function closeIndex(){
+  const box = document.getElementById('index');
+  if(!box) return;
+  document.body.style.overflow = '';
+  box.classList.remove('on');
+}
+function goIndexTo(id, fromEl){
+  const r = fromEl ? fromEl.getBoundingClientRect() : null;
+  inkTransition(r ? r.left + r.width / 2 : null, r ? r.top + r.height / 2 : null,
+    function(){ closeIndex(); },
+    function(){
+      const t = (id === 'world') ? document.querySelector('.world-item') : document.getElementById(id);
+      if(t){ try{ t.scrollIntoView({ behavior: 'auto', block: 'start' }); window.scrollBy(0, -70); }catch(e){} }
+    });
+}
+document.addEventListener('click', function(e){
+  const card = e.target.closest && e.target.closest('[data-ix]');
+  if(card){ goIndexTo(card.dataset.ix, card); return; }
+  if(e.target.closest && e.target.closest('#index-close')){ closeIndex(); return; }
+  if(e.target.closest && e.target.closest('#brand-open') ){ openIndex(e.target.closest('#brand-open')); return; }
+}, true);
 
 /* ============================================================
    启动
