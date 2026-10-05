@@ -1342,49 +1342,6 @@ body.abyss .ix-arrow{color:var(--gold)}
 .gate::after{display:none!important}
 /* ===== 墨迹晕染：全部移除（用户要求） ===== */
 #ink-veil,.realm-veil,.gate::after{display:none!important;animation:none!important}
-/* ===== 开卷页：底图 + 六条热区 ===== */
-#index{position:fixed;inset:0;z-index:850;display:none;background:#0b0c0d;overflow:hidden}
-#index.on{display:flex;align-items:center;justify-content:center}
-.ix-stage{position:relative;width:min(100vw,calc(100vh * 0.5511));height:min(calc(100vw / 0.5511),100vh);
-  background:url("https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-kaijuan-2-bg.jpg") center/cover no-repeat;
-  animation:ixStage .9s var(--ease-out) both}
-@keyframes ixStage{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:none}}
-.ix-hit{position:absolute;display:flex;align-items:center;gap:.5em;border:0;background:transparent;
-  font-family:var(--serif);cursor:pointer;padding:0 .6em;letter-spacing:.3em;text-indent:.3em;
-  white-space:nowrap;overflow:hidden;touch-action:manipulation;transition:opacity .3s var(--ease),transform .3s var(--ease)}
-.ix-hit.dark{color:#f4f1e8}
-.ix-hit.light{color:#1b1f1c}
-.ix-hit .ix-rdot{width:.5em;height:.5em;border-radius:50%;background:#c0392b;flex:none;box-shadow:0 0 0 .12em rgba(192,57,43,.25)}
-.ix-hit .ix-txt{font-size:clamp(.72rem,3.4vw,1.02rem)}
-.ix-hit .ix-rmark{font-size:.62em;opacity:0;margin-left:.5em;transform:translateX(-4px);transition:.3s var(--ease)}
-.ix-hit.sel .ix-rmark{opacity:.95;transform:none}
-.ix-hit:active{transform:scale(.985);opacity:.9}
-/* 入场字幕 & 选项名 覆盖层 */
-.ix-veil-line{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5}
-.ix-veil-line span{font-family:var(--serif);font-size:clamp(1.05rem,5vw,1.7rem);letter-spacing:.42em;text-indent:.42em;
-  color:#f6f3ea;text-shadow:0 2px 18px rgba(0,0,0,.55);opacity:0;transition:opacity .28s var(--ease)}
-.ix-veil-line.show span{opacity:1}
-.ix-name-line span{font-size:clamp(1.3rem,6.4vw,2.2rem);letter-spacing:.5em;text-indent:.5em}
-.ix-skip{margin-top:1.2em;font-size:.6em;letter-spacing:.3em;opacity:.55}
-.ix-copy-panel{position:absolute;left:0;right:0;bottom:0;z-index:8;max-height:70%;overflow-y:auto;
-  background:linear-gradient(180deg,rgba(10,11,12,.72),rgba(10,11,12,.94));backdrop-filter:blur(4px);
-  padding:22px 20px 26px;color:#ece7dc;font-family:var(--serif);font-size:.8rem;line-height:2.05;letter-spacing:.04em;
-  transform:translateY(100%);transition:transform .45s var(--ease-out)}
-.ix-copy-panel.show{transform:none}
-.ix-copy-panel h3{margin:0 0 12px;font-size:.86rem;letter-spacing:.4em;color:#c9a35c;font-weight:400}
-.ix-copy-panel p{margin:0 0 10px;white-space:pre-wrap}
-.ix-copy-close{position:absolute;right:14px;top:12px;background:transparent;border:1px solid rgba(236,231,220,.35);
-  color:#ece7dc;border-radius:99px;font-family:var(--serif);font-size:.7rem;letter-spacing:.2em;padding:4px 12px;cursor:pointer}
-@media (max-width:820px){.ix-copy-panel{font-size:.74rem;padding:18px 16px 22px}}
-@media (prefers-reduced-motion: reduce){.ix-stage{animation:none}.ix-veil-line span{transition:none}}
-/* ===== 文字平滑移动（替代水墨过场） ===== */
-.tchar{display:inline-block;opacity:0;transform:translateY(.55em) translateZ(0);will-change:transform,opacity;
-  animation:tRise .52s cubic-bezier(.16,1,.3,1) forwards}
-@keyframes tRise{to{opacity:1;transform:none}}
-.tline-out .tchar{animation:tFall .32s ease-in forwards}
-@keyframes tFall{to{opacity:0;transform:translateY(-.4em)}}
-.sec-head h2.t-rise{animation:tRise .6s var(--ease-out) both}
-@media (prefers-reduced-motion: reduce){.tchar{animation:none;opacity:1;transform:none}}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -6930,166 +6887,87 @@ function setRealm(r, origin, keepPos){
 }
 
 /* ============ 墨水晕染过场 + 开卷索引 ============ */
-/* ===== 文字平滑移动工具（逐字上浮渐显 / 逐字下落淡出） ===== */
-function textRise(el, stagger){
-  if(!el) return;
-  var txt = el.getAttribute('data-raw') || el.textContent || '';
-  el.setAttribute('data-raw', txt);
-  el.classList.remove('tline-out');
-  el.innerHTML = '';
-  var step = stagger || 0.035;
-  for(var i = 0; i < txt.length; i++){
-    var ch = txt.charAt(i);
-    var sp = document.createElement('span');
-    sp.className = 'tchar';
-    sp.style.animationDelay = (i * step).toFixed(3) + 's';
-    sp.textContent = ch === ' ' ? '\u00a0' : ch;
-    el.appendChild(sp);
-  }
-}
-function textFall(el, cb){
-  if(!el){ cb && cb(); return; }
-  var chars = el.querySelectorAll('.tchar');
-  if(!chars.length){ cb && cb(); return; }
-  el.classList.add('tline-out');
-  var maxDelay = 0;
-  chars.forEach(function(c, i){
-    var d = i * 0.018;
-    c.style.animationDelay = d.toFixed(3) + 's';
-    if(d > maxDelay) maxDelay = d;
-  });
-  setTimeout(function(){ cb && cb(); }, 340 + maxDelay * 1000);
-}
-/* ============ 开卷页 v4：底图 + 六条热区 + 入场动画 ============ */
-var IX_BARS = [
-  { key:'copy',    top:21.58, h:6.20, left:48.06, w:33.31, dark:true  },
-  { key:'world',   top:36.03, h:6.20, left:52.37, w:33.31, dark:false },
-  { key:'chars',   top:47.59, h:6.56, left:35.21, w:34.55, dark:true  },
-  { key:'timeline',top:58.82, h:6.20, left:16.22, w:33.31, dark:false },
-  { key:'lexicon', top:72.95, h:6.56, left:24.18, w:34.55, dark:true  },
-  { key:'guest',   top:88.00, h:6.20, left:14.24, w:33.31, dark:false }
+/* ============ 开卷索引 v2 ============ */
+var INDEX_ITEMS = [
+  { id:'world',    key:'worldSurface', label:'卷',   sub:'世界观 · 地理 · 规则' },
+  { id:'chars',    key:'chars',        label:'名籍', sub:'人物角色与关系' },
+  { id:'timeline', key:'timeline',     label:'年表', sub:'事件与时间线' },
+  { id:'stories',  key:'stories',      label:'志异', sub:'已成篇的故事' },
+  { id:'lexicon',  key:'lexicon',      label:'释名', sub:'专有名词速查' },
+  { id:'guest',    key:'guest',        label:'题跋', sub:'留言与批注' }
 ];
-var ixIntroDone = false, ixBusy2 = false;
-function ixLabel(key){
-  if(key === 'copy') return '版 权';
-  if(key === 'world') return LBL('worldSurface', '卷');
-  if(key === 'chars') return LBL('chars', '名籍');
-  if(key === 'timeline') return LBL('timeline', '年表');
-  if(key === 'lexicon') return LBL('lexicon', '释名');
-  if(key === 'guest') return LBL('guest', '题跋');
-  return key;
-}
-function ixAlive(key){
-  if(key === 'copy') return true;
-  if(key === 'world') return !!document.querySelector('.world-item');
-  return !!document.getElementById(key);
-}
-function openIndex(){
-  var box = document.getElementById('index');
-  if(!box){ box = document.createElement('div'); box.id = 'index'; document.body.appendChild(box); }
-  var html = '<div class="ix-stage" id="ix-stage">';
-  IX_BARS.forEach(function(b){
-    if(!ixAlive(b.key)) return;
-    html += '<button class="ix-hit ' + (b.dark ? 'dark' : 'light') + '" data-ixk="' + b.key + '" type="button"'
-      + ' style="top:' + b.top + '%;height:' + b.h + '%;left:' + b.left + '%;width:' + b.w + '%">'
-      + '<span class="ix-rdot"></span><span class="ix-txt">' + esc(ixLabel(b.key)) + '</span>'
-      + '<span class="ix-rmark">进 入</span></button>';
+function indexAlive(){
+  return INDEX_ITEMS.filter(function(it){
+    if(it.id === 'world') return !!document.querySelector('.world-item');
+    return !!document.getElementById(it.id);
   });
-  html += '<div class="ix-veil-line" id="ix-intro"><span>人间有非常之地<em class="ix-skip">轻触跳过</em></span></div>';
-  html += '<div class="ix-veil-line ix-name-line" id="ix-name"><span></span></div>';
-  html += '<div class="ix-copy-panel" id="ix-copy"><button class="ix-copy-close" type="button">关 闭</button><h3>版 权 与 说 明</h3><div id="ix-copy-body"></div></div>';
-  html += '</div>';
-  box.innerHTML = html;
-  box.classList.add('on');
-  document.body.style.overflow = 'hidden';
-  var fb = document.getElementById('focus-back'); if(fb) fb.classList.add('show');
-  /* 入场字幕：只播一次 */
-  if(!ixIntroDone){
-    var intro = document.getElementById('ix-intro');
-    if(intro){
-      setTimeout(function(){ intro.classList.add('show'); try{ textRise(intro.querySelector('span'), 0.05); }catch(e){} }, 260);
-      setTimeout(function(){ intro.classList.remove('show'); ixIntroDone = true; }, 2100);
-    }
-  }
 }
-function ixClose(){
+
+var ixSel = '';
+function ixEnter(id, fromEl){
+  var el = fromEl || document.querySelector('.ix-row[data-ix="' + id + '"]');
+  var r = el ? el.getBoundingClientRect() : null;
+  inkTransition(r ? r.left + r.width / 2 : null, r ? r.top + r.height / 2 : null,
+    function(){ document.getElementById('index').classList.remove('on'); },
+    function(){ focusSection(id); });
+}
+function focusSection(id){
+  var target = (id === 'world') ? document.querySelector('.world-item') : document.getElementById(id);
+  if(!target){ toast('这个分区还没有内容'); return; }
   var box = document.getElementById('index');
   if(box) box.classList.remove('on');
-  var fb = document.getElementById('focus-back'); if(fb) fb.classList.remove('show');
+  var fb2=document.getElementById('focus-back'); if(fb2) fb2.classList.remove('show');
   document.body.style.overflow = '';
-  var cp = document.getElementById('ix-copy'); if(cp) cp.classList.remove('show');
+  document.body.classList.remove('focusing');
+  document.querySelectorAll('.sec').forEach(function(s2){ s2.classList.remove('sec-focus'); });
+  setTimeout(function(){
+    var y = target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 78;
+    window.scrollTo(0, Math.max(0, y));
+  }, 60);
 }
-function ixEnterKey(key){
-  if(ixBusy2) return;
-  ixBusy2 = true;
-  var intro = document.getElementById('ix-intro');
-  var nameLine = document.getElementById('ix-name');
-  var go = function(){
-    /* 选项名渐隐渐显（0.n s） */
-    if(nameLine){
-      var sp = nameLine.querySelector('span');
-      sp.textContent = key === 'copy' ? '版 权 与 说 明' : ixLabel(key);
-      nameLine.classList.add('show');
-      try{ textRise(sp, 0.045); }catch(e){}
-    }
-    setTimeout(function(){
-      if(nameLine) nameLine.classList.remove('show');
-      ixBusy2 = false;
-      if(key === 'copy'){ ixShowCopy(); return; }
-      focusSection(key);
-      setTimeout(function(){ ixClose(); }, 40);
-    }, 620);
-  };
-  if(!ixIntroDone && intro){
-    intro.classList.add('show');
-    ixIntroDone = true;
-    setTimeout(go, 900);                    /* 快速点击即跳过等待 */
-  }else{
-    go();
-  }
+function exitFocus(){
+  document.body.classList.remove('focusing');
+  document.querySelectorAll('.sec').forEach(function(s2){ s2.classList.remove('sec-focus'); });
+  var box = document.getElementById('index');
+  if(box){ box.classList.add('on'); document.body.style.overflow = 'hidden'; }
 }
-function ixShowCopy(){
-  var panel = document.getElementById('ix-copy');
-  var body = document.getElementById('ix-copy-body');
-  if(!panel || !body) return;
-  var m = state.meta || {};
-  var txt = (m.copyright && m.copyright.text) ? m.copyright.text : '';
-  var extra = [
-    '本站为个人创作的世界观展示站点，所有内容用于作品展示与交流。',
-    '插画：大部分由作者本人绘制，另有部分为委托创作（约稿）作品；设定与文字为作者原创。',
-    '音乐：为作者自选曲目与委托创作作品并用，仅用于本站试听与氛围呈现。',
-    '权利归属：上述原创作品与委托作品的相关权利，分别归作者本人及各原作者所有，均受著作权法保护。',
-    '使用限制：站内全部插画与音乐（含委托作品）仅用于本站展示；未经作者及相关权利人许可，请勿保存、下载、转载或用于任何商业用途。',
-    '引用与二创：欢迎基于本站设定进行交流与创作，请注明出处并避免直接使用站内图像与音乐。'
-  ].join('\n');
-  var html = '';
-  if(txt) html += '<p>' + esc(txt) + '</p>';
-  html += '<p>' + esc(extra) + '</p>';
-  if(m.author) html += '<p>—— ' + esc(m.author) + '</p>';
-  body.innerHTML = html;
-  panel.classList.add('show');
+function openIndex(fromEl, instant){
+  var box = document.getElementById('index');
+  if(!box){ box = document.createElement('div'); box.id = 'index'; document.body.appendChild(box); }
+  var items = indexAlive();
+  var html = '<div class="ix-wrap"><div class="ix-head">' +
+    '<p class="ix-kicker">开 卷</p>' +
+    '<h1 class="ix-title">' + esc((state.meta && (realm === 'abyss' ? (state.meta.abyssTitle || state.meta.title) : state.meta.title)) || '浮魄') + '</h1>' +
+    '<div class="ix-rule"></div></div><div class="ix-list">';
+  items.forEach(function(it){
+    html += '<button class="ix-row" data-ix="' + it.id + '" data-sel="' + (ixSel === it.id ? '1' : '0') + '" type="button">' +
+      '<span class="ix-dot"></span><span class="ix-bar"></span>' +
+      '<span class="ix-text"><span class="ix-label">' + (it.key ? LBL(it.key, it.label) : it.label) + '</span><span class="ix-sub">' + it.sub + '</span></span>' +
+      '<span class="ix-arrow">进 入 ›</span></button>';
+  });
+  html += '</div><p class="ix-tip">轻点选中 · 再点一次进入</p></div>';
+  box.innerHTML = html;
+  var show = function(){ box.classList.add('on'); document.body.style.overflow = 'hidden'; var fb=document.getElementById('focus-back'); if(fb) fb.classList.add('show'); document.body.classList.remove('focusing'); document.querySelectorAll('.sec').forEach(function(s2){ s2.classList.remove('sec-focus'); }); };
+  if(instant || !fromEl){ show(); return; }
+  var r = fromEl.getBoundingClientRect();
+  inkTransition(r.left + r.width / 2, r.top + r.height / 2, null, show);
 }
-/* 点击热区 / 跳过 */
+/* 索引交互：单击选中 · 双击进入 · 返回键 */
 document.addEventListener('click', function(e){
-  var hit = e.target.closest && e.target.closest('.ix-hit');
-  if(hit){
-    document.querySelectorAll('.ix-hit').forEach(function(x){ x.classList.toggle('sel', x === hit); });
-    ixEnterKey(hit.dataset.ixk);
+  var row = e.target.closest && e.target.closest('.ix-row');
+  if(row){
+    var id = row.dataset.ix;
+    if(row.dataset.sel === '1'){ ixEnter(id, row); }
+    else{
+      ixSel = id;
+      document.querySelectorAll('.ix-row').forEach(function(x){ x.dataset.sel = (x.dataset.ix === id ? '1' : '0'); });
+    }
     return;
   }
-  if(e.target.closest && e.target.closest('.ix-copy-close')){
-    var cp = document.getElementById('ix-copy'); if(cp) cp.classList.remove('show');
-    return;
-  }
-  /* 点开卷页空白 = 跳过入场字幕 */
-  var idx = document.getElementById('index');
-  if(idx && idx.classList.contains('on') && !ixIntroDone){
-    var intro = document.getElementById('ix-intro');
-    if(intro){ intro.classList.remove('show'); }
-    ixIntroDone = true;
-  }
+  if(e.target.closest && e.target.closest('#focus-back')){ exitFocus(); return; }
 }, true);
 
+var inkBusy = false;
 function inkTransition(x, y, onCover, onReveal){
   /* 晕染过场已按需求移除：直接执行回调，不做任何遮罩动画 */
   try{ onCover && onCover(); }catch(e){}
