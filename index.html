@@ -1649,7 +1649,7 @@ const FUPO_BUILD = '2026-10-05 05:20 (v41 · 防闪屏+审核修复+版本历程
 window.FUPO_DEBUG = window.FUPO_DEBUG || false;
 const dlog = (...a) => { try{ if(window.FUPO_DEBUG) console.log(...a); }catch(e){} };
 const FUPO_HISTORY = [
-  ['v41','2026-10-05','手机防闪屏（滑动/浮层时暂停背景动画）、感想审核修复、展开卡顿优化、版本历程上线'],
+  ['v42','2026-10-05','手机防闪屏（滑动/浮层时暂停背景动画）、感想审核修复、展开卡顿优化、版本历程上线'],
   ['v40','2026-10-05','词典首字索引 + 完整词典独立一屏；感想墙上移并加导航入口'],
   ['v39','2026-10-05','词典释义完整显示、整行可点、弹窗内可滑动'],
   ['v38','2026-10-05','词典紧凑化、索引带计数、为"词条很多"做减压'],
@@ -1931,10 +1931,72 @@ function sbSafeName(title){
   return s || 'audio';
 }
 /* 把音频上传到 Supabase Storage，成功后返回公开链接（所有设备都能听） */
+/* ===== 上传优化：图片自动压缩 + 内容哈希去重 ===== */
+const FUPO_HASH_KEY = 'fupo-hash-index';
+function fupoHashMap(){
+  try{ return JSON.parse(localStorage.getItem(FUPO_HASH_KEY) || '{}'); }catch(e){ return {}; }
+}
+function fupoHashSave(map){
+  try{
+    const keys = Object.keys(map);
+    if(keys.length > 400){ const cut = keys.slice(-300); const m2 = {}; cut.forEach(k => m2[k] = map[k]); map = m2; }
+    localStorage.setItem(FUPO_HASH_KEY, JSON.stringify(map));
+  }catch(e){}
+}
+async function fupoSha256(blob){
+  try{
+    if(!(window.crypto && crypto.subtle && crypto.subtle.digest)) return '';
+    const buf = await blob.arrayBuffer();
+    const d = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }catch(e){ return ''; }
+}
+/* 图片压缩：限宽 + 转 WebP（画质肉眼无差，体积降 80–90%） */
+async function fupoCompressImage(blob, maxW, quality){
+  try{
+    if(!/^image\//.test(blob.type || '')) return blob;
+    if(/gif|svg/i.test(blob.type)) return blob;                 /* 动图/矢量不压 */
+    if(blob.size < 180 * 1024) return blob;                     /* 本来就小，不压 */
+    const bmp = await createImageBitmap(blob);
+    const w0 = bmp.width, h0 = bmp.height;
+    const scale = Math.min(1, (maxW || 1600) / w0);
+    const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+    const cvs = document.createElement('canvas');
+    cvs.width = w; cvs.height = h;
+    const ctx = cvs.getContext('2d');
+    ctx.drawImage(bmp, 0, 0, w, h);
+    const out = await new Promise(r => cvs.toBlob(r, 'image/webp', quality || 0.82));
+    if(!out || out.size >= blob.size) return blob;               /* 压不小就用原图 */
+    try{ bmp.close && bmp.close(); }catch(e){}
+    return out;
+  }catch(e){ return blob; }
+}
 async function uploadBlobToCloud(blob, ext, title, kind){
   if(!sbConfigured()) return { error: '未配置云端' };
   if(!sbLoggedIn) return { error: '这台设备还没登录云同步' };
   try{
+    /* ① 图片自动压缩（≤1600px / WebP / 质量 82） */
+    if(kind === 'image'){
+      const before = blob.size;
+      const packed = await fupoCompressImage(blob, 1600, 0.82);
+      if(packed && packed !== blob){
+        dlog('[上传] 压缩 ' + Math.round(before / 1024) + 'KB → ' + Math.round(packed.size / 1024) + 'KB');
+        blob = packed;
+        if(/webp/i.test(blob.type || '')) ext = 'webp';
+      }
+    }
+    /* ② 内容哈希去重：同一张图/同一段音频只存一份 */
+    const hash = await fupoSha256(blob);
+    if(hash){
+      const map = fupoHashMap();
+      const hit = map[hash];
+      if(hit && hit.url){
+        try{
+          const head = await fetch(hit.url, { method: 'HEAD' });
+          if(head.ok){ dlog('[上传] 命中已有文件，直接复用'); return { url: hit.url, reused: true }; }
+        }catch(e){}
+      }
+    }
     const folder = kind === 'image' ? 'image/' : 'audio/';
     const safe = sbSafeName(title);
     const path = folder + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '-' + safe + '.' + String(ext || 'bin').toLowerCase();
@@ -1947,6 +2009,11 @@ async function uploadBlobToCloud(blob, ext, title, kind){
     if(!res || res.error) throw (res && res.error) || new Error('上传失败');
     const { data } = sb.storage.from(sbBucket()).getPublicUrl(path);
     if(!data || !data.publicUrl) throw new Error('无法生成公开链接');
+    if(typeof hash === 'string' && hash){
+      const map2 = fupoHashMap();
+      map2[hash] = { url: data.publicUrl, at: Date.now() };
+      fupoHashSave(map2);
+    }
     return { url: data.publicUrl };
   }catch(e){
     return { error: (e && e.message) ? e.message : '上传失败' };
