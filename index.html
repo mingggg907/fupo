@@ -6977,6 +6977,29 @@ function inkTransition(x, y, onCover, onReveal){
     setTimeout(function(){ v.classList.remove('go', 'out'); inkBusy = false; }, 600);
   }, 940);
 }
+/* ===== 播放方式三键：捕获阶段独立监听（不受其它委托守卫影响） ===== */
+document.addEventListener('click', function(e){
+  var chip = e.target.closest && e.target.closest('[data-music-mode]');
+  if(!chip) return;
+  e.preventDefault();
+  e.stopPropagation();
+  var mode = chip.dataset.musicMode || 'order';
+  var touched = 0;
+  ['music','abyssMusic'].forEach(function(k){
+    var cfg = state.meta[k];
+    if(cfg && typeof cfg === 'object' && Array.isArray(cfg.tracks) && cfg.tracks.length){ cfg.mode = mode; touched++; }
+  });
+  if(!touched){
+    var cur = (realm === 'abyss') ? 'abyssMusic' : 'music';
+    if(!state.meta[cur] || typeof state.meta[cur] !== 'object') state.meta[cur] = normMusic(null);
+    state.meta[cur].mode = mode;
+  }
+  document.querySelectorAll('[data-music-mode]').forEach(function(b){ b.classList.toggle('on', b.dataset.musicMode === mode); });
+  try{ applyMusicMode(); }catch(e2){}
+  try{ _doSave(); }catch(e2){}
+  try{ toast(mode === 'loop' ? '已设为单曲循环' : (mode === 'shuffle' ? '已设为随机播放' : '已设为顺序播放')); }catch(e2){}
+}, true);
+
 /* ============================================================
    启动
    ============================================================ */
