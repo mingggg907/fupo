@@ -40,13 +40,37 @@ body.abyss{background-image:none}
 /* ===== 古籍气质：首字下沉 ===== */
 .entry-content>p:first-of-type::first-letter,.entry-content>div:first-child>p:first-of-type::first-letter{float:left;font-family:var(--serif);font-size:2.9em;line-height:.92;margin:.06em .12em 0 0;color:var(--cinnabar);font-weight:400}
 body.abyss .entry-content>p:first-of-type::first-letter{color:var(--gold-2,#c9a35c)}
-/* ===== 古籍气质：章节序号（卷之一 / 壹、贰、叁） ===== */
-.world-list{counter-reset:sec}
-.world-item{counter-increment:sec}
-.world-title::before{content:"卷之" counter(sec,cjk-ideographic) "\3000";font-size:.72em;letter-spacing:.1em;color:var(--gold);opacity:.9}
+/* ===== 古籍气质：章节序号（条目用 壹、贰、叁；大分区不加序号——用户不要"卷之一"） ===== */
 .world-inner{counter-reset:ent}
 .entry{counter-increment:ent}
 .entry-title::before{content:counter(ent,cjk-ideographic) "\3001";font-size:.78em;color:var(--gold);opacity:.85;margin-right:.35em;letter-spacing:0}
+/* ===== 中文排版（手机上最明显的观感差别） ===== */
+.entry-content p{text-indent:2em;margin:.6em 0}
+.entry-content>p:first-of-type{text-indent:0}
+.entry-content>p:first-of-type::first-letter{float:left;font-family:var(--serif);font-size:3.1em;line-height:.9;margin:.05em .12em 0 0;color:var(--cinnabar)}
+body.abyss .entry-content>p:first-of-type::first-letter{color:var(--gold-2,#c9a35c)}
+/* ===== 首屏：淡墨晕染 + 更大的站名 + 金线 ===== */
+.hero{position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;left:-10%;right:-10%;top:-14%;height:130%;pointer-events:none;z-index:0;
+  background:radial-gradient(36% 40% at 20% 26%,rgba(158,51,40,.06),transparent 70%),radial-gradient(42% 46% at 80% 16%,rgba(61,90,82,.07),transparent 72%),radial-gradient(52% 42% at 54% 84%,rgba(160,134,80,.08),transparent 74%)}
+.hero-inner{position:relative;z-index:1}
+.hero-title{font-size:clamp(2.05rem,9vw,3.3rem)!important;letter-spacing:.24em!important;text-indent:.24em;font-weight:400}
+.hero-eyebrow{letter-spacing:.42em!important;color:var(--gold)!important;text-indent:.42em}
+.hero-rule{width:72px!important;height:2px!important;background:linear-gradient(90deg,transparent,var(--gold),transparent)!important;margin:20px auto 24px!important}
+.hero-author{letter-spacing:.26em!important;color:var(--ink-3)!important}
+.hero-vertical{letter-spacing:.5em!important;color:var(--gold)!important;opacity:.85}
+/* ===== 栏目标题升级：左侧朱砂→金渐变竖条 + 更大字号 ===== */
+.sec-head{margin-bottom:20px!important}
+.sec-head h2{position:relative;padding-left:16px;font-size:clamp(1.28rem,4.8vw,1.7rem)!important;letter-spacing:.24em}
+.sec-head h2::before{content:"";position:absolute;left:0;top:.16em;bottom:.16em;width:3px;border-radius:2px;background:linear-gradient(180deg,var(--cinnabar),var(--gold))}
+/* ===== 大分区做成卡片（手机上非常明显） ===== */
+.world-item{background:rgba(255,255,255,.52);border:1px solid var(--line-2);border-radius:4px;margin-bottom:14px;padding:2px 14px 2px 12px;box-shadow:0 2px 12px rgba(31,36,32,.035)}
+body.abyss .world-item{background:rgba(255,255,255,.028)}
+/* ===== 条目行：左侧细金线 + 稍大的标题 ===== */
+.entry{padding-left:12px;border-left:1px solid var(--line-2)}
+.entry-title{font-size:1.03em;letter-spacing:.1em}
+/* ===== 页脚落款 ===== */
+.site-notice{border-top:1px solid var(--line-2);margin-top:34px;padding-top:20px}
 /* ===== 古籍气质：分隔纹样（渐隐细线 + 中央小菱） ===== */
 .sec-head{position:relative;padding-bottom:14px}
 .sec-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--line) 18%,var(--line) 82%,transparent)}
