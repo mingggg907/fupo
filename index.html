@@ -7797,6 +7797,12 @@ document.addEventListener('click', function(e){
   setTimeout(hideLex, 600);
   setTimeout(hideLex, 2000);
   document.addEventListener('click', function(){ setTimeout(hideLex, 300); }, true);
+  /* 动态监听：任何新渲染出来的入口都清掉 */
+  try{
+    var mo = new MutationObserver(function(){ if(mo._t) return; mo._t = setTimeout(function(){ mo._t = null; hideLex(); }, 200); });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }catch(e){}
+  setInterval(hideLex, 2500);
 })();
 
 /* ============================================================
