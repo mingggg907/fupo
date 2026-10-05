@@ -6041,7 +6041,7 @@ function openCharacterEditor(id, isNew){
   const list = W().characters;
   const c = isNew ? { tags:[], relations:[], gallery:[], quotes:[], profile:{} } : list.find(x => x.id === id);
   if(!isNew && !c) return;
-  const relText = (c.relations || []).map(r => `${r.target}:${r.label || ''}`).join(', ');
+  const relText = (c.relations || []).map(r => `${r.target}：${r.label || ''}${r.dir === 'up' ? '（主）' : (r.dir === 'down' ? '（从）' : '')}`).join('、');
   const otherChars = list.filter(x => x.id !== id);
   const prof = c.profile || {};
   const PF = [['race','种族'],['age','年龄'],['height','身高'],['camp','阵营'],['role','身份'],['weapon','武器'],['element','属性'],['voice','口头禅'],['like','喜好'],['hate','厌恶']];
@@ -6079,8 +6079,12 @@ function openCharacterEditor(id, isNew){
         <div style="margin-top:10px"><button class="btn small" type="button" id="gal-add">+ 添加一张</button></div>
       </div>
       <div class="field full" data-field="quotes"><label>语录（每行一句）</label><textarea rows="4">${esc((c.quotes||[]).join('\n'))}</textarea></div>
-      <div class="field full" data-field="relations"><label>关系（角色ID:关系名）</label>
-        <input type="text" value="${esc(relText)}" placeholder="c2:同源">
+      <div class="field full" data-field="aiNote"><label>AI 私记（只喂给速查，不在页面显示）</label>
+        <textarea rows="3" placeholder="例：戮爻是浊日与噬月的主人；他其实早已…（此段仅 AI 可见）">${esc(c.aiNote || '')}</textarea>
+        <span class="hint">这里写的内容访客看不到，但速查回答时会读到 ✅</span>
+      </div>
+      <div class="field full" data-field="relations"><label>关系（目标:关系名（主|从））</label>
+        <input type="text" value="${esc(relText)}" placeholder="c2：主仆（主）">
         <span class="hint">可用 ID：${otherChars.map(x => `${esc(x.id)}（${esc(x.name)}）`).join('、') || '暂无其他角色'}</span>
       </div>
     </div>`,
@@ -6097,7 +6101,17 @@ function openCharacterEditor(id, isNew){
           const byName = list.find(x => x.name === t) || list.find(x => x.name && (x.name.indexOf(t) >= 0 || t.indexOf(x.name) >= 0));
           if(byName) t = byName.id;
         }
-        return { target: t, label: l || '' };
+        /* 方向标记 （主）=我是主 / （从）（仆）=我是从 ✅ 不写则不标方向 */
+        let dir = '';
+        const dm = l.match(/[（(]\s*(主|从|仆|上|下)\s*[)）]/);
+        if(dm){
+          const c = dm[1];
+          dir = (c === '主' || c === '上') ? 'up' : 'down';
+          l = l.replace(dm[0], '').trim();
+        }
+        if(/[↑]/.test(l)){ dir = 'up'; l = l.replace(/[↑]/g, '').trim(); }
+        if(/[↓]/.test(l)){ dir = 'down'; l = l.replace(/[↓]/g, '').trim(); }
+        return { target: t, label: l || '', dir: dir };
       }).filter(Boolean);
       /* 双向互联：同步在对方角色身上补一条反向关系（同一关系名） */
       try{
@@ -6110,7 +6124,8 @@ function openCharacterEditor(id, isNew){
           const other = others.find(o => o.id === r.target);
           if(other){
             other.relations = other.relations || [];
-            other.relations.push({ target: id, label: r.label || '' });
+            const rev = (r.dir === 'up') ? 'down' : (r.dir === 'down' ? 'up' : '');
+            other.relations.push({ target: id, label: r.label || '', dir: rev });
           }
         });
       }catch(e){}
@@ -6143,7 +6158,8 @@ function openCharacterEditor(id, isNew){
         profile, gallery, quotes,
         avatar: get('avatar'),
         desc: modalRoot.querySelector('[data-field="desc"] textarea').value.trim(),
-        relations
+        relations,
+        aiNote: (modalRoot.querySelector('[data-field="aiNote"] textarea') || {}).value || ''
       };
       if(isNew) list.push({ id: uid(), ...data });
       else Object.assign(c, data);
