@@ -1090,6 +1090,52 @@ body.abyss .rich-img img,body.abyss .inline-img{background:var(--paper);padding:
 .rich-img img{max-height:78vh;object-fit:contain}
 .fav-desc figure,.fav-desc .rich-img{margin:12px 0}
 .fav-desc img{max-height:300px;width:auto;object-fit:contain;display:block}
+/* ============ 档案封套（第 1 批：入口改造） ============ */
+.arc-env{position:relative;width:min(560px,88vw);padding:30px 30px 34px;background:
+    linear-gradient(180deg,rgba(226,218,200,.96),rgba(214,204,184,.96));
+  border:1px solid rgba(120,104,74,.35);border-radius:2px;
+  box-shadow:0 26px 60px -22px rgba(31,36,32,.45),inset 0 0 0 6px rgba(255,255,255,.25),inset 0 0 60px rgba(120,104,74,.14);
+  animation:envIn 1.1s var(--ease-out) both;overflow:hidden}
+body.abyss .arc-env{background:linear-gradient(180deg,rgba(26,27,30,.97),rgba(18,19,22,.97));border-color:rgba(200,215,215,.2);box-shadow:0 26px 60px -22px rgba(0,0,0,.7),inset 0 0 0 6px rgba(255,255,255,.03)}
+@keyframes envIn{from{opacity:0;transform:translateY(26px) rotate(-.6deg) scale(.97)}to{opacity:1;transform:none}}
+/* 纸纤维（极淡，一次性） */
+.arc-env::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(96deg,rgba(120,104,74,.05) 0 1px,transparent 1px 5px),repeating-linear-gradient(6deg,rgba(120,104,74,.04) 0 1px,transparent 1px 7px)}
+body.abyss .arc-env::before{opacity:.25}
+.arc-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  font-family:var(--serif);font-size:.72rem;letter-spacing:.3em;color:#6b5c40;border-bottom:1px solid rgba(120,104,74,.3);padding-bottom:10px}
+body.abyss .arc-head{color:var(--gold);border-color:rgba(200,215,215,.18)}
+.arc-code{letter-spacing:.16em;opacity:.8}
+.arc-body{text-align:center;padding:26px 4px 4px;position:relative;z-index:2}
+.arc-kicker{font-family:var(--serif);font-size:.74rem;letter-spacing:.44em;text-indent:.44em;color:#7a6a4c;margin:0 0 12px}
+body.abyss .arc-kicker{color:var(--ink-3)}
+.arc-env .gate-title{margin:6px 0 2px}
+.arc-tip{font-family:var(--serif);font-size:.8rem;letter-spacing:.26em;color:#6f6047;margin:2px 0 0}
+body.abyss .arc-tip{color:var(--ink-3)}
+.arc-line{font-family:var(--serif);font-size:.74rem;letter-spacing:.28em;color:#7d6d4f;margin:14px 0 0;opacity:.9}
+body.abyss .arc-line{color:var(--ink-3)}
+.arc-env .gate-rule{background:linear-gradient(90deg,transparent,rgba(120,104,74,.5),transparent)!important}
+/* 钤印（密级） */
+.arc-seal{position:absolute;right:22px;bottom:20px;width:52px;height:52px;display:grid;place-items:center;
+  font-family:var(--serif);font-size:1.3rem;color:#9e3328;border:2px solid #9e3328;border-radius:3px;
+  transform:rotate(-7deg) scale(1);opacity:.88;animation:sealStamp .5s 1.5s var(--ease-out) both;letter-spacing:0}
+body.abyss .arc-seal{color:#c0603f;border-color:#c0603f}
+@keyframes sealStamp{0%{transform:rotate(-7deg) scale(1.7);opacity:0}60%{transform:rotate(-7deg) scale(.94);opacity:.95}100%{transform:rotate(-7deg) scale(1);opacity:.88}}
+/* 封条：点/划后裂开 */
+.arc-strip{position:absolute;left:-6%;right:-6%;top:46%;height:44px;display:grid;place-items:center;z-index:3;
+  background:linear-gradient(180deg,rgba(158,51,40,.92),rgba(140,42,32,.94));
+  box-shadow:0 6px 18px rgba(31,36,32,.28);cursor:pointer;transition:transform .55s var(--ease-out),opacity .5s}
+.arc-strip i{font-style:normal;font-family:var(--serif);font-size:.86rem;letter-spacing:.5em;text-indent:.5em;color:#f7f2e8;opacity:.92}
+.arc-env.tearing .arc-strip{transform:translateY(-160%) rotate(-8deg) scaleY(.5);opacity:0}
+.arc-env.open{animation:envOpen .9s var(--ease-out) forwards}
+@keyframes envOpen{to{opacity:0;transform:translateY(-30px) rotate(1.2deg) scale(1.04)}}
+@media (max-width:820px){
+  .arc-env{width:90vw;padding:24px 20px 28px}
+  .arc-strip{height:38px}
+  .arc-seal{width:44px;height:44px;font-size:1.1rem;right:16px;bottom:16px}
+  .arc-body{padding-top:20px}
+}
+@media (prefers-reduced-motion: reduce){.arc-env,.arc-seal{animation:none!important}}
 </style>
 </head>
 <body>
@@ -2116,6 +2162,11 @@ function normalize(d){
   if(!Array.isArray(d.meta.fav.images)) d.meta.fav.images = [];
   ['name','title','desc','note','charId'].forEach(k => { if(typeof d.meta.fav[k] !== 'string') d.meta.fav[k] = ''; });
   if(typeof d.meta.fav.on !== 'boolean') d.meta.fav.on = false;
+  /* 档案封套（真实档案语汇：封条 / 密级 / 立卷机构 / 归档年份） */
+  if(!d.meta.archive || typeof d.meta.archive !== 'object') d.meta.archive = {};
+  const _a = d.meta.archive;
+  if(typeof _a.org !== 'string' || !_a.org) _a.org = '佚名辑';
+  ['code','level','category','year','keeper'].forEach(k => { if(typeof _a[k] !== 'string') _a[k] = (k === 'level' ? '密' : (k === 'category' ? '妖界志' : '')); });
   /* 访客感想墙 */
   if(!d.meta.guest || typeof d.meta.guest !== 'object') d.meta.guest = { on: true, ownerLabel: '站主', dailyLimit: 3, ownerNames: ['站主', 'minggg'] };
   if(typeof d.meta.guest.on !== 'boolean') d.meta.guest.on = true;
@@ -5399,6 +5450,7 @@ function moveArr(key, id, dir){
 function openMetaEditor(){
   if(!requireEdit()) return;
   const g = state.meta.gate || {};
+  const arc = state.meta.archive || {};
   const isAb = realm === 'abyss';
   const t = isAb ? state.meta.abyssTitle : state.meta.title;
   const sub = isAb ? state.meta.abyssSubtitle : state.meta.subtitle;
@@ -5418,8 +5470,14 @@ function openMetaEditor(){
       <div class="field" data-field="gate_sub"><label>副标题</label><input type="text" value="${esc(g.sub || '')}"></div>
       <div class="field" data-field="gate_title"><label>主标题</label><input type="text" value="${esc(g.title || '')}"></div>
       <div class="field" data-field="gate_tip"><label>提示语</label><input type="text" value="${esc(g.tip || '')}"></div>
-      <div class="field" data-field="gate_btn"><label>按钮文字</label><input type="text" value="${esc(g.btn || '')}"></div>
+      <div class="field" data-field="gate_btn"><label>开卷提示（封条下方那行淡字）</label><input type="text" value="${esc(g.btn || '')}" placeholder="撕 封 开 卷"></div>
       <div class="field full" data-field="gate_note"><label>按钮下方小字</label><input type="text" value="${esc(g.note || '')}"></div>
+      <div class="field full" style="margin-top:6px;padding-top:14px;border-top:1px solid var(--line-2)"><label>档案封套信息（都可留空/自定，不涉及任何朝代与官署）</label></div>
+      <div class="field" data-field="arc_org"><label>立卷者</label><input type="text" value="${esc(arc.org || '')}" placeholder="佚名辑 / 无名氏录 / 有司封存"></div>
+      <div class="field" data-field="arc_code"><label>档号</label><input type="text" value="${esc(arc.code || '')}" placeholder="可留空，如：柒·叁"></div>
+      <div class="field" data-field="arc_level"><label>钤印文字</label><input type="text" value="${esc(arc.level || '')}" placeholder="密 / 封 / 存"></div>
+      <div class="field" data-field="arc_category"><label>类别</label><input type="text" value="${esc(arc.category || '')}" placeholder="妖界志 / 异闻录"></div>
+      <div class="field" data-field="arc_year"><label>立卷年份</label><input type="text" value="${esc(arc.year || '')}" placeholder="可留空，如：月夜之岁"></div>
     </div>`;
   const entryBlock = isAb
     ? (() => { const ax = state.meta.abyssExit || {}; return `
@@ -5512,6 +5570,14 @@ function openMetaEditor(){
           enabled: modalRoot.querySelector('#gate-enabled-cb')?.checked !== false,
           sub: get('gate_sub'), title: get('gate_title'), tip: get('gate_tip'),
           btn: get('gate_btn') || '入 界', note: get('gate_note')
+        };
+        state.meta.archive = {
+          org: get('arc_org') || '佚名辑',
+          code: get('arc_code'),
+          level: get('arc_level') || '密',
+          category: get('arc_category') || '妖界志',
+          year: get('arc_year'),
+          keeper: (state.meta.archive || {}).keeper || ''
         };
       }
       save(); renderAll(); toast('已 保 存（' + rl() + '）');
@@ -6485,22 +6551,47 @@ function renderGate(){
     return;
   }
   gate.classList.remove('hide');
+  /* 档案封套（机构名等均可在编辑器里改；此处默认值与 normalize 保持一致） */
+  const A = state.meta.archive || {};
+  const org = A.org || '佚名辑';
+  const code = A.code || '';
+  const level = A.level || '密';
+  const category = A.category || '妖界志';
+  const year = A.year || '';
   gate.innerHTML = `
-    <div class="gate-inner">
-      ${g.sub ? `<p class="gate-sub">${esc(g.sub)}</p>` : ''}
-      <h1 class="gate-title">${esc(g.title || state.meta.title || '浮魄').split('').map((ch2, i) => `<span class="g-char" style="animation-delay:${(0.18 + i * 0.16).toFixed(2)}s">${esc(ch2)}</span>`).join('')}</h1>
-      <div class="gate-rule"></div>
-      ${g.tip ? `<p class="gate-tip">${esc(g.tip)}</p>` : ''}
-      <p class="gate-tap">${esc(g.btn && g.btn !== '入 界' ? g.btn : '轻 触 入 界')}</p>
-    </div>`;
+    <div class="arc-env" id="arc-env">
+      <span class="arc-strip" id="arc-strip"><i>封</i></span>
+      <div class="arc-head">
+        <span class="arc-org">${esc(org)}</span>
+        ${code ? `<span class="arc-code">${esc(code)}</span>` : ''}
+      </div>
+      <div class="arc-body">
+        ${g.sub ? `<p class="arc-kicker">${esc(g.sub)}</p>` : ''}
+        <h1 class="gate-title">${esc(g.title || state.meta.title || '浮魄').split('').map((ch2, i) => `<span class="g-char" style="animation-delay:${(0.18 + i * 0.16).toFixed(2)}s">${esc(ch2)}</span>`).join('')}</h1>
+        <div class="gate-rule"></div>
+        ${g.tip ? `<p class="arc-tip">${esc(g.tip)}</p>` : ''}
+        <p class="arc-line">${esc(category)}${year ? '　·　' + esc(year) : ''}</p>
+        <p class="gate-tap">${esc(g.btn && g.btn !== '入 界' ? g.btn : '撕 封 开 卷')}</p>
+      </div>
+      <span class="arc-seal" aria-hidden="true">${esc(level)}</span>
+    </div>
+    <button class="gate-btn" id="gate-btn" style="display:none">${esc(g.btn || '入 界')}</button>`;
   const gateBtn = gate.querySelector('#gate-btn');
   let entered = false;
   function enter(){
     if(entered) return;
     entered = true;
+    /* 先撕封条、再翻开（一次性动画，之后再进正文） */
+    try{
+      const env = document.getElementById('arc-env');
+      if(env){
+        env.classList.add('tearing');
+        setTimeout(() => { env.classList.add('open'); }, 260);
+      }
+    }catch(e){}
     gate.classList.add('hide');
     document.body.style.overflow = '';
-    musicIntent = true;   /* 点「入界」= 想听音乐：即使歌单还在加载，加载完会自动响起 */
+    musicIntent = true;   /* 开卷 = 想听音乐：即使歌单还在加载，加载完会自动响起 */
     if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
     setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); try{ FUPO_BG.attach(); }catch(e){} }, 900);
     document.removeEventListener('keydown', gateKey);
