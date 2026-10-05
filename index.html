@@ -6666,6 +6666,7 @@ function renderGate(){
     entered = true;
     gate.classList.add('hide');
     document.body.style.overflow = '';
+    try{ openIndex(); }catch(e){}          /* 立刻盖上开卷页，不让内页先露出 */
     musicIntent = true;   /* 开卷 = 想听音乐：即使歌单还在加载，加载完会自动响起 */
     if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
     setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); try{ FUPO_BG.attach(); }catch(e){} }, 900);
