@@ -1506,6 +1506,16 @@ a[href="#lexicon"],
   padding:9px 16px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
 #fresh-bar button{font-family:var(--serif);font-size:.74rem;letter-spacing:.1em;background:rgba(255,255,255,.92);color:var(--cinnabar);
   border:0;border-radius:99px;padding:4px 12px;cursor:pointer}
+/* ===== 人物详情：山海经式排版（图 + 长文） ===== */
+.char-detail .entry-content img,
+#modal-root .entry-content img{border-radius:3px;margin:14px 0;max-width:100%;height:auto}
+.char-detail .entry-content p,
+#modal-root .entry-content p{margin:0 0 1em;line-height:2.15;text-indent:0}
+.char-detail .entry-content{word-break:break-word;overflow-wrap:anywhere}
+@media (max-width:820px){
+  #modal-root .entry-content{font-size:.9rem;line-height:2.05}
+  #modal-root .entry-content img{margin:12px 0}
+}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -3484,6 +3494,7 @@ function openPatchEditor(patch, defaultType){
     title: patch ? '编 辑 补 丁' : '新 增 补 丁', wide: true, okText: '保 存',
     body: `<div class="form">
       <div class="field" data-field="name"><label>补丁名字</label><input type="text" value="${esc(p.name)}" placeholder="给这个补丁起个名"></div>
+      <div class="field full" data-field="desc"><label>正文 · 长文（山海经式：图 + 长文）</label><textarea rows="18" placeholder="先写名字与形貌，再写习性、来历、典故…&#10;可随时插入图片：点「🖼 插入图片」或把图直接拖进来">${esc(c.desc || '')}</textarea><span class="hint">支持长文与 Markdown：**加粗**、换行分段、内嵌图片。这段既是页面正文，也会被「速查」读取 ✅</span></div>
       <div class="field" data-field="type"><label>类型</label>
         <select id="patch-type-sel">
           <option value="content" ${p.type === 'content' ? 'selected' : ''}>内容（JSON）</option>
@@ -6112,7 +6123,7 @@ function openCharacterEditor(id, isNew){
           <label class="upload-btn">上传本地图片<input type="file" accept="image/*"></label></div>
         </div>
       </div>
-      <div class="field full" data-field="desc"><label>角色简介</label><textarea rows="8">${esc(c.desc || '')}</textarea><span class="hint">可在简介里插图：点「🖼 插入图片」或直接拖图进来</span></div>
+      
       <div class="field full"><label>立绘画廊（可多张）</label>
         <div class="gal-edit" id="gal-edit">${galRows}</div>
         <div style="margin-top:10px"><button class="btn small" type="button" id="gal-add">+ 添加一张</button></div>
@@ -6220,7 +6231,7 @@ function openTimelineEditor(id, isNew){
       <div class="field" data-field="time"><label>时间</label><input type="text" value="${esc(t.time || '')}"></div>
       <div class="field" data-field="title"><label>事件名</label><input type="text" value="${esc(t.title || '')}"></div>
       <div class="field full" data-field="keywords"><label>检索关键词（逗号分隔）</label><input type="text" value="${esc(t.keywords || '')}"></div>
-      <div class="field full" data-field="desc"><label>描述</label><textarea rows="6">${esc(t.desc || '')}</textarea><span class="hint">可插图：点「🖼 插入图片」或直接拖图进来</span></div>
+      <div class="field full" data-field="desc"><label>单元正文（一话一单元）</label><textarea rows="16" placeholder="本单元的故事正文…&#10;单元剧写法：每篇自成一段落，人物与设定与「名籍」互相引用即可">${esc(t.desc || '')}</textarea><span class="hint">可插图：点「🖼 插入图片」或直接拖图进来 ✅ 章节功能仍可用（要分话就加章节，不分就只写这一栏）</span></div>
     </div>`,
     onOk(){
       const get = k => modalRoot.querySelector(`[data-field="${k}"] input[type=text]`)?.value.trim() || '';
