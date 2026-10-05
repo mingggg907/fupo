@@ -1367,6 +1367,17 @@ body.abyss .ix-arrow{color:var(--gold)}
   .gate-rule{width:56px!important;margin:14px auto 18px!important}
 }
 /* ===== 随机播放：每次打开随机选一首 ===== */
+/* ===== 词典长文本：完整显示 ===== */
+#modal-root .modal{max-height:92vh;display:flex;flex-direction:column}
+#modal-root .modal-body{overflow-y:auto;max-height:none;flex:1 1 auto;-webkit-overflow-scrolling:touch}
+.reader,.reader .entry-content,.lex-detail-head{max-height:none!important;overflow:visible!important}
+.lex-detail-head{flex-wrap:wrap;gap:8px}
+.entry-content{word-break:break-word;overflow-wrap:anywhere}
+@media (max-width:820px){
+  #modal-root .modal{max-height:88vh}
+  #modal-root .modal-body{padding:18px 16px 22px}
+  .reader .entry-content{font-size:.88rem;line-height:2.05}
+}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -7085,6 +7096,23 @@ document.addEventListener('click', function(e){
   try{ applyMusicMode(); }catch(e2){}
   try{ _doSave(); }catch(e2){}
   try{ toast(mode === 'loop' ? '已设为单曲循环' : (mode === 'shuffle' ? '已设为随机播放' : '已设为顺序播放')); }catch(e2){}
+}, true);
+
+/* ===== 词典「查看全部」：捕获阶段直连（避免被其它守卫吞掉） ===== */
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('[data-act="open-lexicon"]');
+  if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  try{ closeDrawer(); }catch(e2){}
+  try{ openLexiconView(); }catch(e2){ try{ toast('词典打不开：' + e2.message); }catch(e3){} }
+}, true);
+/* ===== 退出上古：不再让页面乱滑（锁定位置） ===== */
+document.addEventListener('click', function(e){
+  var x = e.target.closest && e.target.closest('#abyss-exit');
+  if(!x) return;
+  var y0 = window.scrollY || 0;
+  var fix = function(){ try{ window.scrollTo(0, y0); }catch(e2){} };
+  setTimeout(fix, 60); setTimeout(fix, 260); setTimeout(fix, 620);
 }, true);
 
 /* ============================================================
