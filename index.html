@@ -28,6 +28,29 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--paper:#ecece6;--paper-2:#e4e4de;--paper-3:#d8d9d2;--ink:#1f2420;--ink-2:#4f574f;--ink-3:#828a80;--cinnabar:#9e3328;--cinnabar-2:#b8453a;--gold:#a08650;--jade:#3d5a52;--line:rgba(31,36,32,.14);--line-2:rgba(31,36,32,.06);--serif:"Songti SC","STSong","SimSun","Noto Serif SC","Source Han Serif SC","Songti TC",Georgia,"Times New Roman",serif;--sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",sans-serif;--ease:cubic-bezier(.22,.61,.36,1);--ease-out:cubic-bezier(.16,1,.3,1);color-scheme:light}
+/* ===== 时辰主题：按访问时间微调底色（只作用于表层；上古保持冷青黑） ===== */
+body[data-tod="morning"]{--paper:#eff0e8;--paper-2:#e7e8e0;--paper-3:#dbdcd3;--ink:#1e241f;--ink-2:#4c554c;--ink-3:#7e877c}
+body[data-tod="day"]{--paper:#ecece6;--paper-2:#e4e4de;--paper-3:#d8d9d2}
+body[data-tod="dusk"]{--paper:#f0e7d9;--paper-2:#e8dfd1;--paper-3:#dcd2c2;--ink:#282019;--ink-2:#574b40;--ink-3:#8a7d6e;--gold:#a8834a}
+body[data-tod="night"]{--paper:#e6e6e2;--paper-2:#dededa;--paper-3:#d2d2cd;--ink:#1b211d;--ink-2:#485047;--ink-3:#7a837a;--cinnabar:#963024;--gold:#8f7846}
+body.abyss[data-tod]{--paper:#07080a;--paper-2:#0c0e11;--paper-3:#121519}
+/* 极淡纸纹（两层极细斜纹，肉眼几乎看不出，但去掉会觉得"平"） */
+body{background-image:repeating-linear-gradient(45deg,rgba(31,36,32,.014) 0 1px,transparent 1px 3px),repeating-linear-gradient(-45deg,rgba(31,36,32,.012) 0 1px,transparent 1px 4px)}
+body.abyss{background-image:none}
+/* ===== 古籍气质：首字下沉 ===== */
+.entry-content>p:first-of-type::first-letter,.entry-content>div:first-child>p:first-of-type::first-letter{float:left;font-family:var(--serif);font-size:2.9em;line-height:.92;margin:.06em .12em 0 0;color:var(--cinnabar);font-weight:400}
+body.abyss .entry-content>p:first-of-type::first-letter{color:var(--gold-2,#c9a35c)}
+/* ===== 古籍气质：章节序号（卷之一 / 壹、贰、叁） ===== */
+.world-list{counter-reset:sec}
+.world-item{counter-increment:sec}
+.world-title::before{content:"卷之" counter(sec,cjk-ideographic) "\3000";font-size:.72em;letter-spacing:.1em;color:var(--gold);opacity:.9}
+.world-inner{counter-reset:ent}
+.entry{counter-increment:ent}
+.entry-title::before{content:counter(ent,cjk-ideographic) "\3001";font-size:.78em;color:var(--gold);opacity:.85;margin-right:.35em;letter-spacing:0}
+/* ===== 古籍气质：分隔纹样（渐隐细线 + 中央小菱） ===== */
+.sec-head{position:relative;padding-bottom:14px}
+.sec-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--line) 18%,var(--line) 82%,transparent)}
+.sec-head::before{content:"❖";position:absolute;left:50%;bottom:-.45em;transform:translateX(-50%);font-size:.5rem;color:var(--gold);opacity:.5;background:var(--paper);padding:0 6px;line-height:1}
 body.abyss{--paper:#0a0b0d;--paper-2:#111318;--paper-3:#181b21;--ink:#d8d8d0;--ink-2:#9a9a92;--ink-3:#6b6b65;--cinnabar:#c94a3a;--cinnabar-2:#e05a48;--gold:#c9a35c;--jade:#7ba99a;--line:rgba(216,216,208,.16);--line-2:rgba(216,216,208,.07);color-scheme:dark}
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:80px;-webkit-text-size-adjust:100%;background:#ecece6;background:var(--paper,#ecece6);color-scheme:light;forced-color-adjust:none}
@@ -4178,6 +4201,16 @@ function renderAll(){
   try{ if(typeof applyCustomBg === 'function') applyCustomBg(); }catch(e){}
   /* 界面文字（顶部小字 / 导航 / 栏目名） */
   try{ if(typeof applyLabels === 'function') applyLabels(); }catch(e){}
+  /* 时辰主题：按本机时间微调底色（晨 / 昼 / 暮 / 夜） */
+  try{
+    const applyTod = () => {
+      const h = new Date().getHours();
+      const tod = h < 6 ? 'night' : (h < 10 ? 'morning' : (h < 17 ? 'day' : (h < 20 ? 'dusk' : 'night')));
+      if(document.body.dataset.tod !== tod) document.body.dataset.tod = tod;
+    };
+    applyTod();
+    setInterval(applyTod, 600000);
+  }catch(e){}
   /* 版本号角落标记 */
   try{ mountVersionBadge(); }catch(e){}
   /* 感想墙：首次渲染后按需拉取（未建表则自动隐藏）+ 定时刷新 */
