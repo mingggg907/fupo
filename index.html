@@ -6756,7 +6756,7 @@ function goIndexTo(id, fromEl){
     function(){ closeIndex(); },
     function(){
       const t = (id === 'world') ? document.querySelector('.world-item') : document.getElementById(id);
-      if(t){ try{ t.scrollIntoView({ behavior: 'auto', block: 'start' }); window.scrollBy(0, -70); }catch(e){} }
+      if(t){ try{ var y = t.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 72; window.scrollTo(0, Math.max(0, y)); }catch(e){} }
     });
 }
 document.addEventListener('click', function(e){
