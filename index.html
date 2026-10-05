@@ -1268,6 +1268,37 @@ body.abyss .ix-row[data-sel="1"] .ix-dot{background:var(--gold)}
 /* 「继续阅读」可见性与层级修正 */
 #resume-pill{z-index:120!important}
 #resume-pill.on{opacity:1}
+/* ===== 横屏（手机横放）粗略适配：向电脑版靠拢 ===== */
+@media (orientation: landscape) and (max-height: 560px){
+  /* 门帘：logo 缩小、留白收紧、远山压低 */
+  .gate-inner{padding:3vh 0 4vh}
+  .gate-logo{width:auto!important;height:30vh!important;max-height:30vh!important;margin-bottom:2px}
+  .gate-brand{font-size:1.02rem;letter-spacing:.44em;text-indent:.44em;margin-top:6px}
+  .gate-sub{font-size:.76rem;letter-spacing:.4em}
+  .gate-mount{height:26vh}
+  .gate-tap{margin-top:16px;font-size:.8rem;letter-spacing:.36em}
+  .gate-note{font-size:.68rem;margin-top:4px}
+  .hero{min-height:auto;padding:5vh 0 6vh}
+  .hero-title{font-size:2rem!important}
+  .hero-vertical{display:none}
+  .hero-intro{font-size:.9rem;line-height:1.95;max-height:none}
+  /* 开卷页：竖排条目横排一行，间距收紧 */
+  .ix-wrap{padding:6vh 24px 8vh;max-width:960px}
+  .ix-head{margin-bottom:3vh}
+  .ix-title{font-size:1.5rem;letter-spacing:.34em}
+  .ix-list{gap:clamp(20px,3.4vw,44px);margin-top:2.5vh}
+  .ix-label{font-size:1.06rem;letter-spacing:.26em}
+  .ix-row{padding:10px 4px}
+  .ix-row[data-sel="1"] .ix-bar{height:20px}
+  .ix-tip{margin-top:3.5vh;font-size:.68rem}
+  /* 顶栏与栏目：横向留白更舒服 */
+  .topbar{padding:9px clamp(16px,4vw,40px)}
+  .nav{gap:20px}
+  .sec{padding-top:34px;padding-bottom:34px}
+  .world-head{min-height:48px}
+  .fav-card{grid-template-columns:auto 1fr;gap:16px}
+  .fav-lead{width:150px;aspect-ratio:3/4}
+}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
