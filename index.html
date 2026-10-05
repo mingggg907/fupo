@@ -1084,6 +1084,11 @@ body.abyss .gold-dust{opacity:.32}
 body.abyss .gate-tap{border-color:rgba(201,163,92,.5);color:var(--gold)}
 @media (max-width:820px){.gate-tap{font-size:.86rem;letter-spacing:.32em;text-indent:.32em;padding:11px 22px;margin-top:28px}}
 @media (prefers-reduced-motion: reduce){.gate-tap{animation:none!important}}
+/* 白底插画在暗色世界里不刺眼：给图片加一层宣纸托底 */
+body.abyss .rich-img img,body.abyss .inline-img{background:var(--paper);padding:5px;border-radius:2px;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+.rich-img img{max-height:78vh;object-fit:contain}
+.fav-desc figure,.fav-desc .rich-img{margin:12px 0}
+.fav-desc img{max-height:300px;width:auto;object-fit:contain;display:block}
 </style>
 </head>
 <body>
@@ -1931,7 +1936,15 @@ function fmt(text){
   return String(text).trim().split(/\n{2,}/).map(p=>{
     const t = p.trim();
     const only = t.match(/^!\[(.*?)\]\((.*?)\)$/);
-    if(only) return `<figure class="rich-img"><img src="${esc(only[2])}" alt="${esc(only[1])}" loading="lazy" decoding="async">${only[1]?`<figcaption>${esc(only[1])}</figcaption>`:''}</figure>`;
+    if(only){
+      /* 文件名式的说明（Screenshot_/微信图片_/xxx.png…）不显示，避免正文里出现乱码般的文件名 */
+      const alt = String(only[1] || '');
+      const looksLikeFile = /\.(png|jpe?g|gif|webp|bmp|heic)$/i.test(alt)
+        || /^(screenshot|img[_-]|image[_-]|photo[_-]|微信图片|截屏|屏幕截图)/i.test(alt)
+        || /^\d{8,}/.test(alt);
+      const cap = (alt && !looksLikeFile) ? `<figcaption>${esc(alt)}</figcaption>` : '';
+      return `<figure class="rich-img"><img src="${esc(only[2])}" alt="${esc(alt)}" loading="lazy" decoding="async">${cap}</figure>`;
+    }
     let html = esc(p);
     html = html.replace(/!\[(.*?)\]\((.*?)\)/g,(m,alt,url)=>`<img src="${url}" alt="${alt}" class="inline-img" loading="lazy" decoding="async">`);
     html = html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
