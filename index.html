@@ -6105,7 +6105,7 @@ function openCharacterEditor(id, isNew){
       </div>
       <div class="field full" data-field="relations"><label>关系（目标:关系名（主|从））</label>
         <input type="text" value="${esc(relText)}" placeholder="c2：主仆（主）">
-        <span class="hint">可用 ID：${otherChars.map(x => `${esc(x.id)}（${esc(x.name)}）`).join('、') || '暂无其他角色'}</span>
+        <span class="hint">只写"我对于他"的关系（系统不会改动其他人的关系）。可用 ID：${otherChars.map(x => `${esc(x.id)}（${esc(x.name)}）`).join('、') || '暂无其他角色'}</span>
       </div>
     </div>`,
     onOk(){
@@ -6133,33 +6133,6 @@ function openCharacterEditor(id, isNew){
         if(/[↓]/.test(l)){ dir = 'down'; l = l.replace(/[↓]/g, '').trim(); }
         return { target: t, label: l || '', dir: dir };
       }).filter(Boolean);
-      /* 双向互联：同步在对方角色身上补一条反向关系（同一关系名） */
-      try{
-        const others = (W().characters || []).filter(x => x.id !== id);
-        /* 先清掉"对方指向我"的旧关系，避免重复与残留 */
-        others.forEach(o => {
-          o.relations = (o.relations || []).filter(r => !r || r.target !== id);
-        });
-        relations.forEach(r => {
-          const other = others.find(o => o.id === r.target);
-          if(other){
-            other.relations = other.relations || [];
-            const rev = (r.dir === 'up') ? 'down' : (r.dir === 'down' ? 'up' : '');
-            other.relations.push({ target: id, label: r.label || '', dir: rev });
-          }
-        });
-      }catch(e){}
-      /* 再把"指向我的"关系也合并进当前角色，保证两边对称 */
-      try{
-        (W().characters || []).forEach(o => {
-          if(o.id === id) return;
-          (o.relations || []).forEach(r => {
-            if(r && r.target === id && r.label && !relations.some(x => x.target === o.id)){
-              relations.push({ target: o.id, label: r.label });
-            }
-          });
-        });
-      }catch(e){}
       const profile = {};
       modalRoot.querySelectorAll('[data-pf]').forEach(el => {
         const k = el.dataset.pf;
