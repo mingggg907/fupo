@@ -3344,7 +3344,7 @@ function sectionsHTML(){
   const isAbyss = realm === 'abyss';
   return `<section class="sec" id="world">
     <div class="sec-head">
-      <h2>${esc(isAbyss ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '妖界'))}</h2>
+      <h2>${esc(isAbyss ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '卷'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-section">+ 新增大分区</button>` : ''}
     </div>
     ${isAbyss
@@ -3431,7 +3431,7 @@ function charactersHTML(){
   const list = charFilter ? all.filter(c => c.status === charFilter || (c.tags || []).includes(charFilter)) : all;
   return `<section class="sec" id="chars">
     <div class="sec-head">
-      <h2>${esc(LBL('chars', '妖众'))}</h2>
+      <h2>${esc(LBL('chars', '名籍'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-character">+ 新增角色</button>` : ''}
     </div>
     ${(facets.length && all.length > 1) ? `<div class="char-filter">
@@ -3459,8 +3459,8 @@ function applyLabels(){
   const exit = document.getElementById('abyss-exit');
   if(exit) exit.textContent = LBL('abyssExitBtn', '退 出 上 古');
   const nav = document.querySelectorAll('.topbar .nav a');
-  const worldLabel = (realm === 'abyss') ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '妖界');
-  const NAV_LABEL = { world: worldLabel, chars: LBL('chars', '妖众'), timeline: LBL('timeline', '纪年'), guest: LBL('guest', '感想'), stories: LBL('stories', '卷帙'), lexicon: LBL('lexicon', '词典') };
+  const worldLabel = (realm === 'abyss') ? LBL('worldAbyss', '上古秘录') : LBL('worldSurface', '卷');
+  const NAV_LABEL = { world: worldLabel, chars: LBL('chars', '名籍'), timeline: LBL('timeline', '年表'), guest: LBL('guest', '题跋'), stories: LBL('stories', '志异'), lexicon: LBL('lexicon', '释名') };
   nav.forEach(a => {
     const key = a.dataset.lk;
     if(key && NAV_LABEL[key]) a.textContent = NAV_LABEL[key];
@@ -3567,7 +3567,7 @@ function lexiconHTML(){
   const rest = Math.max(0, all.length - shown.length);
   return `<section class="sec" id="lexicon">
     <div class="sec-head">
-      <h2>${esc(LBL('lexicon', '词典'))}${all.length ? `<span class="sec-count">${all.length} 条</span>` : ''}</h2>
+      <h2>${esc(LBL('lexicon', '释名'))}${all.length ? `<span class="sec-count">${all.length} 条</span>` : ''}</h2>
       <div class="sec-tools">
         ${all.length ? `<button class="btn small" data-act="open-lexicon">查 看 全 部</button>` : ''}
         ${editMode ? `<button class="btn small" data-act="add-lex">+ 新增词条</button>` : ''}
@@ -3609,7 +3609,7 @@ function openLexiconView(){
   if(!all.length){ toast('还没有词条'); return; }
   lexvLimit = LEXV_STEP;
   showModal({
-    title: esc(LBL('lexicon', '词典')) + ' · 全 部 词 条', wide: true, hideFooter: true,
+    title: esc(LBL('lexicon', '释名')) + ' · 全 部 词 条', wide: true, hideFooter: true,
     body: `<div class="lexv">
       <div class="lexv-top">
         <input type="text" id="lexv-q" class="lex-input" placeholder="找词条…（也可用下方索引翻）" value="${esc(lexvQuery)}">
@@ -4013,7 +4013,7 @@ function guestHTML(){
   /* 尚未确认留言表可用时，访客不显示（编辑者可以看到建表提示） */
   if(guestState.ok !== true && !editMode) return '';
   return `<section class="sec" id="guest">
-    <div class="sec-head"><h2>${esc(LBL('guest', '感想'))}</h2></div>
+    <div class="sec-head"><h2>${esc(LBL('guest', '题跋'))}</h2></div>
     <div id="guest-body">${guestInnerHTML()}</div>
   </section>`;
 }
@@ -4430,7 +4430,7 @@ function timelineHTML(){
   if(!editMode && !list.length) return '';
   return `<section class="sec" id="timeline">
     <div class="sec-head">
-      <h2>${esc(LBL('timeline', '纪年'))}</h2>
+      <h2>${esc(LBL('timeline', '年表'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-timeline">+ 新增事件</button>` : ''}
     </div>
     <div class="tl">
@@ -4467,7 +4467,7 @@ function storiesHTML(){
   const list = storyKindFilter ? all.filter(s => (s.kind || 'setting') === storyKindFilter) : all;
   return `<section class="sec" id="stories">
     <div class="sec-head">
-      <h2>${esc(LBL('stories', '卷帙'))}</h2>
+      <h2>${esc(LBL('stories', '志异'))}</h2>
       ${editMode ? `<button class="btn small" data-act="add-story">+ 新增故事</button>` : ''}
     </div>
     ${(kinds.length > 1) ? `<div class="story-tabs">
@@ -5605,11 +5605,11 @@ function openMetaEditor(){
     <div class="form">
       <div class="field" data-field="lb_mark"><label>上古顶部小字</label><input type="text" value="${esc(L.abyssMark || '')}" placeholder="上 古 之 力"></div>
       <div class="field" data-field="lb_exit"><label>顶栏退出按钮</label><input type="text" value="${esc(L.abyssExitBtn || '')}" placeholder="退 出 上 古"></div>
-      <div class="field" data-field="lb_world"><label>本界栏目名（${isAb ? '上古' : '表层'}）</label><input type="text" value="${esc(worldLabel)}" placeholder="${isAb ? '上古秘录' : '妖界'}"></div>
-      <div class="field" data-field="lb_chars"><label>妖众栏目名</label><input type="text" value="${esc(L.chars || '')}" placeholder="妖众"></div>
-      <div class="field" data-field="lb_timeline"><label>纪年栏目名</label><input type="text" value="${esc(L.timeline || '')}" placeholder="纪年"></div>
-      <div class="field" data-field="lb_stories"><label>卷帙栏目名</label><input type="text" value="${esc(L.stories || '')}" placeholder="卷帙"></div>
-      <div class="field" data-field="lb_lexicon"><label>词典栏目名</label><input type="text" value="${esc(L.lexicon || '')}" placeholder="词典"></div>
+      <div class="field" data-field="lb_world"><label>本界栏目名（${isAb ? '上古' : '表层'}）</label><input type="text" value="${esc(worldLabel)}" placeholder="${isAb ? '上古秘录' : '卷'}"></div>
+      <div class="field" data-field="lb_chars"><label>名籍栏目名（原妖众）</label><input type="text" value="${esc(L.chars || '')}" placeholder="名籍"></div>
+      <div class="field" data-field="lb_timeline"><label>年表栏目名（原纪年）</label><input type="text" value="${esc(L.timeline || '')}" placeholder="年表"></div>
+      <div class="field" data-field="lb_stories"><label>志异栏目名（原卷帙）</label><input type="text" value="${esc(L.stories || '')}" placeholder="志异"></div>
+      <div class="field" data-field="lb_lexicon"><label>释名栏目名（原词典）</label><input type="text" value="${esc(L.lexicon || '')}" placeholder="释名"></div>
     </div>`;
   })();
   showModal({
@@ -6765,12 +6765,12 @@ function setRealm(r, origin, keepPos){
 /* ============ 墨水晕染过场 + 开卷索引 ============ */
 /* ============ 开卷索引 v2 ============ */
 var INDEX_ITEMS = [
-  { id:'world',    label:'卷',   sub:'世界观 · 地理 · 规则' },
-  { id:'chars',    label:'名籍', sub:'人物角色与关系' },
-  { id:'timeline', label:'年表', sub:'事件与时间线' },
-  { id:'stories',  label:'志异', sub:'已成篇的故事' },
-  { id:'lexicon',  label:'释名', sub:'专有名词速查' },
-  { id:'guest',    label:'题跋', sub:'留言与批注' }
+  { id:'world',    key:'worldSurface', label:'卷',   sub:'世界观 · 地理 · 规则' },
+  { id:'chars',    key:'chars',        label:'名籍', sub:'人物角色与关系' },
+  { id:'timeline', key:'timeline',     label:'年表', sub:'事件与时间线' },
+  { id:'stories',  key:'stories',      label:'志异', sub:'已成篇的故事' },
+  { id:'lexicon',  key:'lexicon',      label:'释名', sub:'专有名词速查' },
+  { id:'guest',    key:'guest',        label:'题跋', sub:'留言与批注' }
 ];
 function indexAlive(){
   return INDEX_ITEMS.filter(function(it){
@@ -6813,7 +6813,7 @@ function openIndex(fromEl, instant){
   items.forEach(function(it){
     html += '<button class="ix-row" data-ix="' + it.id + '" data-sel="' + (ixSel === it.id ? '1' : '0') + '" type="button">' +
       '<span class="ix-dot"></span><span class="ix-bar"></span>' +
-      '<span class="ix-text"><span class="ix-label">' + it.label + '</span><span class="ix-sub">' + it.sub + '</span></span>' +
+      '<span class="ix-text"><span class="ix-label">' + (it.key ? LBL(it.key, it.label) : it.label) + '</span><span class="ix-sub">' + it.sub + '</span></span>' +
       '<span class="ix-arrow">进 入 ›</span></button>';
   });
   html += '</div><p class="ix-tip">轻点选中 · 再点一次进入</p></div>';
@@ -7599,11 +7599,11 @@ function buildToc(){
     const t = w.querySelector('.world-title');
     if(t) items.push({ el: w, label: t.textContent.trim().slice(0, 10) });
   });
-  push('#chars', LBL('chars', '妖众'));
-  push('#timeline', LBL('timeline', '纪年'));
-  push('#guest', LBL('guest', '感想'));
-  push('#stories', LBL('stories', '卷帙'));
-  push('#lexicon', LBL('lexicon', '词典'));
+  push('#chars', LBL('chars', '名籍'));
+  push('#timeline', LBL('timeline', '年表'));
+  push('#guest', LBL('guest', '题跋'));
+  push('#stories', LBL('stories', '志异'));
+  push('#lexicon', LBL('lexicon', '释名'));
   push('#changelog', '更新');
   push('#site-notice', '声明');
   if(items.length < 3){ if(toc) toc.remove(); return; }
