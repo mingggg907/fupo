@@ -1299,6 +1299,22 @@ body.abyss .ix-row[data-sel="1"] .ix-dot{background:var(--gold)}
   .fav-card{grid-template-columns:auto 1fr;gap:16px}
   .fav-lead{width:150px;aspect-ratio:3/4}
 }
+/* ===== 开卷页注解与动画修复 ===== */
+.ix-sub{display:block!important;opacity:0;max-height:0;overflow:hidden;margin-top:0;
+  font-size:.7rem;letter-spacing:.1em;color:var(--ink-3);text-align:center;line-height:1.7;transition:.4s var(--ease)}
+.ix-row[data-sel="1"] .ix-sub{opacity:1;max-height:64px;margin-top:8px}
+.ix-arrow{display:block!important;opacity:0;transform:translateY(-4px);transition:.35s var(--ease);
+  font-family:var(--serif);font-size:.66rem;letter-spacing:.14em;color:var(--cinnabar);white-space:nowrap}
+.ix-row[data-sel="1"] .ix-arrow{opacity:1;transform:none}
+body.abyss .ix-arrow{color:var(--gold)}
+.ix-row .ix-dot{animation:ixDot 3.4s ease-in-out infinite}
+@keyframes ixDot{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.25);opacity:.85}}
+.ix-row[data-sel="1"] .ix-dot{animation:none}
+.gate-note{animation:softUp 1s .9s var(--ease-out) both}
+@media (max-width:820px){
+  .ix-sub{font-size:.66rem}
+  .ix-row[data-sel="1"] .ix-sub{max-height:80px}
+}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -6705,12 +6721,12 @@ function renderGate(){
     <div class="gate-mount" aria-hidden="true"></div>
     <div class="gate-inner">
       <picture class="gate-logo-pic"><source type="image/webp" media="(min-width:821px)" srcset="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp"><source type="image/webp" srcset="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp"><img class="gate-logo" width="440" height="786" decoding="async" fetchpriority="high" src="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.png" alt="${esc(g.title || state.meta.title || '浮魄')}"></picture>
-      <p class="gate-brand">${esc(g.title || state.meta.title || '浮魄')}</p>
       ${g.sub ? `<p class="gate-sub">${esc(g.sub)}</p>` : ''}
-      <h1 class="gate-title" style="display:none">${esc(g.title || state.meta.title || '浮魄').split('').map((ch2, i) => `<span class="g-char" style="animation-delay:${(0.18 + i * 0.16).toFixed(2)}s">${esc(ch2)}</span>`).join('')}</h1>
+      <h1 class="gate-title">${esc(g.title || state.meta.title || '浮魄').split('').map((ch2, i) => `<span class="g-char" style="animation-delay:${(0.18 + i * 0.16).toFixed(2)}s">${esc(ch2)}</span>`).join('')}</h1>
       <div class="gate-rule"></div>
       ${g.tip ? `<p class="gate-tip">${esc(g.tip)}</p>` : ''}
       <p class="gate-tap">${esc(g.btn && g.btn !== '入 界' ? g.btn : '轻 触 入 界')}</p>
+      ${g.note ? `<p class="gate-note">${esc(g.note)}</p>` : '<p class="gate-note">点击进入，音乐随之响起</p>'}
       <button class="gate-btn" id="gate-btn" style="display:none">${esc(g.btn || '入 界')}</button>
       ${g.note ? `<p class="gate-note">${esc(g.note)}</p>` : ''}
     </div>`;
