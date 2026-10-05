@@ -7115,6 +7115,21 @@ document.addEventListener('click', function(e){
   setTimeout(fix, 60); setTimeout(fix, 260); setTimeout(fix, 620);
 }, true);
 
+/* ===== 退出编辑/切换编辑：锁住滚动位置（重渲染不再乱滑） ===== */
+(function(){
+  function lockScroll(y){
+    var fix = function(){ try{ if(Math.abs((window.scrollY||0) - y) > 4) window.scrollTo(0, y); }catch(e){} };
+    setTimeout(fix, 60); setTimeout(fix, 200); setTimeout(fix, 480); setTimeout(fix, 900);
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if(!t || !t.closest) return;
+    var btn = t.closest('[data-action="edit"],[data-act="exit-edit"],[data-act="toggle-edit"],[data-action="exit-edit"],#edit-exit,#edit-done');
+    if(!btn) return;
+    lockScroll(window.scrollY || 0);
+  }, true);
+})();
+
 /* ============================================================
    启动
    ============================================================ */
