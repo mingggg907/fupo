@@ -51,6 +51,55 @@ body.abyss .entry-content>p:first-of-type::first-letter{color:var(--gold-2,#c9a3
 .sec-head{position:relative;padding-bottom:14px}
 .sec-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--line) 18%,var(--line) 82%,transparent)}
 .sec-head::before{content:"❖";position:absolute;left:50%;bottom:-.45em;transform:translateX(-50%);font-size:.5rem;color:var(--gold);opacity:.5;background:var(--paper);padding:0 6px;line-height:1}
+/* ===== 手机优先校准：手机是主要人群，动效与纹理一律让位于流畅 ===== */
+@media (max-width:820px){
+  body{background-image:none}                                  /* 纸纹只在电脑端（手机上整页渐变会拖慢滚动） */
+  .entry-content>p:first-of-type::first-letter{font-size:2.15em;margin:.04em .1em 0 0}
+  .world-title::before{font-size:.66em;letter-spacing:.06em}
+  .entry-title::before{font-size:.72em;margin-right:.3em}
+  .sec-head{padding-bottom:11px}
+  .sec-head::before{font-size:.42rem}
+  .fav-card{padding:15px 13px}
+  .reader{padding:0 2px}
+  .reader .entry-content,.sr-body{line-height:2.05;font-size:.9rem}
+}
+/* ===== 第二批：珍藏柜展柜 / 卷帙书页 / 上古星点 / 电脑端动效 ===== */
+/* 珍藏柜：主图当"立绘"，名字竖排在右侧（手机上也好看） */
+.fav-card{display:grid;grid-template-columns:auto 1fr;gap:18px}
+.fav-lead{grid-column:1;width:168px;aspect-ratio:3/4;border:1px solid var(--line-2);border-radius:2px;overflow:hidden;cursor:zoom-in;position:relative;background:rgba(0,0,0,.04)}
+.fav-lead img{width:100%;height:100%;object-fit:cover;display:block}
+.fav-lead::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(160,134,80,.25),inset 0 0 26px rgba(31,36,32,.18);pointer-events:none}
+.fav-side{grid-column:2;min-width:0}
+.fav-vname{font-family:var(--serif);font-size:1.06rem;letter-spacing:.32em;color:var(--ink);writing-mode:vertical-rl;text-orientation:upright;line-height:1.15;margin:0 0 0 auto;padding:6px 4px 6px 10px;border-right:2px solid var(--gold);max-height:200px}
+.fav-imgs{margin-top:12px}
+@media (max-width:640px){
+  .fav-card{grid-template-columns:1fr;gap:12px}
+  .fav-lead{width:100%;aspect-ratio:4/3;grid-column:1}
+  .fav-side{grid-column:1}
+  .fav-vname{writing-mode:horizontal-tb;border-right:0;border-left:3px solid var(--gold);padding:2px 0 2px 10px;margin:0;letter-spacing:.2em;max-height:none}
+}
+/* 卷帙 / 词典阅读页：书页感 */
+.reader{max-width:720px;margin:0 auto;padding:6px 12px}
+.reader .entry-content,.sr-body{font-family:var(--serif);line-height:2.25;letter-spacing:.02em}
+.reader .sr-chapter-no{font-family:var(--serif);font-size:.7rem;letter-spacing:.4em;color:var(--gold);text-align:center;display:block;margin:2px 0 18px;text-indent:.4em}
+.reader .sr-chapter-no::before,.reader .sr-chapter-no::after{content:"—— ";opacity:.5}
+.reader .sr-chapter-no::after{content:" ——"}
+/* 上古：冷青黑 + 幽蓝星点（仅电脑端画星点，手机保流畅） */
+body.abyss{--paper:#07080a;--paper-2:#0b0d10;--paper-3:#111418;--ink:#dfe4e2;--ink-2:#9aa4a2;--ink-3:#6d7877;--line:rgba(200,215,215,.16);--line-2:rgba(200,215,215,.07);--cinnabar:#c0603f;--gold:#c9a35c;--gold-2:#c9a35c;--jade:#4d7f76}
+@media (min-width:821px) and (prefers-reduced-motion: no-preference){
+  body.abyss::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:radial-gradient(1.2px 1.2px at 20% 30%,rgba(180,220,230,.5),transparent),radial-gradient(1px 1px at 70% 65%,rgba(150,200,215,.4),transparent),radial-gradient(1.4px 1.4px at 45% 85%,rgba(200,230,235,.32),transparent),radial-gradient(1px 1px at 85% 15%,rgba(160,205,220,.4),transparent);
+    background-size:520px 520px,380px 380px,660px 660px,300px 300px}
+}
+/* 电脑端：滚动淡入 + 悬停细节（手机端完全不动） */
+@media (min-width:821px) and (prefers-reduced-motion: no-preference){
+  .card-in{opacity:0;transform:translateY(14px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+  .card-in.shown{opacity:1;transform:none}
+  .world-item,.char-card,.story-item,.lex-item,.fav-card{transition:border-color .35s var(--ease),transform .35s var(--ease),box-shadow .35s var(--ease)}
+  .char-card:hover,.story-item:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(31,36,32,.07)}
+  .fav-card:hover{box-shadow:0 12px 30px rgba(31,36,32,.08)}
+  .entry:hover .entry-title{letter-spacing:.2em}
+}
 body.abyss{--paper:#0a0b0d;--paper-2:#111318;--paper-3:#181b21;--ink:#d8d8d0;--ink-2:#9a9a92;--ink-3:#6b6b65;--cinnabar:#c94a3a;--cinnabar-2:#e05a48;--gold:#c9a35c;--jade:#7ba99a;--line:rgba(216,216,208,.16);--line-2:rgba(216,216,208,.07);color-scheme:dark}
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:80px;-webkit-text-size-adjust:100%;background:#ecece6;background:var(--paper,#ecece6);color-scheme:light;forced-color-adjust:none}
@@ -3358,15 +3407,17 @@ function favHTML(){
     <div class="fav-card">
       <div class="fav-label">珍 藏</div>
       ${editMode ? `<button class="fav-link" id="fav-edit" type="button" style="position:absolute;top:10px;right:12px">编 辑</button>` : ''}
-      ${imgs.length ? `<div class="fav-imgs">
-        ${imgs.map((u, i) => `<div class="fav-img" data-act="fav-img" data-src="${esc(u)}"><img src="${esc(u)}" alt="${esc(f.name || '珍藏')}" loading="lazy" decoding="async"></div>`).join('')}
-      </div>` : ''}
-      <div class="fav-body">
-        ${f.name ? `<h3 class="fav-name">${esc(f.name)}${c ? `<button class="fav-link" data-act="fav-char" data-id="${esc(c.id)}" type="button">查看角色页</button>` : ''}</h3>` : ''}
-        ${f.title ? `<p class="fav-title">${esc(f.title)}</p>` : ''}
-        ${f.desc ? `<div class="fav-desc">${linkTerms(fmt(f.desc))}</div>` : ''}
-        ${f.note ? `<p class="fav-note">${esc(f.note)}</p>` : ''}
-        <button class="fav-say" id="fav-say" type="button">为 TA 留 一 句</button>
+      ${imgs.length ? `<div class="fav-lead" data-act="fav-img" data-src="${esc(imgs[0])}"><img src="${esc(imgs[0])}" alt="${esc(f.name || '珍藏')}" loading="lazy" decoding="async"></div>` : ''}
+      <div class="fav-side">
+        ${f.name ? `<div class="fav-vname">${esc(f.name)}</div>` : ''}
+        ${imgs.length > 1 ? `<div class="fav-imgs">${imgs.slice(1, 5).map(u => `<div class="fav-img" data-act="fav-img" data-src="${esc(u)}"><img src="${esc(u)}" alt="" loading="lazy" decoding="async"></div>`).join('')}</div>` : ''}
+        <div class="fav-body">
+          ${f.title ? `<p class="fav-title">${esc(f.title)}</p>` : ''}
+          ${c ? `<button class="fav-link" data-act="fav-char" data-id="${esc(c.id)}" type="button">查看角色页</button>` : ''}
+          ${f.desc ? `<div class="fav-desc">${linkTerms(fmt(f.desc))}</div>` : ''}
+          ${f.note ? `<p class="fav-note">${esc(f.note)}</p>` : ''}
+          <button class="fav-say" id="fav-say" type="button">为 TA 留 一 句</button>
+        </div>
       </div>
     </div>
   </section>`;
