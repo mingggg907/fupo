@@ -7225,16 +7225,30 @@ function askCorpus(){
   }catch(e){}
   return out;
 }
+function askTokens(q){
+  var t = String(q || '').replace(/[？?。，,、！!；;：:\s"'（）()【】\[\]《》·「」]+/g, ' ').trim();
+  var toks = [];
+  t.split(' ').filter(Boolean).forEach(function(seg){
+    if(/^[A-Za-z0-9]+$/.test(seg)){ if(seg.length >= 2) toks.push(seg.toLowerCase()); return; }
+    for(var i = 0; i < seg.length - 1; i++) toks.push(seg.substr(i, 2));   /* 中文取二元组 */
+    if(seg.length === 1) toks.push(seg);
+  });
+  return toks;
+}
 function askSearch(q){
-  var kw = String(q || '').replace(/[？?。，,、\s]+/g, ' ').trim().split(' ').filter(function(w){ return w.length >= 2; });
-  if(!kw.length) return [];
+  var toks = askTokens(q);
+  if(!toks.length) return [];
   var corpus = askCorpus(), scored = [];
   corpus.forEach(function(c){
-    var hay = (c.title + ' ' + c.text).toLowerCase(), sc = 0;
-    kw.forEach(function(w){ if(hay.indexOf(w.toLowerCase()) >= 0) sc += (c.title.toLowerCase().indexOf(w.toLowerCase()) >= 0 ? 3 : 1); });
-    if(sc > 0) scored.push({ c: c, sc: sc });
+    var title = String(c.title || '').toLowerCase();
+    var hay = (title + ' ' + String(c.text || '')).toLowerCase();
+    var sc = 0, hit = 0;
+    toks.forEach(function(w){
+      if(hay.indexOf(w) >= 0){ sc += (title.indexOf(w) >= 0 ? 3 : 1); hit++; }
+    });
+    if(hit > 0) scored.push({ c: c, sc: sc + hit, hit: hit });
   });
-  scored.sort(function(a, b){ return b.sc - a.sc; });
+  scored.sort(function(a, b){ return (b.sc - a.sc) || (b.hit - a.hit); });
   return scored.slice(0, 4).map(function(x){ return x.c; });
 }
 async function askSubmit(q){
