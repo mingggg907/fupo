@@ -4769,7 +4769,12 @@ function openCopyright(){
     </div>`,
   });
   document.getElementById('cr-save').addEventListener('click', () => {
-    const v = document.getElementById('cr-text').value.trim();
+      /* 全局 AI 私记保存 */
+  (function(){
+    var ta = modalRoot.querySelector('[data-field="aiNotes"] textarea');
+    if(ta){ state.meta.aiNotes = ta.value || ''; }
+  })();
+const v = document.getElementById('cr-text').value.trim();
     state.meta.copyright.text = (v === defaultNoticeLines().join('\n').trim()) ? '' : v;
     _doSave(); closeModal(true); renderAll(); toast('版权声明已保存');
   });
@@ -5982,6 +5987,10 @@ function openMetaEditor(){
     return `
     <p style="font-family:var(--serif);font-size:.82rem;letter-spacing:.3em;color:var(--gold);margin:24px 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line);text-indent:.3em">界 面 文 字（两界共用；栏目名同时用于顶部导航）</p>
     <div class="form">
+      <div class="field full" data-field="aiNotes"><label>AI 私记（全局 · 只喂给速查，页面不显示）</label>
+        <textarea rows="4" placeholder="写给 AI 的补充设定 / 纠正 / 隐藏信息，例如：戮爻是浊日与噬月的主人；两人皆为从属。">${esc((state.meta && state.meta.aiNotes) || '')}</textarea>
+        <span class="hint">此段只用于速查回答，访客在任何页面都看不到 ✅</span>
+      </div>
       <div class="field" data-field="lb_mark"><label>上古顶部小字</label><input type="text" value="${esc(L.abyssMark || '')}" placeholder="上 古 之 力"></div>
       <div class="field" data-field="lb_exit"><label>顶栏退出按钮</label><input type="text" value="${esc(L.abyssExitBtn || '')}" placeholder="退 出 上 古"></div>
       <div class="field" data-field="lb_world"><label>本界栏目名（${isAb ? '上古' : '表层'}）</label><input type="text" value="${esc(worldLabel)}" placeholder="${isAb ? '上古秘录' : '卷'}"></div>
@@ -6099,13 +6108,9 @@ function openCharacterEditor(id, isNew){
         <div style="margin-top:10px"><button class="btn small" type="button" id="gal-add">+ 添加一张</button></div>
       </div>
       <div class="field full" data-field="quotes"><label>语录（每行一句）</label><textarea rows="4">${esc((c.quotes||[]).join('\n'))}</textarea></div>
-      <div class="field full" data-field="aiNote"><label>AI 私记（只喂给速查，不在页面显示）</label>
-        <textarea rows="3" placeholder="例：戮爻是浊日与噬月的主人；他其实早已…（此段仅 AI 可见）">${esc(c.aiNote || '')}</textarea>
-        <span class="hint">这里写的内容访客看不到，但速查回答时会读到 ✅</span>
-      </div>
-      <div class="field full" data-field="relations"><label>关系（目标:关系名（主|从））</label>
-        <input type="text" value="${esc(relText)}" placeholder="c2：主仆（主）">
-        <span class="hint">只写"我对于他"的关系（系统不会改动其他人的关系）。可用 ID：${otherChars.map(x => `${esc(x.id)}（${esc(x.name)}）`).join('、') || '暂无其他角色'}</span>
+      <div class="field full" data-field="relations"><label>关系（目标：他是我的什么）</label>
+        <input type="text" value="${esc(relText)}" placeholder="戮爻：主人">
+        <span class="hint">格式「目标：他是我的什么」，例：戮爻：主人（= 戮爻是我主人，箭头指向他）。系统不会改动其他人的关系。可用 ID：${otherChars.map(x => `${esc(x.id)}（${esc(x.name)}）`).join('、') || '暂无其他角色'}</span>
       </div>
     </div>`,
     onOk(){
@@ -6151,8 +6156,7 @@ function openCharacterEditor(id, isNew){
         profile, gallery, quotes,
         avatar: get('avatar'),
         desc: modalRoot.querySelector('[data-field="desc"] textarea').value.trim(),
-        relations,
-        aiNote: (modalRoot.querySelector('[data-field="aiNote"] textarea') || {}).value || ''
+        relations
       };
       if(isNew) list.push({ id: uid(), ...data });
       else Object.assign(c, data);
