@@ -6982,7 +6982,8 @@ function openRealmTools(){
           <input type="text" id="rt-fav-title" placeholder="一句话（如：本命 · 白狐）" value="${esc(((state.meta.fav||{}).title)||'')}" style="flex:2;min-width:180px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:6px 9px;font-family:var(--serif)">
         </div>
         <textarea id="rt-fav-desc" rows="3" placeholder="想说的话 / 介绍（支持 **加粗**，会自动关联词典词条与角色名）" style="width:100%;margin-top:10px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:9px;font-family:var(--serif);font-size:.88rem;line-height:1.9;resize:vertical">${esc(((state.meta.fav||{}).desc)||'')}</textarea>
-        <textarea id="rt-fav-imgs" rows="3" placeholder="图片链接，每行一个（先在别处上传好再粘链接，或直接粘贴图片会自动上云）" style="width:100%;margin-top:8px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:9px;font-family:var(--sans);font-size:.78rem;line-height:1.8;resize:vertical">${esc((((state.meta.fav||{}).images)||[]).join('\n'))}</textarea>
+        <span class="hint" style="color:var(--cinnabar)">图片请填在下面的「图片链接」栏（每行一个）；不要贴进上面的「介绍」框，否则会渲染成整屏大图。</span>
+        <textarea id="rt-fav-imgs" rows="3" placeholder="图片链接，每行一个 —— 第一张作为展柜主图（竖版 3:4 最好看），其余作为小图" style="width:100%;margin-top:8px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:9px;font-family:var(--sans);font-size:.78rem;line-height:1.8;resize:vertical">${esc((((state.meta.fav||{}).images)||[]).join('\n'))}</textarea>
         <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
           <input type="text" id="rt-fav-note" placeholder="小注（可留空）" value="${esc(((state.meta.fav||{}).note)||'')}" style="flex:1;min-width:160px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;padding:6px 9px;font-family:var(--serif)">
           <button class="btn small" id="rt-fav-save" type="button">保 存 珍 藏 柜</button>
