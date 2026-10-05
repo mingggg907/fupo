@@ -6771,7 +6771,7 @@ function renderGate(){
       <div class="gate-rule"></div>
       ${g.tip ? `<p class="gate-tip">${esc(g.tip)}</p>` : ''}
       <p class="gate-tap">${esc(g.btn && g.btn !== '入 界' ? g.btn : '轻 触 入 界')}</p>
-      ${g.note ? `<p class="gate-note">${esc(g.note)}</p>` : '<p class="gate-note">点击进入，音乐随之响起</p>'}
+      
       <button class="gate-btn" id="gate-btn" style="display:none">${esc(g.btn || '入 界')}</button>
       ${g.note ? `<p class="gate-note">${esc(g.note)}</p>` : ''}
     </div>`;
