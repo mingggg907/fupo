@@ -1765,10 +1765,12 @@ document.addEventListener('keydown', e => {
    状态管理（含旧数据自动迁移到「表层/上古」独立结构）
    ============================================================ */
 function normMusic(m){
-  const r = { volume: (m && typeof m === 'object' && typeof m.volume === 'number') ? m.volume : 60, cur: 0, tracks: [] };
+  const r = { volume: (m && typeof m === 'object' && typeof m.volume === 'number') ? m.volume : 60, cur: 0, tracks: [], mode: 'order' };
+  if(m && typeof m === 'object' && ['loop','order','shuffle'].indexOf(m.mode) >= 0) r.mode = m.mode;
   if(m && typeof m === 'object'){
     if(Array.isArray(m.tracks)){
       r.volume = (typeof m.volume === 'number') ? m.volume : r.volume;
+      r.mode = ['loop','order','shuffle'].indexOf(m.mode) >= 0 ? m.mode : r.mode;
       r.cur = Math.max(0, Math.min(Number(m.cur) || 0, Math.max(m.tracks.length - 1, 0)));
       r.tracks = m.tracks.filter(t => t && typeof t === 'object' && (t.url || t.localId)).map((t, i) => ({ id: t.id || ('t' + i), type: t.type || (t.localId ? 'local' : 'url'), url: t.url || '', localId: t.localId || '', title: t.title || '' }));
     }else if(m.url || m.localId){
@@ -2171,7 +2173,19 @@ function selectTrack(i, autoplay){
   if(autoplay) musicIntent = true;
   loadMusic().then(() => { if(autoplay) audioEl.play().catch(()=>{}); });
 }
-function playNext(){ const list = tracks(); if(list.length) selectTrack((curTrack + 1) % list.length, true); }
+function playNext(){
+  const list = tracks();
+  if(!list.length) return;
+  const mode = (musicCfg() || {}).mode || 'order';   /* 循环单曲 / 顺序 / 随机 */
+  if(mode === 'loop'){ try{ audioEl.currentTime = 0; audioEl.play().catch(()=>{}); }catch(e){} return; }
+  if(mode === 'shuffle' && list.length > 1 && audioEl){
+    let n = curTrack;
+    for(let i = 0; i < 8 && n === curTrack; i++) n = Math.floor(Math.random() * list.length);
+    selectTrack(n, true);
+    return;
+  }
+  selectTrack((curTrack + 1) % list.length, true);
+}
 function playPrev(){ const list = tracks(); if(list.length) selectTrack((curTrack - 1 + list.length) % list.length, true); }
 audioEl.addEventListener('ended', playNext);
 
@@ -2293,6 +2307,12 @@ function openMusicEditor(idx){
     <div class="form">
       <div class="field full" data-field="title"><label>音乐标题</label><input type="text" value="${esc(tempMusic.title)}" placeholder="如：云津夜雨"></div>
       <div class="field full"><label>方式一 · 粘贴音频链接</label><input type="url" id="music-url-input" value="${esc(tempMusic.url)}" placeholder="https://...mp3"><span class="hint">支持 http/https 直链。推荐 mp3 / ogg / m4a 格式。</span></div>
+      <div class="field full"><label>播放方式</label>
+        <div class="chips">
+          ${[['order','顺 序 播 放'],['loop','单 曲 循 环'],['shuffle','随 机 播 放']].map(([v, t]) => `<button class="chip${((musicCfg()||{}).mode || 'order') === v ? ' on' : ''}" data-music-mode="${v}" type="button">${t}</button>`).join('')}
+        </div>
+        <span class="hint">这是你对访客的默认设置：别人打开网站时按这个方式播放；他们自己也能在音乐面板里临时切换。</span>
+      </div>
       <div class="field full"><label>方式二 · 上传本地音频</label><label class="upload-btn">选择音频文件<input type="file" id="music-file-input" accept="audio/*"></label><span class="hint">登录云同步后上传的音频会存进云端，<b>手机、电脑、访客都能听</b>；未登录时只存在本机。建议单曲小于 20MB。</span></div>
       <div class="field full"><label>当前选择</label><div class="music-preview" id="music-preview"><span class="p-dot"></span><span class="p-name" id="music-preview-name">未选择音乐</span><button type="button" class="btn small ghost" id="music-preview-btn">试听</button></div></div>
     </div>`,
@@ -4784,6 +4804,15 @@ app.addEventListener('click', e => {
   if(e.target.closest && e.target.closest('#lex-more-btn')){ lexLimit += LEX_STEP; renderLexList(); return; }
   /* 关系图导出 */
   if(e.target.closest && e.target.closest('#graph-export')){ exportRelationGraph(); return; }
+  if(e.target.closest && e.target.closest('[data-music-mode]')){
+    const mode = e.target.closest('[data-music-mode]').dataset.musicMode;
+    const cfg = realm === 'abyss' ? (state.meta.abyssMusic = state.meta.abyssMusic || normMusic(null)) : (state.meta.music = state.meta.music || normMusic(null));
+    cfg.mode = mode;
+    document.querySelectorAll('[data-music-mode]').forEach(b => b.classList.toggle('on', b.dataset.musicMode === mode));
+    try{ _doSave(); }catch(e2){}
+    toast(mode === 'loop' ? '已设为单曲循环' : (mode === 'shuffle' ? '已设为随机播放' : '已设为顺序播放'));
+    return;
+  }
   const gfb = e.target.closest && e.target.closest('[data-act="graph-full"]');
   if(gfb){ openGraphFull(); return; }
   const fch = e.target.closest && e.target.closest('[data-act="fav-char"]');
