@@ -6894,10 +6894,12 @@ var INDEX_ITEMS = [
   { id:'timeline', key:'timeline',     label:'年表', sub:'事件与时间线' },
   { id:'stories',  key:'stories',      label:'志异', sub:'已成篇的故事' },
   { id:'lexicon',  key:'lexicon',      label:'释名', sub:'专有名词速查' },
-  { id:'guest',    key:'guest',        label:'题跋', sub:'留言与批注' }
+  { id:'guest',    key:'guest',        label:'题跋', sub:'留言与批注' },
+  { id:'colophon', key:'colophon',     label:'牌记', sub:'版权 · 来源 · 使用' }
 ];
 function indexAlive(){
   return INDEX_ITEMS.filter(function(it){
+    if(it.id === 'colophon') return true;
     if(it.id === 'world') return !!document.querySelector('.world-item');
     return !!document.getElementById(it.id);
   });
@@ -6911,7 +6913,35 @@ function ixEnter(id, fromEl){
     function(){ document.getElementById('index').classList.remove('on'); },
     function(){ focusSection(id); });
 }
+function openCopyrightPanel(){
+  var m = state.meta || {};
+  var base = (m.copyright && m.copyright.text) ? m.copyright.text : '';
+  var extra = [
+    '一、本站性质：个人创作的世界观展示站点，内容用于作品展示与交流，不进行商业经营。',
+    '二、插画：大部分为作者本人绘制，另有部分为作者委托他人创作（约稿）的作品。',
+    '三、文字与设定：世界观、设定、故事、词典释义等文字内容均为作者原创。',
+    '四、音乐：为作者自选曲目与委托创作作品并用，仅用于本站试听与氛围呈现。',
+    '五、权利归属：上述原创作品与约稿作品的相关权利，分别归作者本人及各原作者所有，均受著作权法保护。',
+    '六、使用限制：站内全部插画与音乐（含约稿作品）仅用于本站展示；未经作者及相关权利人许可，请勿保存、下载、转载或用于任何商业用途。',
+    '七、引用与二创：欢迎基于本站设定进行交流与创作，请注明出处，并避免直接使用站内图像与音乐。',
+    '八、联系与勘误：如对内容有疑问或发现错误，欢迎通过站内题跋留言告知。'
+  ].join('\n');
+  showModal({ title: '牌 记', hideFooter: true, wide: true,
+    body: '<div class="reader" style="max-width:720px"><div class="entry-content" style="line-height:2.15">'
+      + (base ? '<p>' + esc(base) + '</p>' : '')
+      + '<p>' + esc(extra) + '</p>'
+      + (m.author ? '<p style="text-align:right;opacity:.8">—— ' + esc(m.author) + '</p>' : '')
+      + '</div></div>' });
+}
 function focusSection(id){
+  if(id === 'colophon'){
+    var box0 = document.getElementById('index');
+    if(box0) box0.classList.remove('on');
+    var fb0 = document.getElementById('focus-back'); if(fb0) fb0.classList.remove('show');
+    document.body.style.overflow = '';
+    try{ openCopyright(); }catch(e){ try{ openCopyrightPanel(); }catch(e2){} }
+    return;
+  }
   var target = (id === 'world') ? document.querySelector('.world-item') : document.getElementById(id);
   if(!target){ toast('这个分区还没有内容'); return; }
   var box = document.getElementById('index');
