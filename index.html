@@ -1390,6 +1390,19 @@ body.abyss .ix-arrow{color:var(--gold)}
 #colophon-btn:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
 body.abyss #colophon-btn{color:var(--gold);border-color:rgba(201,163,92,.4)}
 @media (max-width:820px){#colophon-btn{font-size:.72rem;padding:4px 9px;letter-spacing:.16em}}
+/* ===== 门帘 logo（回退后补回） ===== */
+.gate-logo-pic{display:block;width:min(56vw,320px);margin:0 auto 6px}
+.gate-logo{display:block;width:100%;height:auto;max-height:32vh;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(31,36,32,.10));animation:logoIn 1.25s var(--ease-out) both}
+@keyframes logoIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@media (max-width:820px){
+  .gate-logo-pic{width:min(48vw,230px);margin-bottom:2px}
+  .gate-logo{max-height:26vh;filter:none;animation-duration:.9s}
+}
+@media (min-width:821px){
+  .gate-logo-pic{width:min(30vw,360px)}
+  .gate-logo{max-height:42vh}
+}
+@media (prefers-reduced-motion: reduce){.gate-logo{animation:none}}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
