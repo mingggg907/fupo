@@ -1237,6 +1237,13 @@ body.focusing .hero,body.focusing .gold-dust{display:none!important}
 .sec-focus{animation:focusIn .5s var(--ease-out) both}
 @keyframes focusIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.sec-focus{animation:none}}
+/* ===== 墨迹丝滑化：手机端去模糊、去重复的墨点层 ===== */
+#ink-veil i{will-change:transform,opacity;backface-visibility:hidden}
+@media (max-width:820px){
+  #ink-veil i{filter:none!important}                       /* 大层模糊=卡顿根源，改由渐变色自带柔边 */
+  #ink-veil i:nth-child(2){animation-delay:0s!important}
+  .gate::after{display:none!important}                     /* 门帘不再叠一层墨点（与过场重复） */
+}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -6756,6 +6763,21 @@ function setRealm(r, origin, keepPos){
 
 /* ============ 墨水晕染过场 + 开卷索引 ============ */
 /* ============ 开卷索引 v2 ============ */
+var INDEX_ITEMS = [
+  { id:'world',    label:'卷',   sub:'世界观 · 地理 · 规则' },
+  { id:'chars',    label:'名籍', sub:'人物角色与关系' },
+  { id:'timeline', label:'年表', sub:'事件与时间线' },
+  { id:'stories',  label:'志异', sub:'已成篇的故事' },
+  { id:'lexicon',  label:'释名', sub:'专有名词速查' },
+  { id:'guest',    label:'题跋', sub:'留言与批注' }
+];
+function indexAlive(){
+  return INDEX_ITEMS.filter(function(it){
+    if(it.id === 'world') return !!document.querySelector('.world-item');
+    return !!document.getElementById(it.id);
+  });
+}
+
 var ixSel = '';
 function ixEnter(id, fromEl){
   var el = fromEl || document.querySelector('.ix-row[data-ix="' + id + '"]');
