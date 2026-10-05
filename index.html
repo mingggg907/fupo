@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <!-- 分享预览（微信 / QQ / 微博 等平台抓取这些标签） -->
 <meta name="description" content="浮魄 —— 人间有非常之地，名曰浮魄。原创妖界与上古的设定、插画与故事：月夜、水涯、银雾。">
 <meta property="og:type" content="website">
@@ -1497,6 +1501,12 @@ a[href="#lexicon"],
 [data-act="open-lexicon"],
 .nav a[href="#lexicon"],
 .drawer a[href="#lexicon"]{display:none!important}
+/* ===== 新版本提示条 ===== */
+#fresh-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:905;display:flex;align-items:center;gap:10px;
+  background:var(--cinnabar);color:#fff;font-family:var(--serif);font-size:.78rem;letter-spacing:.12em;
+  padding:9px 16px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+#fresh-bar button{font-family:var(--serif);font-size:.74rem;letter-spacing:.1em;background:rgba(255,255,255,.92);color:var(--cinnabar);
+  border:0;border-radius:99px;padding:4px 12px;cursor:pointer}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -4373,7 +4383,7 @@ function guestListHTML(){
       </div>` : '');
 }
 function guestHTML(){
-  if(!guestOn()) return '';
+  if(!guestOn()) if(!window.__guestForce) return '';
   /* 尚未确认留言表可用时，访客不显示（编辑者可以看到建表提示） */
   if(guestState.ok !== true && !editMode) return '';
   return `<section class="sec" id="guest">
@@ -7248,6 +7258,11 @@ function focusSection(id){
     return;
   }
   var target = (id === 'world') ? document.querySelector('.world-item') : document.getElementById(id);
+  if(!target && id === 'guest'){                       /* 题跋：空栏目也放行 */
+    try{ window.__guestForce = true; renderAll(); }catch(e){}
+    target = document.getElementById('guest');
+  }
+  if(!target && id === 'lexicon'){ toast('释名已并入速查，可直接提问'); return; }
   if(!target){ toast('这个分区还没有内容'); return; }
   var box = document.getElementById('index');
   if(box) box.classList.remove('on');
@@ -7803,6 +7818,35 @@ document.addEventListener('click', function(e){
     mo.observe(document.body, { childList: true, subtree: true });
   }catch(e){}
   setInterval(hideLex, 2500);
+})();
+
+/* ===== 版本自动检测：发现新版本就提示刷新（对付 QQ/微信缓存） ===== */
+(function(){
+  var mine = (typeof FUPO_BUILD === 'string') ? FUPO_BUILD : '';
+  function check(){
+    try{
+      fetch(location.origin + '/?fresh=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.text(); })
+        .then(function(t){
+          var m = t.match(/const FUPO_BUILD = '([^']+)'/);
+          if(m && mine && m[1] !== mine){
+            var bar = document.getElementById('fresh-bar');
+            if(!bar){
+              bar = document.createElement('div');
+              bar.id = 'fresh-bar';
+              bar.innerHTML = '<span>发现新版本</span><button type="button">点此刷新</button>';
+              document.body.appendChild(bar);
+              bar.querySelector('button').addEventListener('click', function(){
+                location.replace(location.origin + '/?v=' + Date.now());
+              });
+            }
+          }
+        }).catch(function(){});
+    }catch(e){}
+  }
+  setTimeout(check, 2500);
+  setInterval(check, 120000);
+  window.addEventListener('pageshow', function(ev){ if(ev.persisted) check(); });
 })();
 
 /* ============================================================
