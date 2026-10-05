@@ -6098,6 +6098,32 @@ function openCharacterEditor(id, isNew){
         }
         return { target: t, label: l || '' };
       }).filter(Boolean);
+      /* 双向互联：同步在对方角色身上补一条反向关系（同一关系名） */
+      try{
+        const others = (W().characters || []).filter(x => x.id !== id);
+        /* 先清掉"对方指向我"的旧关系，避免重复与残留 */
+        others.forEach(o => {
+          o.relations = (o.relations || []).filter(r => !r || r.target !== id);
+        });
+        relations.forEach(r => {
+          const other = others.find(o => o.id === r.target);
+          if(other){
+            other.relations = other.relations || [];
+            other.relations.push({ target: id, label: r.label || '' });
+          }
+        });
+      }catch(e){}
+      /* 再把"指向我的"关系也合并进当前角色，保证两边对称 */
+      try{
+        (W().characters || []).forEach(o => {
+          if(o.id === id) return;
+          (o.relations || []).forEach(r => {
+            if(r && r.target === id && r.label && !relations.some(x => x.target === o.id)){
+              relations.push({ target: o.id, label: r.label });
+            }
+          });
+        });
+      }catch(e){}
       const profile = {};
       modalRoot.querySelectorAll('[data-pf]').forEach(el => {
         const k = el.dataset.pf;
@@ -7148,7 +7174,8 @@ var INDEX_ITEMS = [
 ];
 function indexAlive(){
   return INDEX_ITEMS.filter(function(it){
-    if(it.id === 'colophon') return true;
+    if(it.id === 'colophon' || it.id === 'guest') return true;   /* 牌记与题跋恒显示 */
+    if(it.id === 'lexicon') return false;                        /* 词典已隐藏 */
     if(it.id === 'world') return !!document.querySelector('.world-item');
     return !!document.getElementById(it.id);
   });
@@ -7664,10 +7691,18 @@ function fupoShowExitGuard(){
   }
   g.classList.add('on');
 }
+var fupoLastBack = 0;
 window.addEventListener('popstate', function(){
   var closed = fupoCloseTop();
-  try{ history.pushState({ fupo: ++FUPO_LAYER }, ''); }catch(e){}   /* 始终留一层，防误退 */
-  if(!closed) fupoShowExitGuard();
+  try{ history.pushState({ fupo: ++FUPO_LAYER }, ''); }catch(e){}
+  if(closed) return;                       /* 关掉了一层，不算要退出 */
+  var now = Date.now();
+  if(now - fupoLastBack < 3500){           /* 3.5 秒内连按两次返回，才提示退出 */
+    fupoShowExitGuard();
+  }else{
+    fupoLastBack = now;
+    try{ toast('再按一次返回可退出'); }catch(e){}
+  }
 });
 /* 首屏塞一层守卫，使第一次返回先被我们接管 */
 try{ history.pushState({ fupo: 0 }, ''); }catch(e){}
