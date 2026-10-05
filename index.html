@@ -7728,13 +7728,17 @@ function fupoShowExitGuard(){
   }
   g.classList.add('on');
 }
-var fupoLastBack = 0;
+var fupoLastBack = 0, fupoLastClick = 0;
+/* 记录任意点击时刻：锚点跳转会产生 history 噪音，需要忽略 */
+document.addEventListener('click', function(){ fupoLastClick = Date.now(); }, true);
+document.addEventListener('touchend', function(){ fupoLastClick = Date.now(); }, true);
 window.addEventListener('popstate', function(){
   var closed = fupoCloseTop();
   try{ history.pushState({ fupo: ++FUPO_LAYER }, ''); }catch(e){}
-  if(closed) return;                       /* 关掉了一层，不算要退出 */
+  if(closed) return;                                  /* 关掉了一层，不算要退出 */
+  if(Date.now() - fupoLastClick < 900) return;         /* 刚点过链接：属于导航噪音，不弹退出 */
   var now = Date.now();
-  if(now - fupoLastBack < 3500){           /* 3.5 秒内连按两次返回，才提示退出 */
+  if(now - fupoLastBack < 3500){                       /* 3.5 秒内连按两次返回，才提示退出 */
     fupoShowExitGuard();
   }else{
     fupoLastBack = now;
