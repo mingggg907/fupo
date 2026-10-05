@@ -1445,6 +1445,11 @@ body.abyss .ask-a{background:rgba(255,255,255,.03)}
 .ask-hclear{font-family:var(--serif);font-size:.68rem;letter-spacing:.1em;color:var(--ink-3);background:transparent;border:0;
   cursor:pointer;text-decoration:underline;opacity:.75}
 .ask-hclear:hover{color:var(--cinnabar)}
+/* ===== 速查面板关闭按钮 ===== */
+#ask-close{position:absolute;right:18px;top:16px;z-index:3;font-family:var(--serif);font-size:.74rem;letter-spacing:.2em;
+  color:var(--ink-2);background:rgba(255,255,255,.6);border:1px solid var(--line-2);border-radius:99px;padding:5px 13px;
+  cursor:pointer;touch-action:manipulation}
+#ask-close:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -7349,7 +7354,7 @@ function openAsk(){
   if(!box){
     box = document.createElement('div');
     box.id = 'ask-panel';
-    box.innerHTML = '<div class="ask-wrap">'
+    box.innerHTML = '<button id="ask-close" type="button">关 闭</button><div class="ask-wrap">'
       + '<div class="ask-head"><p class="ask-kicker">速 查</p><h1 class="ask-title">速 查</h1><div class="ask-rule"></div></div>'
       + '<div class="ask-row"><input id="ask-input" type="text" placeholder="你想问什么关于此世界观的内容？" maxlength="120"><button id="ask-send" type="button">问</button></div>'
       + '<div class="ask-hist" id="ask-hist"></div>'
@@ -7357,6 +7362,7 @@ function openAsk(){
       + '<div id="ask-out"></div></div>';
     document.body.appendChild(box);
     box.addEventListener('click', function(e){
+      if(e.target.id === 'ask-close'){ box.classList.remove('on'); document.body.style.overflow = ''; return; }
       if(e.target.id === 'ask-send'){ askSubmit((document.getElementById('ask-input') || {}).value); return; }
       if(e.target.classList.contains('ask-hchip')){ var v=e.target.textContent; var inp2=document.getElementById('ask-input'); if(inp2) inp2.value=v; askSubmit(v); return; }
       if(e.target.classList.contains('ask-hclear')){ askHistClear(); return; }
@@ -7383,6 +7389,14 @@ document.addEventListener('click', function(e){
   try{ var idx = document.getElementById('index'); if(idx) idx.classList.remove('on'); }catch(e2){}
   openAsk();
 }, true);
+
+/* ===== Esc 关闭速查/牌记等浮层 ===== */
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  var a = document.getElementById('ask-panel'); if(a) a.classList.remove('on');
+  var idx = document.getElementById('index'); if(idx) idx.classList.remove('on');
+  try{ document.body.style.overflow = ''; }catch(e2){}
+});
 
 /* ============================================================
    启动
