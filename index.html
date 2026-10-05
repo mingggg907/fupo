@@ -1265,6 +1265,9 @@ body.abyss .ix-row[data-sel="1"] .ix-dot{background:var(--gold)}
 /* 开卷页与返回键：始终可用 */
 #focus-back{display:none}
 #focus-back.show{display:flex}
+/* 「继续阅读」可见性与层级修正 */
+#resume-pill{z-index:120!important}
+#resume-pill.on{opacity:1}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -7602,16 +7605,10 @@ function refreshResumePill(){
 function updatePillCover(){
   const pill = document.getElementById('resume-pill');
   if(!pill || !pill.classList.contains('on')) return;
-  let cover = false;
-  try{
-    const g = document.getElementById('guest');
-    if(g){
-      const r = g.getBoundingClientRect();
-      cover = r.top < window.innerHeight * 0.85 && r.bottom > 0;
-    }
-  }catch(e){}
-  pill.style.opacity = cover ? '0' : '';
-  pill.style.pointerEvents = cover ? 'none' : '';
+  const idx = document.getElementById('index');
+  const covered = !!(idx && idx.classList.contains('on'));   /* 只在开卷页盖住时隐藏 */
+  pill.style.opacity = covered ? '0' : '';
+  pill.style.pointerEvents = covered ? 'none' : '';
 }
 
 /* 侧边目录 + 滚动高亮 */
