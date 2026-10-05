@@ -1403,6 +1403,43 @@ body.abyss #colophon-btn{color:var(--gold);border-color:rgba(201,163,92,.4)}
   .gate-logo{max-height:42vh}
 }
 @media (prefers-reduced-motion: reduce){.gate-logo{animation:none}}
+/* ===== 词典栏目隐藏（数据保留供「问」检索） ===== */
+#lexicon{display:none!important}
+/* ===== 「问」面板 ===== */
+#ask-btn{font-family:var(--serif);font-size:.78rem;letter-spacing:.22em;color:var(--ink-2);
+  background:transparent;border:1px solid var(--line-2);border-radius:2px;padding:5px 12px;cursor:pointer;
+  transition:.25s var(--ease);touch-action:manipulation;white-space:nowrap}
+#ask-btn:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
+body.abyss #ask-btn{color:var(--gold);border-color:rgba(201,163,92,.4)}
+@media (max-width:820px){#ask-btn{font-size:.72rem;padding:4px 9px;letter-spacing:.16em}}
+#ask-panel{position:fixed;inset:0;z-index:860;display:none;background:var(--paper);overflow-y:auto}
+#ask-panel.on{display:block}
+.ask-wrap{max-width:720px;margin:0 auto;padding:7vh 20px 12vh}
+.ask-head{text-align:center;margin-bottom:3vh}
+.ask-kicker{font-family:var(--serif);font-size:.72rem;letter-spacing:.5em;text-indent:.5em;color:var(--gold);margin:0 0 10px}
+.ask-title{font-family:var(--serif);font-size:clamp(1.3rem,4.6vw,1.8rem);letter-spacing:.4em;text-indent:.4em;color:var(--ink);margin:0;font-weight:400}
+.ask-rule{width:64px;height:2px;margin:14px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.ask-row{display:flex;gap:10px;margin:24px 0 12px}
+#ask-input{flex:1;min-width:0;background:rgba(255,255,255,.62);border:1px solid var(--line);border-radius:3px;
+  padding:12px 14px;font-family:var(--serif);font-size:.92rem;color:var(--ink);letter-spacing:.02em}
+body.abyss #ask-input{background:rgba(255,255,255,.05)}
+#ask-input:focus{outline:none;border-color:var(--gold)}
+#ask-send{flex:none;font-family:var(--serif);font-size:.8rem;letter-spacing:.2em;color:var(--paper);background:var(--cinnabar);
+  border:0;border-radius:3px;padding:0 20px;cursor:pointer;touch-action:manipulation}
+#ask-send:hover{background:var(--cinnabar-2)}
+.ask-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.ask-chip{font-family:var(--serif);font-size:.74rem;letter-spacing:.08em;color:var(--ink-3);background:transparent;
+  border:1px solid var(--line-2);border-radius:99px;padding:5px 13px;cursor:pointer;touch-action:manipulation;transition:.2s}
+.ask-chip:hover{color:var(--cinnabar);border-color:var(--cinnabar)}
+#ask-out{font-family:var(--serif);font-size:.86rem;line-height:2.1;color:var(--ink-2)}
+.ask-a{margin:0 0 18px;padding:16px 18px;border:1px solid var(--line-2);border-radius:4px;background:rgba(255,255,255,.45);white-space:pre-wrap}
+body.abyss .ask-a{background:rgba(255,255,255,.03)}
+.ask-cite{display:block;margin-top:10px;font-size:.74rem;color:var(--gold);letter-spacing:.08em}
+.ask-q{font-size:.84rem;color:var(--ink-3);margin:0 0 10px;letter-spacing:.06em}
+.ask-src{margin-top:6px;font-size:.76rem;color:var(--ink-3);line-height:1.9}
+.ask-src b{color:var(--ink-2);font-weight:400}
+.ask-loading{color:var(--ink-3);letter-spacing:.2em;font-size:.82rem}
+@media (max-width:820px){.ask-wrap{padding:5vh 16px 10vh}#ask-input{font-size:.88rem}}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -1431,7 +1468,8 @@ body.abyss #colophon-btn{color:var(--gold);border-color:rgba(201,163,92,.4)}
     <a href="#lexicon" data-lk="lexicon">词典</a>
   </nav>
   <button class="abyss-exit" id="abyss-exit">退 出 上 古</button>
-  <button id="colophon-btn" type="button" title="牌记 · 版权与说明">牌 记</button>
+  <button id="ask-btn" type="button" title="问 · 查阅档案">问</button>
+      <button id="colophon-btn" type="button" title="牌记 · 版权与说明">牌 记</button>
       <button class="icon-btn" id="search-open" aria-label="搜索" title="搜索（Ctrl+K）">⌕</button>
   <div class="topbar-actions">
     <button class="btn small" data-action="edit">编辑</button>
@@ -6971,7 +7009,7 @@ var INDEX_ITEMS = [
   { id:'chars',    key:'chars',        label:'名籍', sub:'人物角色与关系' },
   { id:'timeline', key:'timeline',     label:'年表', sub:'事件与时间线' },
   { id:'stories',  key:'stories',      label:'志异', sub:'已成篇的故事' },
-  { id:'lexicon',  key:'lexicon',      label:'释名', sub:'专有名词速查' },
+
   { id:'guest',    key:'guest',        label:'题跋', sub:'留言与批注' },
   { id:'colophon', key:'colophon',     label:'牌记', sub:'版权 · 来源 · 使用' }
 ];
@@ -7169,6 +7207,98 @@ document.addEventListener('click', function(e){
   try{ var idx=document.getElementById('index'); if(idx) idx.classList.remove('on'); }catch(e2){}
   try{ document.body.style.overflow=''; }catch(e2){}
   try{ openCopyrightPanel(); }catch(e2){ try{ openCopyright(); }catch(e3){ toast('牌记打不开'); } }
+}, true);
+
+/* ============ 「问」：AI 优先，关键词兜底 ============ */
+var ASK_CHIPS = ['怎么进入浮魄？', '妖怪有什么特殊之处？', '妖怪平时都做些什么？', '浮魄用什么钱？', '望月大典是什么？', '鬼市在哪里？'];
+function askCorpus(){
+  var out = [];
+  try{
+    (W().sections || []).forEach(function(sec){
+      (sec.entries || []).forEach(function(e){
+        out.push({ src: '卷·' + sec.title, title: e.title, text: String(e.content || '') });
+      });
+    });
+    (W().characters || []).forEach(function(c){ out.push({ src: '名籍', title: c.name || '无名', text: String(c.desc || '') + ' ' + String(c.title || '') }); });
+    (W().timeline || []).forEach(function(t){ out.push({ src: '年表', title: t.date || '', text: String(t.title || '') + ' ' + String(t.desc || '') }); });
+    (W().lexicon || []).forEach(function(x){ out.push({ src: '释名', title: x.term || '', text: String(x.def || '') + ' ' + String(x.note || '') }); });
+  }catch(e){}
+  return out;
+}
+function askSearch(q){
+  var kw = String(q || '').replace(/[？?。，,、\s]+/g, ' ').trim().split(' ').filter(function(w){ return w.length >= 2; });
+  if(!kw.length) return [];
+  var corpus = askCorpus(), scored = [];
+  corpus.forEach(function(c){
+    var hay = (c.title + ' ' + c.text).toLowerCase(), sc = 0;
+    kw.forEach(function(w){ if(hay.indexOf(w.toLowerCase()) >= 0) sc += (c.title.toLowerCase().indexOf(w.toLowerCase()) >= 0 ? 3 : 1); });
+    if(sc > 0) scored.push({ c: c, sc: sc });
+  });
+  scored.sort(function(a, b){ return b.sc - a.sc; });
+  return scored.slice(0, 4).map(function(x){ return x.c; });
+}
+async function askSubmit(q){
+  var out = document.getElementById('ask-out');
+  if(!out) return;
+  q = String(q || '').trim();
+  if(!q){ return; }
+  out.innerHTML = '<p class="ask-loading">正 在 查 阅 档 案 …</p>';
+  var answer = '';
+  try{
+    var r = await withTimeout(fetch('https://api.minggg.top/ask?q=' + encodeURIComponent(q)), 20000);
+    if(r.ok){
+      var t = await r.text();
+      try{ var j = JSON.parse(t); answer = j.answer || j.text || ''; }catch(e2){ answer = t; }
+    }
+  }catch(e){}
+  if(answer && answer.length > 1){
+    out.innerHTML = '<div class="ask-a">' + esc(answer) + '</div>';
+    return;
+  }
+  /* 兜底：关键词检索 */
+  var hits = askSearch(q);
+  var html = '<p class="ask-q">AI 暂不可用，已为你检索站内档案：</p>';
+  if(!hits.length) html += '<div class="ask-a">没有找到相关内容。可以换个说法，或到「题跋」里留言问作者。</div>';
+  hits.forEach(function(h){
+    html += '<div class="ask-a"><b>' + esc(h.title || '(无题)') + '</b>\n' + esc(String(h.text).replace(/!\[[^\]]*\]\([^)]*\)/g, '').slice(0, 220));
+    html += '<span class="ask-cite">引自：' + esc(h.src) + '</span></div>';
+  });
+  out.innerHTML = html;
+}
+function openAsk(){
+  var box = document.getElementById('ask-panel');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'ask-panel';
+    box.innerHTML = '<div class="ask-wrap">'
+      + '<div class="ask-head"><p class="ask-kicker">问 档</p><h1 class="ask-title">问</h1><div class="ask-rule"></div></div>'
+      + '<div class="ask-row"><input id="ask-input" type="text" placeholder="想问什么？例如：怎么进入浮魄" maxlength="120"><button id="ask-send" type="button">问</button></div>'
+      + '<div class="ask-chips">' + ASK_CHIPS.map(function(c){ return '<button class="ask-chip" type="button">' + esc(c) + '</button>'; }).join('') + '</div>'
+      + '<div id="ask-out"></div></div>';
+    document.body.appendChild(box);
+    box.addEventListener('click', function(e){
+      if(e.target.id === 'ask-send'){ askSubmit((document.getElementById('ask-input') || {}).value); return; }
+      if(e.target.classList.contains('ask-chip')){
+        var inp = document.getElementById('ask-input'); if(inp) inp.value = e.target.textContent;
+        askSubmit(e.target.textContent); return;
+      }
+      if(e.target === box){ box.classList.remove('on'); document.body.style.overflow = ''; }
+    });
+    box.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' && e.target && e.target.id === 'ask-input'){ e.preventDefault(); askSubmit(e.target.value); }
+    });
+  }
+  box.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function(){ var i = document.getElementById('ask-input'); if(i) i.focus(); }, 260);
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('#ask-btn');
+  if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  try{ closeDrawer(); }catch(e2){}
+  try{ var idx = document.getElementById('index'); if(idx) idx.classList.remove('on'); }catch(e2){}
+  openAsk();
 }, true);
 
 /* ============================================================
