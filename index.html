@@ -6550,7 +6550,6 @@ function renderGate(){
   if(g.enabled === false){
     gate.classList.add('hide');
     document.body.style.overflow = '';
-    setTimeout(function(){ try{ openIndex(); }catch(e){} }, 420);
     setTimeout(() => { if(gate.parentNode) gate.remove(); }, 400);
     const tryPlayOnce = () => {
       musicIntent = true;
@@ -6586,7 +6585,7 @@ function renderGate(){
     document.body.style.overflow = '';
     musicIntent = true;   /* 开卷 = 想听音乐：即使歌单还在加载，加载完会自动响起 */
     if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
-    setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); try{ FUPO_BG.attach(); }catch(e){} }, 900);
+    setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); try{ FUPO_BG.attach(); }catch(e){} try{ openIndex(); }catch(e){} }, 900);
     document.removeEventListener('keydown', gateKey);
   }
   /* 回车也可以入界 */
