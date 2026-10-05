@@ -1004,7 +1004,10 @@ body.abyss .entry-content>p:first-of-type::first-letter{color:var(--gold)}
   18%{opacity:.85}
   100%{transform:scale(120);opacity:0}
 }
-.gate-title .g-char{display:inline-block;opacity:0;filter:blur(10px);transform:translateY(14px) scale(1.14);animation:charIn 1.05s var(--ease-out) both}
+.gate-title .g-char{display:inline-block;opacity:0;filter:blur(6px);transform:translateY(14px) scale(1.1);animation:charIn 1.05s var(--ease-out) both}
+/* 逐字动画与 background-clip:text 会打架（出现灰影/丢字）：门帘标题改用纯墨色 */
+.gate-title{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;color:var(--ink)!important}
+.gate-title .g-char{-webkit-text-fill-color:currentColor}
 @keyframes charIn{to{opacity:1;filter:blur(0);transform:none}}
 .gate-rule{transform-origin:50% 50%;animation:ruleGrow 1.1s .75s var(--ease-out) both}
 @keyframes ruleGrow{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
