@@ -1484,6 +1484,10 @@ body.abyss .ask-a{background:rgba(255,255,255,.03)}
 .eg-stay{background:var(--cinnabar);color:#fff;border:0}
 .eg-leave{background:transparent;color:var(--ink-3);border:1px solid var(--line-2)}
 @media (max-width:820px){.eg-box{padding:22px 20px;max-width:290px}}
+/* ===== 关系网：有向箭头 ===== */
+.relation-svg .rel-line{stroke-linecap:round}
+.rel-arrowhead{fill:var(--ink-3);opacity:.75}
+.rel-label{font-family:var(--serif)}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -5055,28 +5059,44 @@ function renderRelationGraph(){
       }
     }
   });
-  const seen = new Set();
-  const lines = [];
+  /* 有向关系：A→B 与 B→A 各画一条（带箭头），同一方向的多条关系合并标签 */
+  const dirMap = {};
   chars.forEach(c => {
     (c.relations || []).forEach(r => {
       const t = chars.find(x => x.id === r.target);
-      if(!t) return;
-      const key = [c.id, t.id].sort().join('|');
-      if(seen.has(key)) return;
-      seen.add(key);
-      lines.push({ from: c, to: t, label: r.label || '' });
+      if(!t || t.id === c.id) return;
+      const key = c.id + '|' + t.id;
+      if(!dirMap[key]) dirMap[key] = { from: c, to: t, labels: [] };
+      const lab = String(r.label || '').trim();
+      if(lab && dirMap[key].labels.indexOf(lab) < 0) dirMap[key].labels.push(lab);
     });
+  });
+  const lines = Object.keys(dirMap).map(function(k){
+    const d = dirMap[k];
+    return { from: d.from, to: d.to, label: d.labels.join(' · '), reverse: !!dirMap[d.to.id + '|' + d.from.id] };
   });
   const clipId = 'avatarClip_' + uid();
   let svg = `<svg class="relation-svg" viewBox="0 0 ${GRAPH_W} ${GRAPH_H}" preserveAspectRatio="xMidYMid meet">`;
-  svg += `<defs><clipPath id="${clipId}"><circle r="26" cx="0" cy="0"/></clipPath></defs>`;
+  svg += '<defs><clipPath id="' + clipId + '"><circle r="26" cx="0" cy="0"/></clipPath>'
+    + '<marker id="relArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+    + '<path class="rel-arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>';
   lines.forEach(l => {
     const hue = String(l.label || '').split('').reduce((a, ch) => a + ch.charCodeAt(0), 0) % 360;
-    const lc = l.label ? `hsl(${hue} 40% 52%)` : '';
-    svg += `<line class="rel-line" data-a="${l.from.id}" data-b="${l.to.id}" x1="${l.from._x}" y1="${l.from._y}" x2="${l.to._x}" y2="${l.to._y}"${lc ? ` style="stroke:${lc}"` : ''}/>`;
+    const lc = l.label ? 'hsl(' + hue + ' 40% 52%)' : '';
+    const dx = l.to._x - l.from._x, dy = l.to._y - l.from._y;
+    const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+    /* 双向时各自垂直偏移 7px，避免两条线重叠 */
+    const off = l.reverse ? 7 : 0;
+    const ox = (-dy / len) * off, oy = (dx / len) * off;
+    /* 两端各留出一点，让箭头不被头像盖住 */
+    const pad = 30;
+    const x1 = l.from._x + (dx / len) * pad + ox, y1 = l.from._y + (dy / len) * pad + oy;
+    const x2 = l.to._x - (dx / len) * pad + ox, y2 = l.to._y - (dy / len) * pad + oy;
+    svg += '<line class="rel-line" data-a="' + l.from.id + '" data-b="' + l.to.id + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" marker-end="url(#relArrow)"'
+      + (lc ? ' style="stroke:' + lc + '"' : '') + '/>';
     if(l.label){
-      const mx = (l.from._x + l.to._x) / 2, my = (l.from._y + l.to._y) / 2;
-      svg += `<text class="rel-label" data-a="${l.from.id}" data-b="${l.to.id}" x="${mx}" y="${my}" text-anchor="middle">${esc(l.label)}</text>`;
+      const mx = (x1 + x2) / 2 + ox * 1.4, my = (y1 + y2) / 2 + oy * 1.4;
+      svg += '<text class="rel-label" data-a="' + l.from.id + '" data-b="' + l.to.id + '" x="' + mx + '" y="' + my + '" text-anchor="middle">' + esc(l.label) + '</text>';
     }
   });
   chars.forEach(c => {
