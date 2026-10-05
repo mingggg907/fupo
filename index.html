@@ -464,8 +464,26 @@ body.abyss .fav-say:hover{color:var(--ink);background:var(--gold-2,#c9a35c);bord
 @media (max-width:640px){.fav-card{padding:16px 14px;gap:14px}.fav-img{width:76px;height:76px}}
 /* 关系网：手机上不再"吃掉"页面滚动；并支持放大查看 */
 .relation-svg{touch-action:pan-y}
-.relation-full-wrap{overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;border:1px solid var(--line-2);border-radius:3px;padding:8px}
-.relation-full-wrap svg{width:190%;max-width:none;height:auto;touch-action:none}
+/* ============ 关系网：手机端交互重做 ============ */
+/* 手机端内嵌图不可拖（避免吃掉页面滚动），整块点一下进全屏操作 */
+.relation-wrap{position:relative}
+.graph-open-mask{display:none}
+@media (max-width:820px){
+  .graph-open-mask{display:flex;position:absolute;inset:0;align-items:center;justify-content:center;z-index:4;
+    background:linear-gradient(180deg,rgba(236,236,230,.35),rgba(236,236,230,.72));border:0;border-radius:3px;
+    font-family:var(--serif);font-size:.86rem;letter-spacing:.24em;color:var(--ink);cursor:pointer;touch-action:manipulation}
+  body.abyss .graph-open-mask{background:linear-gradient(180deg,rgba(10,11,13,.4),rgba(10,11,13,.78));color:var(--gold)}
+  .graph-open-mask span{padding:9px 20px;border:1px solid var(--gold);border-radius:99px;background:rgba(255,255,255,.72)}
+  body.abyss .graph-open-mask span{background:rgba(10,11,13,.7)}
+}
+/* 全屏操作区：单指拖 · 双指缩放 · 点圆点看角色 */
+.graph-stage{position:relative;height:min(66vh,560px);overflow:hidden;border:1px solid var(--line-2);border-radius:3px;touch-action:none;background:radial-gradient(60% 60% at 50% 40%,rgba(255,255,255,.55),rgba(255,255,255,.12));cursor:grab}
+body.abyss .graph-stage{background:radial-gradient(60% 60% at 50% 40%,rgba(255,255,255,.04),rgba(255,255,255,0))}
+.graph-stage:active{cursor:grabbing}
+.graph-zoom{transform-origin:0 0;will-change:transform;width:max-content;padding:10px}
+.graph-zoom svg{width:820px;height:auto;max-width:none;display:block;touch-action:none}
+.graph-hint{font-family:var(--serif);font-size:.76rem;letter-spacing:.14em;color:var(--ink-3);text-align:center;margin-top:12px}
+@media (max-width:640px){.graph-zoom svg{width:680px}.graph-stage{height:min(62vh,480px)}}
 .lex-input{width:min(420px,100%);background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:2px;color:var(--ink);padding:9px 13px;font-family:var(--serif);font-size:.9rem;letter-spacing:.04em;text-align:center}
 body.abyss .lex-input{background:rgba(255,255,255,.05)}
 .lex-input:focus{outline:none;border-color:var(--gold)}
@@ -3118,7 +3136,8 @@ function charactersHTML(){
     </div>` : ''}
     <div class="char-grid" id="char-grid">${charCardsHTML(list)}</div>
     ${all.length ? `<div class="relation-wrap"><span class="relation-title">关 系 网</span>
-      <button class="btn small" data-act="graph-full" type="button" style="position:absolute;top:10px;right:12px;z-index:3">放 大 查 看</button>
+      <button class="btn small" data-act="graph-full" type="button" style="position:absolute;top:10px;right:12px;z-index:5">放 大 查 看</button>
+      <button class="graph-open-mask" data-act="graph-full" type="button"><span>点 击 放 大 操 作</span></button>
       <div id="relation-graph"></div>
       <div style="text-align:center;margin-top:14px"><button class="btn small ghost" type="button" id="graph-export">导 出 关 系 图</button></div>
     </div>` : ''}
@@ -7197,15 +7216,67 @@ function updateTocActive(){
 }
 
 /* 关系图导出为图片 */
-/* 关系网放大查看（手机上小字看不清；这里可平移查看） */
+/* 关系网全屏操作（手机端主入口）：单指拖动 / 双指缩放 / 点圆点看角色 / 双击放大 */
 function openGraphFull(){
   const src = document.querySelector('#relation-graph svg');
   if(!src){ toast('还没有关系数据'); return; }
   showModal({
     title: '关 系 网', hideFooter: true, wide: true,
-    body: `<div class="relation-full-wrap">${src.outerHTML}</div>
-      <p class="hint" style="font-family:var(--serif);font-size:.76rem;letter-spacing:.1em;color:var(--ink-3);text-align:center;margin-top:10px">可用手指拖动查看</p>`
+    body: `<div class="graph-stage" id="graph-stage"><div class="graph-zoom" id="graph-zoom">${src.outerHTML}</div></div>
+      <p class="graph-hint">单指拖动 · 双指缩放 · 双击放大 · 点圆点查看角色</p>`
   });
+  bindGraphStage();
+}
+function bindGraphStage(){
+  const stage = document.getElementById('graph-stage');
+  const zoom = document.getElementById('graph-zoom');
+  if(!stage || !zoom) return;
+  let scale = 1, tx = 0, ty = 0, sx = 0, sy = 0, moved = 0, dragging = false;
+  const pts = new Map();
+  const applyT = () => { zoom.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')'; };
+  const dist = () => { const a = [...pts.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
+  let startDist = 0, startScale = 1;
+  const mid = () => { const a = [...pts.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 }; };
+  let startMid = { x: 0, y: 0 }, startTx = 0, startTy = 0;
+  stage.addEventListener('pointerdown', e => {
+    try{ stage.setPointerCapture(e.pointerId); }catch(e2){}
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if(pts.size === 1){ dragging = true; moved = 0; sx = e.clientX - tx; sy = e.clientY - ty; }
+    else if(pts.size === 2){ dragging = false; startDist = dist(); startScale = scale; startMid = mid(); startTx = tx; startTy = ty; }
+  });
+  stage.addEventListener('pointermove', e => {
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if(pts.size >= 2){
+      const d = dist();
+      if(startDist > 0 && d > 0){
+        const ns = Math.max(.5, Math.min(3.2, startScale * d / startDist));
+        const m = mid();
+        tx = startTx + (m.x - startMid.x); ty = startTy + (m.y - startMid.y);
+        scale = ns; applyT();
+      }
+      return;
+    }
+    if(dragging){
+      const nx = e.clientX - sx, ny = e.clientY - sy;
+      moved += Math.abs(nx - tx) + Math.abs(ny - ty);
+      tx = nx; ty = ny; applyT();
+    }
+  });
+  const end = e => { pts.delete(e.pointerId); if(!pts.size) dragging = false; if(pts.size < 2){ startDist = 0; } };
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+  stage.addEventListener('pointerleave', end);
+  stage.addEventListener('click', e => {
+    if(moved > 8){ moved = 0; return; }              /* 拖动过就不算点击 */
+    const n = e.target.closest ? e.target.closest('.rel-node') : null;
+    if(n && n.dataset.id){
+      const id = n.dataset.id;
+      closeModal(true);
+      setTimeout(() => { try{ openCharacter(id); }catch(e2){} }, 180);
+    }
+  });
+  stage.addEventListener('dblclick', () => { scale = scale > 1.5 ? 1 : 2; if(scale === 1){ tx = 0; ty = 0; } applyT(); });
 }
 async function exportRelationGraph(){  const svg = document.querySelector('#relation-graph svg');
   if(!svg){ toast('暂无可导出的关系图'); return; }
