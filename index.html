@@ -296,7 +296,6 @@ html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjus
 .site-notice .nt-mark{font-family:var(--serif);font-size:.8rem;letter-spacing:.62em;color:var(--gold);text-indent:.62em;margin-bottom:20px}
 .site-notice .nt-line{font-size:.76rem;line-height:2.2;letter-spacing:.05em;margin:0 0 10px;text-align:center;text-indent:0}
 .site-notice .nt-line:last-of-type{margin-bottom:0}
-.site-notice .nt-copy{margin-top:24px;font-size:.72rem;letter-spacing:.18em;opacity:.85;text-indent:.18em}
 /* 图片防盗：禁止拖拽另存与长按菜单（文字仍可正常选中） */
 .rich-img, .inline-img, .fupo-lightbox img, .img-preview, .hero-cover, .char-avatar{-webkit-user-drag:none;user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 /* 「完善中」标记：内容尚未撰写时的雅致占位 */
@@ -1378,6 +1377,12 @@ body.abyss .ix-arrow{color:var(--gold)}
   #modal-root .modal-body{padding:18px 16px 22px}
   .reader .entry-content{font-size:.88rem;line-height:2.05}
 }
+/* ===== 牌记面板排版：逐条分段 ===== */
+.cpn{font-family:var(--serif);font-size:.82rem;line-height:2.05;color:var(--ink-2);max-width:680px;margin:0 auto}
+.cpn-p{margin:0 0 14px;text-indent:0;letter-spacing:.02em;word-break:break-word}
+.cpn-p + .cpn-p{padding-top:2px}
+.cpn-sign{margin:22px 0 0;text-align:right;color:var(--ink-3);letter-spacing:.16em}
+@media (max-width:820px){.cpn{font-size:.78rem;line-height:2}.cpn-p{margin-bottom:12px}}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -4554,7 +4559,6 @@ function noticeHTML(){
   return `<section class="site-notice" id="site-notice">
     <div class="nt-mark">浮 魄</div>
     ${noticeLines().map(l => `<p class="nt-line">${esc(l)}</p>`).join('')}
-    <div class="nt-copy">© ${y} 浮魄${author ? ' · ' + author : ''}　保留所有权利</div>
   </section>`;
 }
 
@@ -6968,8 +6972,8 @@ function ixEnter(id, fromEl){
 }
 function openCopyrightPanel(){
   var m = state.meta || {};
-  var base = (m.copyright && m.copyright.text) ? m.copyright.text : '';
-  var extra = [
+  var base = (m.copyright && m.copyright.text) ? String(m.copyright.text) : '';
+  var items = [
     '一、本站性质：个人创作的世界观展示站点，内容用于作品展示与交流，不进行商业经营。',
     '二、插画：大部分为作者本人绘制，另有部分为作者委托他人创作（约稿）的作品。',
     '三、文字与设定：世界观、设定、故事、词典释义等文字内容均为作者原创。',
@@ -6978,13 +6982,18 @@ function openCopyrightPanel(){
     '六、使用限制：站内全部插画与音乐（含约稿作品）仅用于本站展示；未经作者及相关权利人许可，请勿保存、下载、转载或用于任何商业用途。',
     '七、引用与二创：欢迎基于本站设定进行交流与创作，请注明出处，并避免直接使用站内图像与音乐。',
     '八、联系与勘误：如对内容有疑问或发现错误，欢迎通过站内题跋留言告知。'
-  ].join('\n');
-  showModal({ title: '牌 记', hideFooter: true, wide: true,
-    body: '<div class="reader" style="max-width:720px"><div class="entry-content" style="line-height:2.15">'
-      + (base ? '<p>' + esc(base) + '</p>' : '')
-      + '<p>' + esc(extra) + '</p>'
-      + (m.author ? '<p style="text-align:right;opacity:.8">—— ' + esc(m.author) + '</p>' : '')
-      + '</div></div>' });
+  ];
+  var html = '<div class="cpn">';
+  if(base){
+    base.split(/\n{1,}/).forEach(function(line){
+      var t = line.trim();
+      if(t) html += '<p class="cpn-p">' + esc(t) + '</p>';
+    });
+  }
+  items.forEach(function(t){ html += '<p class="cpn-p">' + esc(t) + '</p>'; });
+  if(m.author) html += '<p class="cpn-sign">—— ' + esc(m.author) + '</p>';
+  html += '</div>';
+  showModal({ title: '牌 记', hideFooter: true, wide: true, body: html });
 }
 function focusSection(id){
   if(id === 'colophon'){
