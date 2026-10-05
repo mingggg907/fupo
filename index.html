@@ -5354,11 +5354,19 @@ app.addEventListener('click', e => {
   /* 关系图导出 */
   if(e.target.closest && e.target.closest('#graph-export')){ exportRelationGraph(); return; }
   if(e.target.closest && e.target.closest('[data-music-mode]')){
-    const mode = e.target.closest('[data-music-mode]').dataset.musicMode;
-    const cfg = realm === 'abyss' ? (state.meta.abyssMusic = state.meta.abyssMusic || normMusic(null)) : (state.meta.music = state.meta.music || normMusic(null));
-    cfg.mode = mode;
-    try{ applyMusicMode(); }catch(e){}
-    document.querySelectorAll('[data-music-mode]').forEach(b => b.classList.toggle('on', b.dataset.musicMode === mode));
+    var mode = e.target.closest('[data-music-mode]').dataset.musicMode;
+    var touched = 0;
+    ['music','abyssMusic'].forEach(function(k){
+      var cfg = state.meta[k];
+      if(cfg && typeof cfg === 'object'){ cfg.mode = mode; touched++; }
+    });
+    if(!touched){                                  /* 两个世界都还没建音乐配置时，只给当前世界建 */
+      var cur = realm === 'abyss' ? 'abyssMusic' : 'music';
+      state.meta[cur] = normMusic(state.meta[cur] || null);
+      state.meta[cur].mode = mode;
+    }
+    document.querySelectorAll('[data-music-mode]').forEach(function(b){ b.classList.toggle('on', b.dataset.musicMode === mode); });
+    try{ applyMusicMode(); }catch(e2){}
     try{ _doSave(); }catch(e2){}
     toast(mode === 'loop' ? '已设为单曲循环' : (mode === 'shuffle' ? '已设为随机播放' : '已设为顺序播放'));
     return;
@@ -6744,13 +6752,19 @@ function renderGate(){
     </div>`;
   const gateBtn = gate.querySelector('#gate-btn');
   let entered = false;
-  function enter(){
+  var gateTapX = 0, gateTapY = 0;
+function enter(){
     if(entered) return;
     entered = true;
     gate.classList.add('hide');
     document.body.style.overflow = '';
-    try{ openIndex(); }catch(e){}          /* 立刻盖上开卷页，不让内页先露出 */
-    musicIntent = true;   /* 开卷 = 想听音乐：即使歌单还在加载，加载完会自动响起 */
+    musicIntent = true;
+    /* 走完整墨迹过场：墨先盖住 → 开卷页在墨下就位 → 墨散开时看到开卷页 */
+    try{
+      inkTransition(gateTapX, gateTapY,
+        function(){ try{ openIndex(); }catch(e){} },
+        null);
+    }catch(e){ try{ openIndex(); }catch(e2){} }   /* 开卷 = 想听音乐：即使歌单还在加载，加载完会自动响起 */
     if(musicReady && audioEl.paused) audioEl.play().catch(()=>{});
     setTimeout(() => { if(gate.parentNode) gate.parentNode.removeChild(gate); try{ FUPO_BG.attach(); }catch(e){} }, 900);
     document.removeEventListener('keydown', gateKey);
@@ -6760,8 +6774,8 @@ function renderGate(){
   document.addEventListener('keydown', gateKey);
   if(gateBtn) gateBtn.addEventListener('click', enter);
   /* 点门帘任意位置都能入界（红色按钮已去掉） */
-  gate.addEventListener('click', () => enter());
-  gate.addEventListener('touchend', e => { if(!entered){ e.preventDefault(); enter(); } }, { passive: false });
+  gate.addEventListener('click', e => { try{ gateTapX = e.clientX || window.innerWidth/2; gateTapY = e.clientY || window.innerHeight/2; }catch(e2){} enter(); });
+  gate.addEventListener('touchend', e => { if(!entered){ try{ var t=e.changedTouches&&e.changedTouches[0]; if(t){ gateTapX=t.clientX; gateTapY=t.clientY; } }catch(e2){} e.preventDefault(); enter(); } }, { passive: false });
   document.body.style.overflow = 'hidden';
 }
 
@@ -6926,29 +6940,26 @@ document.addEventListener('click', function(e){
   if(e.target.closest && e.target.closest('#focus-back')){ exitFocus(); return; }
 }, true);
 
+var inkBusy = false;
 function inkTransition(x, y, onCover, onReveal){
-  let reduce = false;
+  if(inkBusy) return;                                  /* 忙锁：绝对不重入 */
+  var reduce = false;
   try{ reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
   if(reduce){ try{ onCover && onCover(); }catch(e){} try{ onReveal && onReveal(); }catch(e){} return; }
-  let v = document.getElementById('ink-veil');
-  if(!v){
-    v = document.createElement('div');
-    v.id = 'ink-veil';
-    v.innerHTML = '<i></i><i></i><i></i>';
-    document.body.appendChild(v);
-  }
+  inkBusy = true;
+  var v = document.getElementById('ink-veil');
+  if(!v){ v = document.createElement('div'); v.id = 'ink-veil'; v.innerHTML = '<i></i><i></i><i></i>'; document.body.appendChild(v); }
   v.style.setProperty('--ix', (x || window.innerWidth / 2) + 'px');
   v.style.setProperty('--iy', (y || window.innerHeight / 2) + 'px');
-  if(v.classList.contains('go')) return;   /* 防重复触发 */
   v.classList.remove('out', 'go');
   void v.offsetWidth;
   v.classList.add('go');
-  setTimeout(function(){ try{ onCover && onCover(); }catch(e){} }, 540);
+  setTimeout(function(){ try{ onCover && onCover(); }catch(e){} }, 560);
   setTimeout(function(){
     v.classList.add('out');
     try{ onReveal && onReveal(); }catch(e){}
-    setTimeout(function(){ v.classList.remove('go', 'out'); }, 560);
-  }, 900);
+    setTimeout(function(){ v.classList.remove('go', 'out'); inkBusy = false; }, 600);
+  }, 940);
 }
 /* ============================================================
    启动
