@@ -7517,16 +7517,27 @@ document.addEventListener('keydown', function(e){
 
 /* ============ 返回键逐层返回 / 离开确认 / 开卷标题重播 ============ */
 var FUPO_LAYER = 0;
+function fupoVisible(el){
+  if(!el) return false;
+  try{
+    var st = getComputedStyle(el);
+    if(st.display === 'none' || st.visibility === 'hidden' || parseFloat(st.opacity) === 0) return false;
+    return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  }catch(e){ return false; }
+}
 function fupoAnyOpen(){
   var ask = document.getElementById('ask-panel');
   if(ask && ask.classList.contains('on')) return 'ask';
-  var idx = document.getElementById('index');
-  if(idx && idx.classList.contains('on')) return 'index';
   var eg = document.getElementById('exit-guard');
   if(eg && eg.classList.contains('on')) return 'guard';
-  if(document.querySelector('#modal-root .modal') && document.querySelector('#modal-root .mask, #modal-root .modal-mask')) return 'modal';
-  if(document.querySelector('.drawer.on, #drawer.on, .panel-drawer.on')) return 'drawer';
-  if(document.querySelector('.lightbox.on, #lightbox.on')) return 'lightbox';
+  var idx = document.getElementById('index');
+  if(idx && idx.classList.contains('on')) return 'index';
+  var modals = document.querySelectorAll('#modal-root .modal, .modal.on, .modal:not([hidden])');
+  for(var i = 0; i < modals.length; i++){ if(fupoVisible(modals[i])) return 'modal'; }
+  var dw = document.querySelector('.drawer.on, #drawer.on, .panel-drawer.on');
+  if(fupoVisible(dw)) return 'drawer';
+  var lb = document.querySelector('.lightbox.on, #lightbox.on');
+  if(fupoVisible(lb)) return 'lightbox';
   if(document.body.classList.contains('focusing')) return 'focus';
   return null;
 }
@@ -7573,18 +7584,21 @@ window.addEventListener('popstate', function(){
 try{ history.pushState({ fupo: 0 }, ''); }catch(e){}
 /* 开卷标题：点击 = 从头重播开卷动画 */
 function ixReplay(){
-  try{ ixIntroDone2 = false; }catch(e){}
+  /* 回到内页最开头：关掉开卷、收起已展开的条目、滚到页面顶部 */
   var box = document.getElementById('index');
-  if(!box) return;
-  var stage = box.querySelector('.ix-wrap');
-  if(stage){
-    stage.style.animation = 'none';
-    void stage.offsetWidth;
-    stage.style.animation = '';
-  }
-  try{ ixSplitChars(box); }catch(e){}
+  if(box) box.classList.remove('on');
+  var fb = document.getElementById('focus-back'); if(fb) fb.classList.remove('show');
+  document.body.classList.remove('focusing');
+  document.querySelectorAll('.sec').forEach(function(x){ x.classList.remove('sec-focus'); });
+  document.body.style.overflow = '';
+  /* 收起展开的世界栏目 / 条目，回到初始状态 */
+  try{
+    document.querySelectorAll('.world-item.open, .entry.open, .entry.expanded, .is-open').forEach(function(el){ el.classList.remove('open','expanded','is-open'); });
+    var f = document.querySelector('#world .world-item'); if(f) f.click();
+  }catch(e){}
   try{ window.scrollTo(0, 0); }catch(e){}
-  try{ toast('已回到开卷'); }catch(e){}
+  try{ history.scrollRestoration = 'manual'; }catch(e){}
+  try{ toast('已回到首页开头'); }catch(e){}
 }
 document.addEventListener('click', function(e){
   var h = e.target.closest && e.target.closest('#ix-home');
