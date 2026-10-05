@@ -1148,12 +1148,7 @@ body.abyss .gate-brand{color:var(--ink)}
 .ix-kicker{font-family:var(--serif);font-size:.74rem;letter-spacing:.5em;text-indent:.5em;color:var(--gold);margin:0 0 10px}
 .ix-title{font-family:var(--serif);font-size:clamp(1.5rem,5vw,2.1rem);letter-spacing:.4em;text-indent:.4em;color:var(--ink);margin:0}
 .ix-rule{width:72px;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.ix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
-.ix-card{position:relative;text-align:left;padding:22px 20px;border:1px solid var(--line-2);border-radius:5px;
-  background:rgba(255,255,255,.5);cursor:pointer;transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .35s;
-  font-family:var(--serif);touch-action:manipulation}
 body.abyss .ix-card{background:rgba(255,255,255,.035)}
-.ix-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(31,36,32,.09);border-color:var(--line)}
 .ix-card .ix-glyph{position:absolute;right:16px;top:14px;font-size:2.3rem;color:var(--gold);opacity:.16;line-height:1}
 .ix-card .ix-label{font-size:1.12rem;letter-spacing:.3em;color:var(--ink);display:block}
 .ix-card .ix-sub{display:block;margin-top:8px;font-size:.76rem;letter-spacing:.14em;color:var(--ink-3);line-height:1.9}
@@ -7311,6 +7306,14 @@ function askSearch(q){
   });
   scored.sort(function(a, b){ return (b.sc - a.sc) || (b.hit - a.hit); });
   return scored.slice(0, 4).map(function(x){ return x.c; });
+}
+/* ===== 寒暄类兜底：不请求 AI，直接引导 ===== */
+function askIsChitchat(q){
+  var t = String(q || '').trim();
+  if(!t) return true;
+  if(t.length <= 6 && /^(你好|您好|哈喽|嗨|hi|hello|在吗|有人吗|谢谢|多谢|辛苦了|测试|test)[呀啊哦！!。~\s]*$/i.test(t)) return true;
+  if(/^(你好|您好|哈喽|嗨|在吗|有人吗)[呀啊哦！!。~\s]*$/i.test(t)) return true;
+  return false;
 }
 async function askSubmit(q){
   var out = document.getElementById('ask-out');
