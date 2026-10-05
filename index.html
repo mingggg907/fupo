@@ -4771,7 +4771,7 @@ function openCopyright(){
   document.getElementById('cr-save').addEventListener('click', () => {
       /* 全局 AI 私记保存 */
   (function(){
-    var ta = modalRoot.querySelector('[data-field="aiNotes"] textarea');
+    var ta = document.getElementById('cr-ai');
     if(ta){ state.meta.aiNotes = ta.value || ''; }
   })();
 const v = document.getElementById('cr-text').value.trim();
@@ -5987,11 +5987,7 @@ function openMetaEditor(){
     return `
     <p style="font-family:var(--serif);font-size:.82rem;letter-spacing:.3em;color:var(--gold);margin:24px 0 6px;padding-bottom:10px;border-bottom:1px solid var(--line);text-indent:.3em">界 面 文 字（两界共用；栏目名同时用于顶部导航）</p>
     <div class="form">
-      <div class="field full" data-field="aiNotes"><label>AI 私记（全局 · 只喂给速查，页面不显示）</label>
-        <textarea rows="4" placeholder="写给 AI 的补充设定 / 纠正 / 隐藏信息，例如：戮爻是浊日与噬月的主人；两人皆为从属。">${esc((state.meta && state.meta.aiNotes) || '')}</textarea>
-        <span class="hint">此段只用于速查回答，访客在任何页面都看不到 ✅</span>
-      </div>
-      <div class="field" data-field="lb_mark"><label>上古顶部小字</label><input type="text" value="${esc(L.abyssMark || '')}" placeholder="上 古 之 力"></div>
+<div class="field" data-field="lb_mark"><label>上古顶部小字</label><input type="text" value="${esc(L.abyssMark || '')}" placeholder="上 古 之 力"></div>
       <div class="field" data-field="lb_exit"><label>顶栏退出按钮</label><input type="text" value="${esc(L.abyssExitBtn || '')}" placeholder="退 出 上 古"></div>
       <div class="field" data-field="lb_world"><label>本界栏目名（${isAb ? '上古' : '表层'}）</label><input type="text" value="${esc(worldLabel)}" placeholder="${isAb ? '上古秘录' : '卷'}"></div>
       <div class="field" data-field="lb_chars"><label>名籍栏目名（原妖众）</label><input type="text" value="${esc(L.chars || '')}" placeholder="名籍"></div>
