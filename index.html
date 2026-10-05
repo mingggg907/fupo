@@ -2647,6 +2647,20 @@ function normalize(d){
       s.entries = s.entries.map(e => (e && typeof e === 'object') ? e : { id: uid(), title:'未命名', content:'' });
       return s;
     });
+    /* 修坏数据：历史版本用全角冒号时，target 里可能混进了 "id：标签" */
+    w.characters.forEach(c => {
+      if(!Array.isArray(c.relations)) return;
+      c.relations = c.relations.map(r => {
+        if(!r || typeof r !== 'object') return null;
+        let t = String(r.target || '').trim(), l = String(r.label || '').trim();
+        const m2 = t.match(/^([^:：\-—\s]+)\s*[:：\-—]\s*(.+)$/);
+        if(m2){ if(!l) l = m2[2].trim(); t = m2[1].trim(); }
+        if(!t) return null;
+        const hit = w.characters.find(x => x.id === t) || w.characters.find(x => x.name === t);
+        if(hit && hit.id) t = hit.id;
+        return { target: t, label: l };
+      }).filter(Boolean);
+    });
     w.characters = w.characters.map(c => { if(!Array.isArray(c.relations)) c.relations = []; if(!Array.isArray(c.tags)) c.tags = []; return normChar(c); });
     w.timeline = w.timeline.filter(t => t && typeof t === 'object');
     w.stories = w.stories.filter(s => s && typeof s === 'object').map(s => {
@@ -6072,9 +6086,17 @@ function openCharacterEditor(id, isNew){
     onOk(){
       const get = k => modalRoot.querySelector(`[data-field="${k}"] input[type=text]`)?.value.trim() || '';
       const tags = get('tags').split(/[,，、]/).map(s => s.trim()).filter(Boolean);
-      const relations = get('relations').split(/[,，]/).map(s => {
-        const [t, l] = s.split(':').map(x => (x || '').trim());
-        return t ? { target: t, label: l || '' } : null;
+      const relations = get('relations').split(/[,，、;；]/).map(s => {
+        /* 分隔符兼容：半角冒号 : / 全角冒号 ： / 横杠 - —— 中文输入法常常打出全角冒号 */
+        const parts = String(s).split(/[:：\-—]/).map(x => (x || '').trim());
+        let t = parts[0] || '', l = parts.slice(1).join(' ').trim();
+        if(!t) return null;
+        /* 允许直接写人物名字：自动解析成 ID */
+        if(!list.some(x => x.id === t)){
+          const byName = list.find(x => x.name === t) || list.find(x => x.name && (x.name.indexOf(t) >= 0 || t.indexOf(x.name) >= 0));
+          if(byName) t = byName.id;
+        }
+        return { target: t, label: l || '' };
       }).filter(Boolean);
       const profile = {};
       modalRoot.querySelectorAll('[data-pf]').forEach(el => {
