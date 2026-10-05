@@ -951,6 +951,29 @@ body{background:#fff;color:#000}
 .rich-img img{opacity:1!important;filter:none!important;transform:none!important}
 a[href]::after{content:""}
 }
+/* ============ 观感升级（放在样式表最后，确保不被前面的规则覆盖） ============ */
+/* 大分区做成卡片：手机上最直观的层次变化 */
+.world-item{background:rgba(255,255,255,.55);border:1px solid var(--line-2);border-radius:5px;margin-bottom:15px;padding:2px 14px 2px 12px;box-shadow:0 2px 14px rgba(31,36,32,.045)}
+body.abyss .world-item{background:rgba(255,255,255,.03);box-shadow:none}
+/* 栏目标题：朱砂→金 渐变竖条 + 更大字 */
+.sec-head h2{position:relative;padding-left:16px;font-size:clamp(1.3rem,4.9vw,1.72rem);letter-spacing:.24em}
+.sec-head h2::before{content:"";position:absolute;left:0;top:.16em;bottom:.16em;width:3px;border-radius:2px;background:linear-gradient(180deg,var(--cinnabar),var(--gold))}
+/* 中文正文：首行缩进两字，首段首字下沉 */
+.entry-content p{text-indent:2em;margin:.6em 0}
+.entry-content>p:first-of-type{text-indent:0}
+.entry-content>p:first-of-type::first-letter{float:left;font-family:var(--serif);font-size:3em;line-height:.9;margin:.05em .12em 0 0;color:var(--cinnabar)}
+body.abyss .entry-content>p:first-of-type::first-letter{color:var(--gold)}
+/* 首屏：更大的站名 + 金线 */
+.hero-title{font-size:clamp(2.05rem,9vw,3.3rem);letter-spacing:.24em;font-weight:400}
+.hero-rule{width:72px!important;height:2px!important;background:linear-gradient(90deg,transparent,var(--gold),transparent)!important;margin:20px auto 24px!important}
+/* 条目行：左侧细线 + 稍大标题 */
+.entry{padding-left:12px;border-left:1px solid var(--line-2)}
+.entry-title{font-size:1.03em;letter-spacing:.1em}
+@media (max-width:820px){
+  .entry-content>p:first-of-type::first-letter{font-size:2.5em}
+  .sec-head h2{letter-spacing:.18em;padding-left:14px}
+  .world-item{padding:2px 11px 2px 10px;margin-bottom:12px}
+}
 </style>
 </head>
 <body>
