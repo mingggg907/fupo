@@ -1488,6 +1488,15 @@ body.abyss .ask-a{background:rgba(255,255,255,.03)}
 .relation-svg .rel-line{stroke-linecap:round}
 .rel-arrowhead{fill:var(--ink-3);opacity:.75}
 .rel-label{font-family:var(--serif)}
+/* ===== 释名（已隐藏栏目）的所有入口一并隐藏 ===== */
+#lexicon,
+a[href="#lexicon"],
+[data-goto="lexicon"],
+[data-ix="lexicon"],
+[data-act="lexicon"],
+[data-act="open-lexicon"],
+.nav a[href="#lexicon"],
+.drawer a[href="#lexicon"]{display:none!important}
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -7514,6 +7523,25 @@ function askGoto(src){
     return null;
   }
   try{
+    /* 释名出处兜底：栏目已隐藏 → 跳到同名的卷条目 */
+    if(type === '释名' || type === '詞典'){
+      var secsAll = document.querySelectorAll('.sec');
+      var hitEl = null;
+      for(var q = 0; q < secsAll.length; q++){
+        var cand = secsAll[q].querySelectorAll('.entry-title, .entry-head, h3');
+        for(var w = 0; w < cand.length; w++){
+          if(norm(cand[w].innerText).indexOf(norm(entry || name)) >= 0){ hitEl = cand[w].closest('.entry') || cand[w]; break; }
+        }
+        if(hitEl) break;
+      }
+      if(hitEl){
+        var y0 = hitEl.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 84;
+        window.scrollTo(0, Math.max(0, y0));
+        hitEl.classList.add('ask-hit-flash');
+        setTimeout(function(){ hitEl.classList.remove('ask-hit-flash'); }, 2100);
+        return;
+      }
+    }
     if(type === '名籍'){
       var cs = document.querySelectorAll('#chars .char-card, #chars .card, #chars li');
       for(var a = 0; a < cs.length; a++){ if(norm(cs[a].innerText).indexOf(norm(name)) >= 0){ if(flash(cs[a])) return; } }
@@ -7751,6 +7779,25 @@ document.addEventListener('click', function(e){
   setTimeout(function(){ h.classList.remove('sel'); }, 620);
   setTimeout(ixReplay, 220);
 }, true);
+
+/* 顶部导航：按文字隐藏"释名"入口（含无 href 的按钮形式） */
+(function(){
+  var HIDE = ['释名','詞典','词典'];
+  function hideLex(){
+    try{
+      document.querySelectorAll('.nav a, .nav button, .topbar a, .topbar button, .drawer a, .drawer button, .menu a, .menu button').forEach(function(el){
+        var t = (el.textContent || '').replace(/\s/g, '');
+        if(HIDE.indexOf(t) >= 0) el.style.display = 'none';
+        var h = el.getAttribute && el.getAttribute('href');
+        if(h === '#lexicon') el.style.display = 'none';
+      });
+    }catch(e){}
+  }
+  hideLex();
+  setTimeout(hideLex, 600);
+  setTimeout(hideLex, 2000);
+  document.addEventListener('click', function(){ setTimeout(hideLex, 300); }, true);
+})();
 
 /* ============================================================
    启动
