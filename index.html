@@ -7335,44 +7335,64 @@ function askGoto(src){
   if(!parts.length) return;
   var type = parts[0], name = parts[1] || '', entry = parts[2] || '';
   var panel = document.getElementById('ask-panel');
-  if(panel){ panel.classList.remove('on'); }
-  var idx0 = document.getElementById('index');            /* 保险：开卷页若还盖着，先收起 */
-  if(idx0) idx0.classList.remove('on');
+  if(panel) panel.classList.remove('on');
+  var idx0 = document.getElementById('index'); if(idx0) idx0.classList.remove('on');
   var fb0 = document.getElementById('focus-back'); if(fb0) fb0.classList.remove('show');
   document.body.style.overflow = '';
-  document.documentElement.style.overflow = '';
-  var target = null;
+  var norm = function(t){ return String(t || '').replace(/\s/g, ''); };
+  function flash(el){
+    if(!el) return false;
+    var y = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 84;
+    window.scrollTo(0, Math.max(0, y));
+    el.classList.add('ask-hit-flash');
+    setTimeout(function(){ el.classList.remove('ask-hit-flash'); }, 2100);
+    return true;
+  }
+  function findEntry(scope, kw){
+    if(!scope || !kw) return null;
+    var list = scope.querySelectorAll('.entry-title, .entry-head, .ex-head, h3, .excerpt-title, li, p, div');
+    for(var i = 0; i < list.length; i++){
+      if(list[i].children.length > 3) continue;
+      if(norm(list[i].innerText).indexOf(norm(kw)) >= 0) return list[i].closest('.entry') || list[i];
+    }
+    return null;
+  }
   try{
     if(type === '名籍'){
-      var cards = document.querySelectorAll('#chars .char-card, #chars .card, #chars li');
-      for(var i = 0; i < cards.length; i++){
-        if(cards[i].innerText.indexOf(name) >= 0){ target = cards[i]; break; }
-      }
-      if(!target) target = document.getElementById('chars');
+      var cs = document.querySelectorAll('#chars .char-card, #chars .card, #chars li');
+      for(var a = 0; a < cs.length; a++){ if(norm(cs[a].innerText).indexOf(norm(name)) >= 0){ if(flash(cs[a])) return; } }
+      if(flash(document.getElementById('chars'))) return;
     }else if(type === '年表'){
-      target = document.getElementById('timeline');
+      if(flash(document.getElementById('timeline'))) return;
     }else{
-      /* 卷：先找栏目，再找条目 */
-      var secs = document.querySelectorAll('.sec');
-      var sec = null;
-      for(var k = 0; k < secs.length; k++){
-        var h = secs[k].querySelector('.sec-head h2, h2');
-        if(h && h.innerText.replace(/\s/g, '').indexOf(name.replace(/\s/g, '')) >= 0){ sec = secs[k]; break; }
+      /* 卷：先在栏目列表里点开目标栏目，再定位条目 */
+      var tabs = document.querySelectorAll('.world-item, .world-head, [data-world]');
+      var tab = null, secEl = null;
+      for(var i2 = 0; i2 < tabs.length; i2++){
+        if(norm(tabs[i2].innerText).indexOf(norm(name)) >= 0){ tab = tabs[i2]; break; }
       }
-      if(sec && entry){
-        var items = sec.querySelectorAll('.entry-title, .entry-head, h3, .excerpt-title');
-        for(var m = 0; m < items.length; m++){
-          if(items[m].innerText.replace(/\s/g, '').indexOf(entry.replace(/\s/g, '')) >= 0){ target = items[m].closest('.entry') || items[m]; break; }
-        }
+      if(tab){
+        try{ tab.click(); }catch(e){}
+        setTimeout(function(){
+          var scope = null;
+          var secs = document.querySelectorAll('.sec, .world-body, #world');
+          for(var k = 0; k < secs.length; k++){ if(norm(secs[k].innerText).indexOf(norm(entry || name)) >= 0){ scope = secs[k]; break; } }
+          var t2 = entry ? findEntry(scope || document, entry) : null;
+          if(!flash(t2 || scope || tab)){ try{ toast('未找到对应条目'); }catch(e){} }
+        }, 340);
+        return;
       }
-      target = target || sec;
+      /* 若栏目已是展开态，直接找 */
+      var secs2 = document.querySelectorAll('.sec');
+      for(var m = 0; m < secs2.length; m++){
+        var h = secs2[m].querySelector('.sec-head h2, h2');
+        if(h && norm(h.innerText).indexOf(norm(name)) >= 0){ secEl = secs2[m]; break; }
+      }
+      var t3 = entry ? findEntry(secEl || document, entry) : null;
+      if(flash(t3 || secEl)) return;
     }
   }catch(e){}
-  if(!target){ try{ toast('未找到对应档案'); }catch(e){} return; }
-  var y = target.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - 84;
-  window.scrollTo(0, Math.max(0, y));
-  target.classList.add('ask-hit-flash');
-  setTimeout(function(){ target.classList.remove('ask-hit-flash'); }, 2000);
+  try{ toast('未找到对应档案'); }catch(e){}
 }
 async function askSubmit(q){
   var out = document.getElementById('ask-out');
