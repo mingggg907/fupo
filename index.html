@@ -6978,7 +6978,7 @@ function exitFocus(){
   document.body.classList.remove('focusing');
   document.querySelectorAll('.sec').forEach(function(s2){ s2.classList.remove('sec-focus'); });
   var box = document.getElementById('index');
-  if(box){ box.classList.add('on'); document.body.style.overflow = 'hidden'; }
+  if(box){ box.classList.add('on'); try{ ixSplitChars(box); }catch(e){} document.body.style.overflow = 'hidden'; }
 }
 /* 把标题与栏目名拆成单字，做逐字上浮（只影响开卷页显示） */
 function ixSplitChars(scope){
@@ -7015,7 +7015,7 @@ function openIndex(fromEl, instant){
   });
   html += '</div><p class="ix-tip">轻点选中 · 再点一次进入</p></div>';
   box.innerHTML = html;
-  var show = function(){ box.classList.add('on'); document.body.style.overflow = 'hidden'; var fb=document.getElementById('focus-back'); if(fb) fb.classList.add('show'); document.body.classList.remove('focusing'); document.querySelectorAll('.sec').forEach(function(s2){ s2.classList.remove('sec-focus'); }); };
+  var show = function(){ box.classList.add('on'); try{ ixSplitChars(box); }catch(e){} document.body.style.overflow = 'hidden'; var fb=document.getElementById('focus-back'); if(fb) fb.classList.add('show'); document.body.classList.remove('focusing'); document.querySelectorAll('.sec').forEach(function(s2){ s2.classList.remove('sec-focus'); }); };
   if(instant || !fromEl){ show(); return; }
   var r = fromEl.getBoundingClientRect();
   inkTransition(r.left + r.width / 2, r.top + r.height / 2, null, show);
