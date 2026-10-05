@@ -1361,6 +1361,12 @@ body.abyss .ix-arrow{color:var(--gold)}
 @media (prefers-reduced-motion: reduce){
   #index .ix-wrap,#index .ix-head,#index .ix-row,#index .ix-tip,#index .ix-label .ixc,#index .ix-title .ixc{animation:none!important;opacity:1!important;transform:none!important}
 }
+/* ===== 手机端门帘标题收小 ===== */
+@media (max-width:820px){
+  .gate-title{font-size:clamp(1.85rem,8.6vw,2.5rem)!important;letter-spacing:.22em!important;text-indent:.22em}
+  .gate-rule{width:56px!important;margin:14px auto 18px!important}
+}
+/* ===== 随机播放：每次打开随机选一首 ===== */
 </style>
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-d.webp" media="(min-width:821px)">
 <link rel="preload" as="image" href="https://api.minggg.top/storage/v1/object/public/fupo-audio/mat-logo-m.webp" media="(max-width:820px)">
@@ -2734,7 +2740,23 @@ function selectTrack(i, autoplay){
   saveMusicPref();          /* 播放位置只存本机：访客切歌不会产生草稿、也不会写云端 */
   if(autoplay) musicIntent = true;
   try{ applyMusicMode(); }catch(e){}
+  try{ musicPickShuffle(); }catch(e){}
   loadMusic().then(() => { if(autoplay) audioEl.play().catch(()=>{}); });
+}
+/* 随机播放：每次载入随机选一首（同一会话只随一次） */
+var _musicShuffled = false;
+function musicPickShuffle(){
+  try{
+    if(_musicShuffled) return;
+    var mode = (musicCfg() || {}).mode || 'order';
+    if(mode !== 'shuffle') return;
+    var list = tracks();
+    if(list.length < 2) return;
+    _musicShuffled = true;
+    var n2 = Math.floor(Math.random() * list.length);
+    if(n2 === curTrack) n2 = (n2 + 1) % list.length;
+    selectTrack(n2, false);
+  }catch(e){}
 }
 function applyMusicMode(){
   try{
@@ -6902,6 +6924,7 @@ function setRealm(r, origin, keepPos){
     restoreRealmScroll(r);   /* 回到该界面上次读到的位置（首次进入 = 顶部） */
   }
   loadMusic();
+  try{ musicPickShuffle(); }catch(e){}
   toast(r === 'abyss' ? '已 入 上 古 · 内容与音乐均为独立栏目' : '已 归 表 层');
 }
 
@@ -6958,7 +6981,7 @@ function focusSection(id){
     if(box0) box0.classList.remove('on');
     var fb0 = document.getElementById('focus-back'); if(fb0) fb0.classList.remove('show');
     document.body.style.overflow = '';
-    try{ openCopyright(); }catch(e){ try{ openCopyrightPanel(); }catch(e2){} }
+    try{ openCopyrightPanel(); }catch(e){ try{ openCopyright(); }catch(e2){} }
     return;
   }
   var target = (id === 'world') ? document.querySelector('.world-item') : document.getElementById(id);
