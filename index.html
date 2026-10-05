@@ -3143,7 +3143,7 @@ function lexiconHTML(){
     </div>
     ${(filtered.length > shown.length) ? `<div class="lex-more">
       <button class="btn small" data-act="open-lexicon">查 看 全 部 ${all.length} 条 词 条</button>
-      ${(!lexCat && !lexInitial && !lexQuery && all.length > shown.length) ? `<button class="btn small ghost" data-lex-more="1" style="margin-left:8px">继续看下面 ${Math.min(LEX_STEP, filtered.length - shown.length)} 条</button>` : (filtered.length > shown.length ? `<button class="btn small ghost" id="lex-more-btn" style="margin-left:8px">载入更多（还有 ${filtered.length - shown.length} 条）</button>` : '')}
+      ${(!lexCat && !lexInitial && !lexQuery && all.length > shown.length) ? `<button class="btn small ghost" data-lex-more="1" style="margin-left:8px">继续看下面 ${Math.min(LEX_STEP, filtered.length - shown.length)} 条</button>` : (filtered.length > shown.length ? `<button class="btn small ghost" data-lex-more="1" style="margin-left:8px">载入更多（还有 ${filtered.length - shown.length} 条）</button>` : '')}
     </div>` : `<div class="lex-more"><button class="btn small ghost" data-act="open-lexicon">打 开 完 整 词 典</button></div>`}
   </section>`;
 }
