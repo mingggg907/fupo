@@ -1403,7 +1403,6 @@ body.abyss #colophon-btn{color:var(--gold);border-color:rgba(201,163,92,.4)}
 }
 @media (prefers-reduced-motion: reduce){.gate-logo{animation:none}}
 /* ===== 词典栏目隐藏（数据保留供「问」检索） ===== */
-#lexicon{display:none!important}
 /* ===== 「问」面板 ===== */
 #ask-btn{font-family:var(--serif);font-size:.78rem;letter-spacing:.22em;color:var(--ink-2);
   background:transparent;border:1px solid var(--line-2);border-radius:2px;padding:5px 12px;cursor:pointer;
@@ -7306,13 +7305,6 @@ function exitFocus(){
 /* 把标题与栏目名拆成单字，做逐字上浮（只影响开卷页显示） */
 function ixSplitChars(scope){
   try{
-    var t = scope.querySelector('.ix-title');
-    if(t && !t.querySelector('.ixc')){
-      var raw = t.textContent || '';
-      t.innerHTML = raw.split('').map(function(c, i){
-        return '<span class="ixc" style="animation-delay:' + (0.10 + i * 0.07).toFixed(2) + 's">' + (c === ' ' ? '&nbsp;' : c) + '</span>';
-      }).join('');
-    }
     scope.querySelectorAll('.ix-label').forEach(function(el){
       if(el.querySelector('.ixc')) return;
       var raw2 = el.textContent || '';
@@ -7839,7 +7831,9 @@ document.addEventListener('click', function(e){
     var mo = new MutationObserver(function(){ if(mo._t) return; mo._t = setTimeout(function(){ mo._t = null; hideLex(); }, 200); });
     mo.observe(document.body, { childList: true, subtree: true });
   }catch(e){}
-  setInterval(hideLex, 2500);
+  /* 限时清扫：前 40 秒内每 2.5 秒清一次，之后停止（不留常驻定时器） */
+  var lexSweep = setInterval(hideLex, 2500);
+  setTimeout(function(){ clearInterval(lexSweep); }, 40000);
 })();
 
 /* ===== 版本自动检测：发现新版本就提示刷新（对付 QQ/微信缓存） ===== */
