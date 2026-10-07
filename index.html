@@ -1106,7 +1106,7 @@ body.abyss .gate-ink{opacity:.3;filter:invert(1) hue-rotate(180deg)}
 body.abyss .gate-mount{opacity:.32;filter:invert(.86) hue-rotate(170deg) saturate(.6)}
 .gate-inner{position:relative;z-index:3}
 @media (max-width:820px){.gate-ink{opacity:.42}.gate-mount{height:24vh;opacity:.44}}
-/* ===== Logo（妖世倫）+ 电脑端适配 ===== */
+/* ===== Logo（妖世绘）+ 电脑端适配 ===== */
 .gate-logo{display:block;width:min(52vw,300px);max-height:32vh;object-fit:contain;margin:0 auto 4px;
   filter:drop-shadow(0 8px 20px rgba(31,36,32,.10));animation:logoIn 1.25s var(--ease-out) both}
 @keyframes logoIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
@@ -7643,6 +7643,8 @@ async function askSubmit(q){
       if(mm){ mm[1].split(/[；;、,，]/).forEach(function(x){ var v = x.trim(); if(v && srcList.indexOf(v) < 0) srcList.push(v); }); return; }
       kept.push(ln);
     });
+    /* 丢空引自 */
+    kept = kept.filter(function(x){ return !/^\s*引自\s*[：:]\s*$/.test(x); });
     var bodyTxt = kept.join('\n').trim();
     var html2 = '<div class="ask-a">' + esc(bodyTxt);
     if(srcList.length){
